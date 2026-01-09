@@ -1481,8 +1481,7 @@ class CacheManager:
                         "body": base64.b64encode(response.body).decode("ascii"),
                         "timestamp": response.timestamp,
                         "original_response": (
-                            base64.b64encode(response.original_response).decode("ascii")
-                            if response.original_response else None
+                            base64.b64encode(response.original_response).decode("ascii") if response.original_response else None
                         ),
                         "bypass_applied": response.bypass_applied,
                         "cache_hit": response.cache_hit,

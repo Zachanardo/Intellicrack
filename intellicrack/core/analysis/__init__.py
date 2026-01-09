@@ -88,12 +88,7 @@ enhanced_deep_license_analysis: Callable[[str], dict[str, Any]] | None
 detect_packing: Callable[[str], dict[str, Any]] | None
 
 try:
-    from .core_analysis import (
-        analyze_binary_internal,
-        calculate_entropy,
-        detect_packing,
-        enhanced_deep_license_analysis,
-    )
+    from .core_analysis import analyze_binary_internal, calculate_entropy, detect_packing, enhanced_deep_license_analysis
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     calculate_entropy = None

@@ -307,6 +307,7 @@ class AuditLogger:
 
         # Queue for non-blocking logging
         import queue
+
         self._log_queue: queue.Queue[AuditEvent | None] = queue.Queue()
         self._running = True
         self._worker_thread = threading.Thread(target=self._log_worker, daemon=True, name="AuditLoggerWorker")

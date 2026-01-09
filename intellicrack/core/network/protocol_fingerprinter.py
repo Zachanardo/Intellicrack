@@ -157,7 +157,12 @@ class ProtocolFingerprinter:
                 {"type": "binary", "offset": 0, "bytes": "5345525645525f", "weight": 0.5, "description": "SERVER_"},
                 {"type": "binary", "offset": 0, "bytes": "46454154555245", "weight": 0.5, "description": "FEATURE"},
                 {"type": "binary", "offset": 0, "bytes": "494e4352454d454e54", "weight": 0.5, "description": "INCREMENT"},
-                {"type": "regex", "pattern": "(FEATURE|VENDOR|SERVER|INCREMENT)", "weight": 0.4, "description": "FlexLM keywords in payload"},
+                {
+                    "type": "regex",
+                    "pattern": "(FEATURE|VENDOR|SERVER|INCREMENT)",
+                    "weight": 0.4,
+                    "description": "FlexLM keywords in payload",
+                },
                 {"type": "regex", "pattern": "SIGN=[A-F0-9]+", "weight": 0.4, "description": "License signature pattern"},
                 {"type": "regex", "pattern": "(lmgrd|adskflex|flexlm)", "weight": 0.35, "description": "FlexLM daemon references"},
             ],

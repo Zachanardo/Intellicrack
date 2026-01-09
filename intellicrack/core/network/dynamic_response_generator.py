@@ -95,13 +95,13 @@ class FlexLMProtocolHandler:
         self.logger = logging.getLogger("IntellicrackLogger.FlexLMHandler")
 
         self.vendor_keys: dict[str, bytes] = {
-            "autodesk": b"\x4A\x5F\x8E\x9C\x2D\x1B\x3E\x7F\xA2\xC4\xD6\x8B\x9F\x0E\x1C\x2A",
-            "mathworks": b"\x7E\x3D\x9A\x1F\x6C\x4B\x2E\x8D\x5A\x7C\x0B\x3F\x9E\x1D\x4A\x6B",
-            "ansys": b"\x2B\x8C\x4D\x7E\x1A\x5F\x9C\x3E\x6D\x0A\x8B\x2C\x7F\x4E\x1D\x9A",
-            "siemens": b"\x9F\x2E\x7D\x4C\x8A\x1B\x6E\x3F\x0D\x5A\x7C\x9B\x2E\x4D\x8F\x1A",
-            "ptc": b"\x3E\x7F\x1C\x9D\x5A\x2B\x8E\x4D\x7C\x0A\x6F\x3D\x9B\x1E\x5C\x8A",
-            "adobe": b"\x8D\x4C\x7E\x2F\x9A\x1D\x5B\x3E\x0C\x6A\x8F\x4D\x7C\x2E\x9B\x5A",
-            "vendor": b"\x5A\x3C\x7E\x1F\x9D\x4B\x2E\x8A\x6C\x0F\x3D\x7B\x9E\x1C\x4A\x6D",
+            "autodesk": b"\x4a\x5f\x8e\x9c\x2d\x1b\x3e\x7f\xa2\xc4\xd6\x8b\x9f\x0e\x1c\x2a",
+            "mathworks": b"\x7e\x3d\x9a\x1f\x6c\x4b\x2e\x8d\x5a\x7c\x0b\x3f\x9e\x1d\x4a\x6b",
+            "ansys": b"\x2b\x8c\x4d\x7e\x1a\x5f\x9c\x3e\x6d\x0a\x8b\x2c\x7f\x4e\x1d\x9a",
+            "siemens": b"\x9f\x2e\x7d\x4c\x8a\x1b\x6e\x3f\x0d\x5a\x7c\x9b\x2e\x4d\x8f\x1a",
+            "ptc": b"\x3e\x7f\x1c\x9d\x5a\x2b\x8e\x4d\x7c\x0a\x6f\x3d\x9b\x1e\x5c\x8a",
+            "adobe": b"\x8d\x4c\x7e\x2f\x9a\x1d\x5b\x3e\x0c\x6a\x8f\x4d\x7c\x2e\x9b\x5a",
+            "vendor": b"\x5a\x3c\x7e\x1f\x9d\x4b\x2e\x8a\x6c\x0f\x3d\x7b\x9e\x1c\x4a\x6d",
         }
 
         # FlexLM date epoch (January 1, 1970)
@@ -195,8 +195,7 @@ class FlexLMProtocolHandler:
             return "permanent"
 
         # FlexLM date format: DD-MMM-YYYY
-        months = ["jan", "feb", "mar", "apr", "may", "jun",
-                  "jul", "aug", "sep", "oct", "nov", "dec"]
+        months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 
         day = expiry_date.day
         month = months[expiry_date.month - 1]
@@ -385,9 +384,7 @@ class FlexLMProtocolHandler:
                         # Build complete FEATURE line
                         hostid_clause = f"HOSTID={hostid}" if hostid else "HOSTID=ANY"
                         feature_line = (
-                            f"FEATURE {feature_name} {vendor_daemon} {version} "
-                            f"{expiry_str} {count_str} {hostid_clause} "
-                            f"SIGN={signature}"
+                            f"FEATURE {feature_name} {vendor_daemon} {version} {expiry_str} {count_str} {hostid_clause} SIGN={signature}"
                         )
 
                         # Add options if present
@@ -421,11 +418,7 @@ class FlexLMProtocolHandler:
                 )
 
                 hostid_clause = f"HOSTID={hostid}" if hostid else "HOSTID=ANY"
-                feature_line = (
-                    f"FEATURE {feature_name} {vendor_daemon} {version} "
-                    f"{expiry_str} {count_str} {hostid_clause} "
-                    f"SIGN={signature}"
-                )
+                feature_line = f"FEATURE {feature_name} {vendor_daemon} {version} {expiry_str} {count_str} {hostid_clause} SIGN={signature}"
 
                 checksum = self._calculate_flexlm_checksum(feature_line)
                 feature_line += f" ck={checksum}"
@@ -440,21 +433,12 @@ class FlexLMProtocolHandler:
 
             # Fallback with basic signature
             fallback_key = self.vendor_keys["vendor"]
-            fallback_sig = self._generate_composite_signature(
-                "product", "vendor", "1.0", "permanent", "uncounted", None, fallback_key
-            )
-            fallback_line = (
-                f"FEATURE product vendor 1.0 permanent uncounted "
-                f"HOSTID=ANY SIGN={fallback_sig}"
-            )
+            fallback_sig = self._generate_composite_signature("product", "vendor", "1.0", "permanent", "uncounted", None, fallback_key)
+            fallback_line = f"FEATURE product vendor 1.0 permanent uncounted HOSTID=ANY SIGN={fallback_sig}"
             fallback_ck = self._calculate_flexlm_checksum(fallback_line)
             fallback_line += f" ck={fallback_ck}"
 
-            return (
-                f"SERVER this_host ANY 27000\n"
-                f"VENDOR vendor\n"
-                f"{fallback_line}\n"
-            ).encode("utf-8")
+            return (f"SERVER this_host ANY 27000\nVENDOR vendor\n{fallback_line}\n").encode("utf-8")
 
 
 class HASPProtocolHandler:

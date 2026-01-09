@@ -2,7 +2,7 @@ const ISC_REQ_MANUAL_CRED_VALIDATION = 0x00_08_00_00;
 const ISC_REQ_USE_SUPPLIED_CREDS = 0x00_00_00_80;
 const SECPKG_ATTR_REMOTE_CERT_CONTEXT = 0x53;
 const _SECPKG_ATTR_STREAM_SIZES = 0x04;
-const _SECPKG_ATTR_CONNECTION_INFO = 0x5A;
+const _SECPKG_ATTR_CONNECTION_INFO = 0x5a;
 const SEC_E_OK = 0x00_00_00_00;
 
 const sessions = [];
@@ -32,9 +32,9 @@ if (sspicli) {
     log(`Schannel module found at: ${sspicli.base}`);
 
     try {
-        const InitializeSecurityContext
-            = Module.findExportByName(sspicli.name, 'InitializeSecurityContextW')
-            || Module.findExportByName(sspicli.name, 'InitializeSecurityContextA');
+        const InitializeSecurityContext =
+            Module.findExportByName(sspicli.name, 'InitializeSecurityContextW') ||
+            Module.findExportByName(sspicli.name, 'InitializeSecurityContextA');
         if (InitializeSecurityContext) {
             Interceptor.attach(InitializeSecurityContext, {
                 onEnter(args) {
@@ -65,9 +65,9 @@ if (sspicli) {
                     }
 
                     const originalFlags = fContextReq.toInt32();
-                    const modifiedFlags
-                        = (originalFlags | ISC_REQ_MANUAL_CRED_VALIDATION)
-                        & ~ISC_REQ_USE_SUPPLIED_CREDS;
+                    const modifiedFlags =
+                        (originalFlags | ISC_REQ_MANUAL_CRED_VALIDATION) &
+                        ~ISC_REQ_USE_SUPPLIED_CREDS;
                     args[3] = ptr(modifiedFlags);
 
                     log(
@@ -106,9 +106,9 @@ if (sspicli) {
     }
 
     try {
-        const QueryContextAttributes
-            = Module.findExportByName(sspicli.name, 'QueryContextAttributesW')
-            || Module.findExportByName(sspicli.name, 'QueryContextAttributesA');
+        const QueryContextAttributes =
+            Module.findExportByName(sspicli.name, 'QueryContextAttributesW') ||
+            Module.findExportByName(sspicli.name, 'QueryContextAttributesA');
         if (QueryContextAttributes) {
             Interceptor.attach(QueryContextAttributes, {
                 onEnter(args) {
@@ -142,9 +142,9 @@ if (sspicli) {
 
                                 let certData = null;
                                 if (
-                                    !pbCertEncoded.isNull()
-                                    && cbCertEncoded > 0
-                                    && cbCertEncoded < 0x1_00_00
+                                    !pbCertEncoded.isNull() &&
+                                    cbCertEncoded > 0 &&
+                                    cbCertEncoded < 0x1_00_00
                                 ) {
                                     try {
                                         certData = pbCertEncoded.readByteArray(cbCertEncoded);

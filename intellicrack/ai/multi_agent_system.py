@@ -672,7 +672,7 @@ class ExploitGenerator:
     def __init__(self) -> None:
         """Initialize exploit generator with target architecture and vulnerability type."""
         self.target_arch = "{target_system}"
-        self.vuln_type = "{vulnerability_data.get('type', 'buffer_overflow')}"
+        self.vuln_type = "{vulnerability_data.get("type", "buffer_overflow")}"
 
     def generate_payload(self) -> bytes:
         """Generate exploit payload based on vulnerability type.
@@ -947,6 +947,7 @@ payload = exploit.generate_payload()
         target_functions = task.input_data.get("target_functions", [])
 
         script_validation_result = None
+        validation_process: asyncio.subprocess.Process | None = None
         try:
             validation_cmd = ["python", "-c", "import ast; print('syntax_valid')"]
             validation_process = await asyncio.create_subprocess_exec(
@@ -959,17 +960,26 @@ payload = exploit.generate_payload()
             except TimeoutError:
                 validation_process.kill()
                 await validation_process.communicate()
+                validation_process = None
                 raise
             script_validation_result = {
                 "syntax_check": "passed" if validation_process.returncode == 0 else "failed",
                 "validation_output": stdout.decode().strip() if stdout else "",
                 "validation_errors": stderr.decode().strip() if stderr else "",
             }
-        except (TimeoutError, subprocess.SubprocessError, FileNotFoundError):
+            validation_process = None
+        except (TimeoutError, subprocess.SubprocessError, FileNotFoundError, OSError):
             script_validation_result = {
                 "syntax_check": "skipped",
                 "reason": "validation_unavailable",
             }
+        finally:
+            if validation_process is not None and validation_process.returncode is None:
+                try:
+                    validation_process.kill()
+                    await validation_process.communicate()
+                except (OSError, ProcessLookupError):
+                    pass
 
         if script_type == "frida":
             script_content = f"""

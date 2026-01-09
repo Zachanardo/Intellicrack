@@ -554,9 +554,7 @@ class CertificateExtractor:
 
         return ", ".join(parts) if parts else str(name)
 
-    def _analyze_signing_info(
-        self, cert_data: bytes, certificates: list[CertificateInfo]
-    ) -> dict[str, Any]:
+    def _analyze_signing_info(self, cert_data: bytes, certificates: list[CertificateInfo]) -> dict[str, Any]:
         """Analyze signing information and trust status.
 
         Validates the certificate chain by checking issuer-subject relationships,
@@ -613,9 +611,7 @@ class CertificateExtractor:
 
         return info
 
-    def _validate_certificate_chain(
-        self, certificates: list[CertificateInfo]
-    ) -> bool:
+    def _validate_certificate_chain(self, certificates: list[CertificateInfo]) -> bool:
         """Validate certificate chain (simplified check).
 
         Performs basic chain validation by verifying that each certificate's
@@ -644,9 +640,7 @@ class CertificateExtractor:
 
         return True
 
-    def export_certificates(
-        self, file_path: str, output_dir: str | None = None
-    ) -> dict[str, str]:
+    def export_certificates(self, file_path: str, output_dir: str | None = None) -> dict[str, str]:
         """Export extracted certificates to PEM files using serialization module.
 
         Extracts certificates from the PE file and writes each to a separate PEM

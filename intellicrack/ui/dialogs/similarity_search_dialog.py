@@ -23,16 +23,6 @@ import os
 from pathlib import Path
 from typing import Any
 
-SelectRows: Any
-NoEditTriggers: Any
-StretchMode: Any
-TicksBelow: Any
-HorizontalOrientation: Any
-VerticalOrientation: Any
-YesButton: Any
-NoButton: Any
-BinarySimilaritySearch: type[Any] | None
-
 from intellicrack.handlers.pyqt6_handler import (
     QAbstractItemView,
     QCloseEvent,
@@ -54,7 +44,17 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.utils.logger import logger
 
+SelectRows: Any
+NoEditTriggers: Any
+StretchMode: Any
+TicksBelow: Any
+HorizontalOrientation: Any
+VerticalOrientation: Any
+YesButton: Any
+NoButton: Any
+BinarySimilaritySearch: type[Any] | None
 
 if hasattr(QAbstractItemView, "SelectionBehavior"):
     SelectRows = QAbstractItemView.SelectionBehavior.SelectRows
@@ -86,7 +86,6 @@ if hasattr(QMessageBox, "StandardButton"):
 else:
     YesButton = QMessageBox.Yes
     NoButton = QMessageBox.No
-from intellicrack.utils.logger import logger
 
 
 HAS_SIMILARITY_SEARCH: bool

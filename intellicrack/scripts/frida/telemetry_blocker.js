@@ -133,9 +133,9 @@ function randomDelay() {
     if (!CONFIG.stealthMode) {
         return;
     }
-    const delay
-        = Math.floor(Math.random() * (CONFIG.blockingDelay.max - CONFIG.blockingDelay.min + 1))
-        + CONFIG.blockingDelay.min;
+    const delay =
+        Math.floor(Math.random() * (CONFIG.blockingDelay.max - CONFIG.blockingDelay.min + 1)) +
+        CONFIG.blockingDelay.min;
     Thread.sleep(delay / 1000);
 }
 
@@ -154,7 +154,7 @@ function encryptData(data) {
     if (!CONFIG.logEncryption) {
         return data;
     }
-    const key = 0xDE_AD_BE_EF;
+    const key = 0xde_ad_be_ef;
     let result = '';
     for (let i = 0; i < data.length; i++) {
         const codePoint = data.codePointAt(i) || 0;
@@ -232,7 +232,7 @@ tryAttach('ntdll.dll', 'NtCreateFile', {
     },
     onLeave(retval) {
         if (this.blockTcp) {
-            retval.replace(ptr(0xC0_00_00_22)); // STATUS_ACCESS_DENIED
+            retval.replace(ptr(0xc0_00_00_22)); // STATUS_ACCESS_DENIED
         }
     },
 });
@@ -310,8 +310,8 @@ tryAttach('winhttp.dll', 'WinHttpSendRequest', {
             ];
 
             if (
-                headers
-                && suspiciousHeaders.some(header => headers.toLowerCase().includes(header))
+                headers &&
+                suspiciousHeaders.some(header => headers.toLowerCase().includes(header))
             ) {
                 randomDelay();
                 send({
@@ -436,7 +436,7 @@ if (CONFIG.cryptoHooking) {
         },
         onLeave(retval) {
             if (this.blockCert) {
-                retval.replace(0x80_0B_01_09); // CERT_E_UNTRUSTEDROOT
+                retval.replace(0x80_0b_01_09); // CERT_E_UNTRUSTEDROOT
             }
         },
     });
@@ -466,7 +466,7 @@ if (CONFIG.cryptoHooking) {
         },
         onLeave(retval) {
             if (this.blockBCrypt) {
-                retval.replace(0xC0_00_00_0D); // STATUS_INVALID_PARAMETER
+                retval.replace(0xc0_00_00_0d); // STATUS_INVALID_PARAMETER
             }
         },
     });
@@ -493,7 +493,7 @@ tryAttach('ws2_32.dll', 'WSAConnect', {
             const ip = sockAddr.add(4).readU32();
 
             // Convert IP to readable format
-            const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${(ip >> 16) & 0xFF}.${(ip >> 24) & 0xFF}`;
+            const ipStr = `${ip & 0xff}.${(ip >> 8) & 0xff}.${(ip >> 16) & 0xff}.${(ip >> 24) & 0xff}`;
 
             // Check against known telemetry IP ranges
             const suspiciousIPs = [
@@ -610,8 +610,8 @@ tryAttach('ws2_32.dll', 'send', {
                 ];
 
                 if (
-                    data
-                    && suspiciousPayloads.some(payload => data.toLowerCase().includes(payload))
+                    data &&
+                    suspiciousPayloads.some(payload => data.toLowerCase().includes(payload))
                 ) {
                     randomDelay();
                     this.blockSend = true;
@@ -975,7 +975,7 @@ tryAttach('ntdll.dll', 'NtCreateProcess', {
     },
     onLeave(retval) {
         if (this.blockNtProcess) {
-            retval.replace(ptr(0xC0_00_00_22)); // STATUS_ACCESS_DENIED
+            retval.replace(ptr(0xc0_00_00_22)); // STATUS_ACCESS_DENIED
         }
     },
 });
@@ -1140,7 +1140,7 @@ tryAttach('ntdll.dll', 'NtSetValueKey', {
     },
     onLeave(retval) {
         if (this.blockNtRegistry) {
-            retval.replace(ptr(0xC0_00_00_22)); // STATUS_ACCESS_DENIED
+            retval.replace(ptr(0xc0_00_00_22)); // STATUS_ACCESS_DENIED
         }
     },
 });
@@ -1296,12 +1296,12 @@ setInterval(() => {
             blocked_registry: TELEMETRY_STATS.blockedRegistry,
             crypto_interceptions: TELEMETRY_STATS.cryptoInterceptions,
             total_blocked:
-                TELEMETRY_STATS.blockedConnections
-                + TELEMETRY_STATS.blockedDNS
-                + TELEMETRY_STATS.blockedFiles
-                + TELEMETRY_STATS.blockedProcesses
-                + TELEMETRY_STATS.blockedRegistry
-                + TELEMETRY_STATS.cryptoInterceptions,
+                TELEMETRY_STATS.blockedConnections +
+                TELEMETRY_STATS.blockedDNS +
+                TELEMETRY_STATS.blockedFiles +
+                TELEMETRY_STATS.blockedProcesses +
+                TELEMETRY_STATS.blockedRegistry +
+                TELEMETRY_STATS.cryptoInterceptions,
         },
         timestamp: Date.now(),
     });

@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import QDialog, QMessageBox, QToolBar, QWidget
 from intellicrack.handlers.pyqt6_handler import QAction
 from intellicrack.utils.logger import logger
 
+
 __all__ = [
     "add_hex_viewer_menu",
     "add_hex_viewer_toolbar_button",

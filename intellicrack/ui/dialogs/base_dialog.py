@@ -721,9 +721,7 @@ class BaseDialog(QDialog):
 
         """
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        templates_dir = os.path.join(
-            base_dir, "..", "..", "data", "templates", self._get_template_type()
-        )
+        templates_dir = os.path.join(base_dir, "..", "..", "data", "templates", self._get_template_type())
         templates_dir = os.path.normpath(templates_dir)
         os.makedirs(templates_dir, exist_ok=True)
         return templates_dir
@@ -946,9 +944,7 @@ class BaseDialog(QDialog):
                 section_checkboxes[section] = checkbox
             layout.addWidget(sections_group)
 
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(editor_dialog.accept)
         button_box.rejected.connect(editor_dialog.reject)
         layout.addWidget(button_box)
@@ -988,10 +984,7 @@ class BaseDialog(QDialog):
             self.show_error("Template name cannot be empty.")
             return
 
-        selected_sections = [
-            section for section, checkbox in section_checkboxes.items()
-            if checkbox.isChecked()
-        ]
+        selected_sections = [section for section, checkbox in section_checkboxes.items() if checkbox.isChecked()]
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         new_data: dict[str, Any] = {
@@ -1030,9 +1023,7 @@ class BaseDialog(QDialog):
         """
         from intellicrack.handlers.pyqt6_handler import QDialog
 
-        editor_dialog, widgets = self._build_template_editor_ui(
-            template_name, template_data, is_new=is_new
-        )
+        editor_dialog, widgets = self._build_template_editor_ui(template_name, template_data, is_new=is_new)
 
         if editor_dialog.exec() == QDialog.DialogCode.Accepted:
             self._save_template_from_editor(widgets, template_data, is_new=is_new)

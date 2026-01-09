@@ -1108,7 +1108,11 @@ const websocketInterceptor = {
                 const OriginalRTCPeerConnection = RTCPeerConnection;
                 Object.defineProperty(globalThis, 'RTCPeerConnection', {
                     value: config => {
-                        if (self.config.webRtcConfig.spoofIceServers && config && config.iceServers) {
+                        if (
+                            self.config.webRtcConfig.spoofIceServers &&
+                            config &&
+                            config.iceServers
+                        ) {
                             config.iceServers = self.config.webRtcConfig.overrideStunServers.map(
                                 url => ({
                                     urls: url,
@@ -1462,8 +1466,8 @@ const websocketInterceptor = {
                             });
 
                             // Override with our supported extensions
-                            const extensionList
-                                = self.config.wsExtensions.supportedExtensions.join(';');
+                            const extensionList =
+                                self.config.wsExtensions.supportedExtensions.join(';');
                             Memory.writeUtf8String(extensions, extensionList);
                         }
                     },
@@ -1565,9 +1569,9 @@ const websocketInterceptor = {
                                     total_attempts: self.compressionStats.inflate_attempts,
                                     successful_bypasses: self.compressionStats.bypass_success,
                                     success_rate: `${(
-                                        (self.compressionStats.bypass_success
-                                            / self.compressionStats.inflate_attempts)
-                                        * 100
+                                        (self.compressionStats.bypass_success /
+                                            self.compressionStats.inflate_attempts) *
+                                        100
                                     ).toFixed(2)}%`,
                                 },
                             });
@@ -1623,9 +1627,9 @@ const websocketInterceptor = {
                                     manipulations: self.rateLimitStats.time_manipulations,
                                     bypass_attempts: self.rateLimitStats.bypass_attempts,
                                     manipulation_rate: `${(
-                                        (self.rateLimitStats.time_manipulations
-                                            / self.rateLimitStats.timing_queries)
-                                        * 100
+                                        (self.rateLimitStats.time_manipulations /
+                                            self.rateLimitStats.timing_queries) *
+                                        100
                                     ).toFixed(1)}%`,
                                 },
                             });
@@ -1691,9 +1695,9 @@ const websocketInterceptor = {
                         successes: self.binaryProtocolStats.decoding_successes,
                         failures: self.binaryProtocolStats.decoding_failures,
                         total_protocols:
-                            self.binaryProtocolStats.protobuf_messages
-                            + self.binaryProtocolStats.msgpack_messages
-                            + self.binaryProtocolStats.avro_messages,
+                            self.binaryProtocolStats.protobuf_messages +
+                            self.binaryProtocolStats.msgpack_messages +
+                            self.binaryProtocolStats.avro_messages,
                     },
                 },
             });
@@ -1738,11 +1742,11 @@ const websocketInterceptor = {
 
                             // Analyze for license-related fields and credentials
                             if (
-                                stringData
-                                && (stringData.includes('license')
-                                    || stringData.includes('token')
-                                    || stringData.includes('credential')
-                                    || stringData.includes('auth'))
+                                stringData &&
+                                (stringData.includes('license') ||
+                                    stringData.includes('token') ||
+                                    stringData.includes('credential') ||
+                                    stringData.includes('auth'))
                             ) {
                                 self.protobufAnalysis.license_fields_detected++;
                                 self.protobufAnalysis.bypass_opportunities++;
@@ -1762,9 +1766,9 @@ const websocketInterceptor = {
                                     license_fields: self.protobufAnalysis.license_fields_detected,
                                     bypass_ops: self.protobufAnalysis.bypass_opportunities,
                                     detection_rate: `${(
-                                        (self.protobufAnalysis.license_fields_detected
-                                            / self.protobufAnalysis.parsed_messages)
-                                        * 100
+                                        (self.protobufAnalysis.license_fields_detected /
+                                            self.protobufAnalysis.parsed_messages) *
+                                        100
                                     ).toFixed(1)}%`,
                                 },
                             });
@@ -1791,8 +1795,8 @@ const websocketInterceptor = {
                                     error_type: error.name || 'ProtobufParseError',
                                     error_message: error.message || error.toString(),
                                     likely_binary:
-                                        error.toString().includes('UTF')
-                                        || error.toString().includes('encode'),
+                                        error.toString().includes('UTF') ||
+                                        error.toString().includes('encode'),
                                     fallback_strategy: 'binary_analysis_mode',
                                 },
                             });
@@ -1807,9 +1811,9 @@ const websocketInterceptor = {
     processProtobufMessage: message => {
         // Look for common license validation patterns in protobuf
         if (
-            message.includes('license')
-            || message.includes('valid')
-            || message.includes('expire')
+            message.includes('license') ||
+            message.includes('valid') ||
+            message.includes('expire')
         ) {
             send({
                 type: 'info',
@@ -2155,9 +2159,9 @@ const websocketInterceptor = {
                                             ...self.jwtSpoofingStats.detected_algorithms,
                                         ],
                                         spoof_success_rate: `${(
-                                            (self.jwtSpoofingStats.tokens_spoofed
-                                                / self.jwtSpoofingStats.tokens_decoded)
-                                            * 100
+                                            (self.jwtSpoofingStats.tokens_spoofed /
+                                                self.jwtSpoofingStats.tokens_decoded) *
+                                            100
                                         ).toFixed(1)}%`,
                                     },
                                 });
@@ -2253,9 +2257,9 @@ const websocketInterceptor = {
                             try {
                                 const keyData = data.readUtf8String(Math.min(dataLen, 256));
                                 if (
-                                    /^[\d+/=A-Za-z]{16,}$/.test(keyData)
-                                    || keyData.includes('key')
-                                    || keyData.includes('api')
+                                    /^[\d+/=A-Za-z]{16,}$/.test(keyData) ||
+                                    keyData.includes('key') ||
+                                    keyData.includes('api')
                                 ) {
                                     send({
                                         type: 'info',
@@ -2325,9 +2329,9 @@ const websocketInterceptor = {
                             const originalAddEventListener = eventSource.addEventListener;
                             eventSource.addEventListener = function (type, listener, options) {
                                 if (
-                                    type === 'message'
-                                || type === 'error'
-                                || type.includes('license')
+                                    type === 'message' ||
+                                    type === 'error' ||
+                                    type.includes('license')
                                 ) {
                                     const wrappedListener = event => {
                                         const originalData = event.data;
@@ -2342,7 +2346,7 @@ const websocketInterceptor = {
                                         // Process SSE message for license validation bypass
                                         const modified = self.processIncomingMessage(originalData);
                                         if (modified !== originalData) {
-                                        // Create modified event
+                                            // Create modified event
                                             Object.defineProperty(event, 'data', {
                                                 value: modified,
                                                 writable: false,
@@ -2372,9 +2376,11 @@ const websocketInterceptor = {
                             };
 
                             // Hook onmessage property
-                            const messageDescriptor
-                            = Object.getOwnPropertyDescriptor(EventSource.prototype, 'onmessage')
-                            || Object.getOwnPropertyDescriptor(eventSource, 'onmessage');
+                            const messageDescriptor =
+                                Object.getOwnPropertyDescriptor(
+                                    EventSource.prototype,
+                                    'onmessage'
+                                ) || Object.getOwnPropertyDescriptor(eventSource, 'onmessage');
                             if (messageDescriptor?.set) {
                                 const originalSetter = messageDescriptor.set;
                                 Object.defineProperty(eventSource, 'onmessage', {
@@ -2435,8 +2441,8 @@ const websocketInterceptor = {
 
                             // Check for SSE requests (typically GET with Accept: text/event-stream)
                             if (
-                                verb === 'GET'
-                                && (objectName.includes('/events') || objectName.includes('/stream'))
+                                verb === 'GET' &&
+                                (objectName.includes('/events') || objectName.includes('/stream'))
                             ) {
                                 this.isSseRequest = true;
                                 this.objectName = objectName;
@@ -2501,8 +2507,8 @@ const websocketInterceptor = {
                                             NULL,
                                             buffer,
                                             sizeNeeded
-                                        ) !== 0
-                                        || Process.getLastError() === 122
+                                        ) !== 0 ||
+                                        Process.getLastError() === 122
                                     ) {
                                         // ERROR_INSUFFICIENT_BUFFER
 
@@ -2842,9 +2848,9 @@ const websocketInterceptor = {
 
                     // Check if this is a license-related gRPC call
                     if (
-                        method.includes('license')
-                        || method.includes('validate')
-                        || method.includes('auth')
+                        method.includes('license') ||
+                        method.includes('validate') ||
+                        method.includes('auth')
                     ) {
                         send({
                             type: 'info',
@@ -2912,9 +2918,9 @@ const websocketInterceptor = {
                             const method = args[4] ? args[4].readUtf8String() : '';
 
                             if (
-                                method.includes('license')
-                                || method.includes('validate')
-                                || method.includes('auth')
+                                method.includes('license') ||
+                                method.includes('validate') ||
+                                method.includes('auth')
                             ) {
                                 send({
                                     type: 'info',
@@ -3598,10 +3604,10 @@ const websocketInterceptor = {
 
                                             // Look for license-related webhook endpoints
                                             if (
-                                                headers.includes('license')
-                                                || headers.includes('webhook')
-                                                || headers.includes('validate')
-                                                || headers.includes('callback')
+                                                headers.includes('license') ||
+                                                headers.includes('webhook') ||
+                                                headers.includes('validate') ||
+                                                headers.includes('callback')
                                             ) {
                                                 send({
                                                     type: 'info',
@@ -3646,7 +3652,10 @@ const websocketInterceptor = {
                 const OriginalRequire = require;
                 Object.defineProperty(globalThis, 'require', {
                     value: (module, ...restArgs) => {
-                        const result = Reflect.apply(OriginalRequire, globalThis, [module, ...restArgs]);
+                        const result = Reflect.apply(OriginalRequire, globalThis, [
+                            module,
+                            ...restArgs,
+                        ]);
 
                         if (module === 'express' && result) {
                             send({
@@ -3665,9 +3674,9 @@ const websocketInterceptor = {
                                 // Hook POST routes (common for webhooks)
                                 router.post = function (path, ...postArgs) {
                                     if (
-                                        path.includes('webhook')
-                                        || path.includes('license')
-                                        || path.includes('callback')
+                                        path.includes('webhook') ||
+                                        path.includes('license') ||
+                                        path.includes('callback')
                                     ) {
                                         send({
                                             type: 'info',
@@ -3683,9 +3692,9 @@ const websocketInterceptor = {
                                 // Hook PUT routes
                                 router.put = function (path, ...putArgs) {
                                     if (
-                                        path.includes('webhook')
-                                        || path.includes('license')
-                                        || path.includes('callback')
+                                        path.includes('webhook') ||
+                                        path.includes('license') ||
+                                        path.includes('callback')
                                     ) {
                                         send({
                                             type: 'info',
@@ -3743,8 +3752,8 @@ const websocketInterceptor = {
                         },
                         onLeave(retval) {
                             if (
-                                this.isWebhookValidation
-                                && (funcName.includes('Verify') || funcName.includes('Check'))
+                                this.isWebhookValidation &&
+                                (funcName.includes('Verify') || funcName.includes('Check'))
                             ) {
                                 retval.replace(ptr(1)); // TRUE
                                 send({
@@ -3966,13 +3975,13 @@ const websocketInterceptor = {
 
                             // Hook functions that might be used for license validation
                             if (
-                                typeof originalFunc === 'function'
-                                && (func.includes('send')
-                                    || func.includes('message')
-                                    || func.includes('validate')
-                                    || func.includes('license')
-                                    || func.includes('check')
-                                    || func.includes('auth'))
+                                typeof originalFunc === 'function' &&
+                                (func.includes('send') ||
+                                    func.includes('message') ||
+                                    func.includes('validate') ||
+                                    func.includes('license') ||
+                                    func.includes('check') ||
+                                    func.includes('auth'))
                             ) {
                                 moduleImports[func] = (...wasmArgs) => {
                                     const args = wasmArgs;
@@ -3983,7 +3992,7 @@ const websocketInterceptor = {
                                         module,
                                         function: func,
                                         args: args.map(arg =>
-                                            (typeof arg === 'string' ? arg : typeof arg)
+                                            typeof arg === 'string' ? arg : typeof arg
                                         ),
                                     });
 
@@ -4054,12 +4063,12 @@ const websocketInterceptor = {
 
                     // Hook functions that might handle license validation
                     if (
-                        func.includes('validate')
-                        || func.includes('license')
-                        || func.includes('check')
-                        || func.includes('auth')
-                        || func.includes('send')
-                        || func.includes('receive')
+                        func.includes('validate') ||
+                        func.includes('license') ||
+                        func.includes('check') ||
+                        func.includes('auth') ||
+                        func.includes('send') ||
+                        func.includes('receive')
                     ) {
                         exports[func] = (...exportArgs) => {
                             const args = exportArgs;
@@ -4159,10 +4168,10 @@ const websocketInterceptor = {
                                     module: moduleName,
                                     function: funcName,
                                 });
-                                this.isLicenseFunction
-                                    = funcName.includes('license')
-                                    || funcName.includes('validate')
-                                    || funcName.includes('auth');
+                                this.isLicenseFunction =
+                                    funcName.includes('license') ||
+                                    funcName.includes('validate') ||
+                                    funcName.includes('auth');
                             },
                             onLeave(retval) {
                                 if (this.isLicenseFunction) {
@@ -4243,9 +4252,9 @@ const websocketInterceptor = {
                         onLeave(retval) {
                             const result = retval.toInt32();
                             if (
-                                result === 0
-                                && funcName === 'SslDecryptPacket'
-                                && this.bufferSize > 0
+                                result === 0 &&
+                                funcName === 'SslDecryptPacket' &&
+                                this.bufferSize > 0
                             ) {
                                 // Process decrypted TLS data
                                 try {
@@ -4253,8 +4262,8 @@ const websocketInterceptor = {
                                         Math.min(this.bufferSize, 1024)
                                     );
                                     if (
-                                        decryptedData.includes('license')
-                                        || decryptedData.includes('validate')
+                                        decryptedData.includes('license') ||
+                                        decryptedData.includes('validate')
                                     ) {
                                         send({
                                             type: 'info',
@@ -4317,9 +4326,9 @@ const websocketInterceptor = {
                             try {
                                 const data = this.buf.readUtf8String(Math.min(bytesRead, 1024));
                                 if (
-                                    data.includes('license')
-                                    || data.includes('validate')
-                                    || data.includes('auth')
+                                    data.includes('license') ||
+                                    data.includes('validate') ||
+                                    data.includes('auth')
                                 ) {
                                     send({
                                         type: 'info',
@@ -4363,9 +4372,9 @@ const websocketInterceptor = {
                             try {
                                 const data = this.buf.readUtf8String(Math.min(this.num, 1024));
                                 if (
-                                    data.includes('license')
-                                    || data.includes('validate')
-                                    || data.includes('auth')
+                                    data.includes('license') ||
+                                    data.includes('validate') ||
+                                    data.includes('auth')
                                 ) {
                                     const modified = self.processOutgoingMessage(data);
                                     if (modified !== data) {
@@ -4454,8 +4463,8 @@ const websocketInterceptor = {
                         const WINHTTP_OPTION_SECURITY_FLAGS = 31;
 
                         if (
-                            option === WINHTTP_OPTION_SERVER_CERT_CONTEXT
-                            || option === WINHTTP_OPTION_SECURITY_FLAGS
+                            option === WINHTTP_OPTION_SERVER_CERT_CONTEXT ||
+                            option === WINHTTP_OPTION_SECURITY_FLAGS
                         ) {
                             send({
                                 type: 'bypass',
@@ -4495,10 +4504,10 @@ const websocketInterceptor = {
 
                             // Check if this is a license server connection
                             if (
-                                originalName.includes('license')
-                                || originalName.includes('activate')
-                                || originalName.includes('validate')
-                                || originalName.includes('auth')
+                                originalName.includes('license') ||
+                                originalName.includes('activate') ||
+                                originalName.includes('validate') ||
+                                originalName.includes('auth')
                             ) {
                                 send({
                                     type: 'info',
@@ -4560,10 +4569,11 @@ const websocketInterceptor = {
 
                     // Check if this is a GraphQL subscription WebSocket
                     if (
-                        protocols
-                    && (protocols.includes('graphql-ws')
-                        || protocols.includes('graphql-transport-ws')
-                        || (Array.isArray(protocols) && protocols.some(p => p.includes('graphql'))))
+                        protocols &&
+                        (protocols.includes('graphql-ws') ||
+                            protocols.includes('graphql-transport-ws') ||
+                            (Array.isArray(protocols) &&
+                                protocols.some(p => p.includes('graphql'))))
                     ) {
                         send({
                             type: 'info',
@@ -4604,10 +4614,10 @@ const websocketInterceptor = {
                     const variables = message.payload.variables || {};
 
                     if (
-                        query.includes('license')
-                        || query.includes('validate')
-                        || query.includes('subscription')
-                        || Object.keys(variables).some(
+                        query.includes('license') ||
+                        query.includes('validate') ||
+                        query.includes('subscription') ||
+                        Object.keys(variables).some(
                             k => k.includes('license') || k.includes('auth')
                         )
                     ) {
@@ -4705,13 +4715,16 @@ const websocketInterceptor = {
                 const OriginalRequireGraphQL = require;
                 Object.defineProperty(globalThis, 'require', {
                     value: (module, ...restArgs) => {
-                        const result = Reflect.apply(OriginalRequireGraphQL, globalThis, [module, ...restArgs]);
+                        const result = Reflect.apply(OriginalRequireGraphQL, globalThis, [
+                            module,
+                            ...restArgs,
+                        ]);
 
                         if (
-                            (module === 'graphql'
-                            || module === 'apollo-server'
-                            || module === 'apollo-client')
-                        && result
+                            (module === 'graphql' ||
+                                module === 'apollo-server' ||
+                                module === 'apollo-client') &&
+                            result
                         ) {
                             send({
                                 type: 'info',
@@ -4732,10 +4745,12 @@ const websocketInterceptor = {
                                             if (def.selectionSet?.selections) {
                                                 def.selectionSet.selections.forEach(selection => {
                                                     if (
-                                                        selection.name
-                                                    && (selection.name.value.includes('license')
-                                                        || selection.name.value.includes('validate')
-                                                        || selection.name.value.includes('auth'))
+                                                        selection.name &&
+                                                        (selection.name.value.includes('license') ||
+                                                            selection.name.value.includes(
+                                                                'validate'
+                                                            ) ||
+                                                            selection.name.value.includes('auth'))
                                                     ) {
                                                         send({
                                                             type: 'info',
@@ -4746,8 +4761,8 @@ const websocketInterceptor = {
                                                         });
 
                                                         // Modify variables for license bypass
-                                                        args.variableValues
-                                                        = self.modifyGraphQLVariables(variables);
+                                                        args.variableValues =
+                                                            self.modifyGraphQLVariables(variables);
                                                     }
                                                 });
                                             }
@@ -4756,7 +4771,9 @@ const websocketInterceptor = {
 
                                     return originalExecute.call(this, args).then(result => {
                                         if (result.data) {
-                                            const modified = self.processGraphQLResponse(result.data);
+                                            const modified = self.processGraphQLResponse(
+                                                result.data
+                                            );
                                             if (modified !== result.data) {
                                                 result.data = modified;
                                                 send({
@@ -4792,10 +4809,10 @@ const websocketInterceptor = {
         // Modify license-related variables
         for (const key in modified) {
             if (
-                key.toLowerCase().includes('license')
-                || key.toLowerCase().includes('valid')
-                || key.toLowerCase().includes('expired')
-                || key.toLowerCase().includes('trial')
+                key.toLowerCase().includes('license') ||
+                key.toLowerCase().includes('valid') ||
+                key.toLowerCase().includes('expired') ||
+                key.toLowerCase().includes('trial')
             ) {
                 if (key.includes('valid') || key.includes('license')) {
                     modified[key] = true;
@@ -4823,11 +4840,11 @@ const websocketInterceptor = {
                     if (typeof value === 'object' && value !== null) {
                         processObject(value);
                     } else if (
-                        key.toLowerCase().includes('license')
-                        || key.toLowerCase().includes('valid')
-                        || key.toLowerCase().includes('expired')
-                        || key.toLowerCase().includes('trial')
-                        || key.toLowerCase().includes('auth')
+                        key.toLowerCase().includes('license') ||
+                        key.toLowerCase().includes('valid') ||
+                        key.toLowerCase().includes('expired') ||
+                        key.toLowerCase().includes('trial') ||
+                        key.toLowerCase().includes('auth')
                     ) {
                         // Modify license-related fields
                         if (key.includes('valid') || key.includes('licensed')) {
@@ -4898,8 +4915,8 @@ const websocketInterceptor = {
 
                             // Check for WebSocket upgrade with subprotocols
                             if (
-                                headerString.includes('Upgrade: websocket')
-                                && headerString.includes('Sec-WebSocket-Protocol:')
+                                headerString.includes('Upgrade: websocket') &&
+                                headerString.includes('Sec-WebSocket-Protocol:')
                             ) {
                                 send({
                                     type: 'info',
@@ -4995,8 +5012,8 @@ const websocketInterceptor = {
                                     const responseHeaders = buffer.readUtf8String();
 
                                     if (
-                                        responseHeaders.includes('101 Switching Protocols')
-                                        && responseHeaders.includes('Sec-WebSocket-Protocol:')
+                                        responseHeaders.includes('101 Switching Protocols') &&
+                                        responseHeaders.includes('Sec-WebSocket-Protocol:')
                                     ) {
                                         send({
                                             type: 'info',
@@ -5327,16 +5344,16 @@ const websocketInterceptor = {
                             const family = addr.readU16();
                             if (family === 2) {
                                 let port = addr.add(2).readU16();
-                                port = ((port & 0xFF) << 8) | ((port >> 8) & 0xFF); // Convert from network byte order
+                                port = ((port & 0xff) << 8) | ((port >> 8) & 0xff); // Convert from network byte order
 
                                 if (port === 853) {
                                     // DoT port
                                     const ip = addr.add(4).readU32();
                                     const ipStr = [
-                                        ip & 0xFF,
-                                        (ip >> 8) & 0xFF,
-                                        (ip >> 16) & 0xFF,
-                                        (ip >> 24) & 0xFF,
+                                        ip & 0xff,
+                                        (ip >> 8) & 0xff,
+                                        (ip >> 16) & 0xff,
+                                        (ip >> 24) & 0xff,
                                     ].join('.');
 
                                     send({
@@ -5458,11 +5475,11 @@ const websocketInterceptor = {
 
                             // Check for license-related domains
                             if (
-                                hostname.includes('license')
-                                || hostname.includes('activate')
-                                || hostname.includes('validate')
-                                || hostname.includes('auth')
-                                || hostname.includes('verify')
+                                hostname.includes('license') ||
+                                hostname.includes('activate') ||
+                                hostname.includes('validate') ||
+                                hostname.includes('auth') ||
+                                hostname.includes('verify')
                             ) {
                                 send({
                                     type: 'info',
@@ -5514,10 +5531,10 @@ const websocketInterceptor = {
                         const hostname = args[0].readUtf8String();
 
                         if (
-                            hostname.includes('license')
-                            || hostname.includes('activate')
-                            || hostname.includes('validate')
-                            || hostname.includes('auth')
+                            hostname.includes('license') ||
+                            hostname.includes('activate') ||
+                            hostname.includes('validate') ||
+                            hostname.includes('auth')
                         ) {
                             send({
                                 type: 'info',
@@ -5558,10 +5575,10 @@ const websocketInterceptor = {
             const domainName = this.extractDnsName(questions);
 
             if (
-                domainName
-                && (domainName.includes('license')
-                    || domainName.includes('activate')
-                    || domainName.includes('validate'))
+                domainName &&
+                (domainName.includes('license') ||
+                    domainName.includes('activate') ||
+                    domainName.includes('validate'))
             ) {
                 send({
                     type: 'info',
@@ -5594,7 +5611,7 @@ const websocketInterceptor = {
 
             const flags = dataView.getUint16(2);
             const isResponse = (flags & 0x80_00) !== 0;
-            const responseCode = flags & 0x00_0F;
+            const responseCode = flags & 0x00_0f;
 
             if (isResponse && responseCode === 0) {
                 // NOERROR

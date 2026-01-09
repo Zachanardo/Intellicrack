@@ -19,13 +19,11 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import re
-
-
 from dataclasses import dataclass, field
-
-from defusedxml import ElementTree as ET
 from pathlib import Path
 from typing import Any
+
+from defusedxml import ElementTree as ET
 
 
 logger = logging.getLogger(__name__)

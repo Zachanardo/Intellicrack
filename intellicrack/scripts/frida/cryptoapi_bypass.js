@@ -64,7 +64,7 @@ if (crypt32) {
                         try {
                             const dwErrorOffset = Process.pointerSize === 8 ? 0x08 : 0x04;
                             const lChainIndexOffset = Process.pointerSize === 8 ? 0x10 : 0x08;
-                            const lElementIndexOffset = Process.pointerSize === 8 ? 0x18 : 0x0C;
+                            const lElementIndexOffset = Process.pointerSize === 8 ? 0x18 : 0x0c;
 
                             const originalError = this.pPolicyStatus.add(dwErrorOffset).readU32();
                             const originalChainIndex = this.pPolicyStatus
@@ -248,7 +248,7 @@ if (crypt32) {
                             try {
                                 const existingHandle = this.phChainEngine.readPointer();
                                 if (existingHandle.isNull()) {
-                                    this.phChainEngine.writePointer(ptr(0xDE_AD_BE_EF));
+                                    this.phChainEngine.writePointer(ptr(0xde_ad_be_ef));
                                     log(
                                         'CertCreateCertificateChainEngine: Created synthetic engine handle'
                                     );

@@ -30,11 +30,7 @@ import queue
 import struct
 import threading
 import time
-
-
 from collections import defaultdict
-
-from defusedxml import ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -42,6 +38,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 import psutil
+from defusedxml import ElementTree as ET
 
 from ...utils.core.plugin_paths import get_ghidra_scripts_dir
 from ..frida_manager import FridaManager
@@ -1001,14 +998,16 @@ class CrossToolOrchestrator:
 
             """
             self.logger.info("Attempting Ghidra recovery")
-            # Kill any hanging Ghidra process
             for proc in psutil.process_iter(["name"]):
                 if "ghidra" in proc.info["name"].lower():
                     try:
                         proc.terminate()
                         proc.wait(timeout=5)
-                    except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
+                    except psutil.TimeoutExpired:
                         proc.kill()
+                        proc.wait(timeout=3)
+                    except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
+                        pass
             # Clear temp files
             import tempfile
 
@@ -1475,6 +1474,9 @@ class CrossToolOrchestrator:
             ValueError: If binary path is unsafe or contains path traversal.
 
         """
+        import subprocess
+
+        spawned_proc: subprocess.Popen[bytes] | None = None
         try:
             if not self.frida_manager:
                 self.logger.warning("Frida not available, skipping")
@@ -1486,39 +1488,40 @@ class CrossToolOrchestrator:
             self.tool_monitor.status["frida"] = ToolStatus.RUNNING
             self.logger.info("Starting Frida analysis with IPC")
 
-            # Send start message via IPC
             self.ipc_channel.send_message(
                 MessageType.STATUS,
                 {"tool": "frida", "status": "starting", "timestamp": datetime.now().isoformat()},
             )
 
-            # Attach to process or spawn
             pid: int | None = None
             if config:
                 pid_value = config.get("pid")
                 if isinstance(pid_value, int):
                     pid = pid_value
-            if not pid:
-                # Spawn process for real analysis
-                import subprocess
 
-                # Validate binary_path to prevent command injection
+            if not pid:
                 if not Path(str(self.binary_path)).is_absolute() or ".." in str(self.binary_path):
                     raise ValueError(f"Unsafe binary path: {self.binary_path}")
-                proc = subprocess.Popen([self.binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-                pid = proc.pid
-                time.sleep(1)  # Let process initialize
+
+                spawned_proc = subprocess.Popen(
+                    [str(self.binary_path)],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    stdin=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0,
+                )
+                pid = spawned_proc.pid
+                self.tool_monitor.register_process("frida_target", pid)
+                time.sleep(1)
+
             self.frida_manager.attach_to_process(pid)
-            # Run standard scripts
-            scripts: list[str] = []
+
+            scripts: list[str] = ["memory_scan", "api_monitor", "hook_detection"]
             if config:
-                scripts_value = config.get("scripts", ["memory_scan", "api_monitor", "hook_detection"])
+                scripts_value = config.get("scripts")
                 if isinstance(scripts_value, list):
                     scripts = scripts_value
-                else:
-                    scripts = ["memory_scan", "api_monitor", "hook_detection"]
-            else:
-                scripts = ["memory_scan", "api_monitor", "hook_detection"]
+
             results: dict[str, Any] = {}
 
             for script_name in scripts:
@@ -1526,10 +1529,9 @@ class CrossToolOrchestrator:
                     results["api_calls"] = self._frida_api_monitor()
                 elif script_name == "hook_detection":
                     results["hooks"] = self._frida_hook_detection()
-
                 elif script_name == "memory_scan":
                     results["memory"] = self._frida_memory_scan()
-            # Serialize and send results via IPC
+
             serialized = self.result_serializer.serialize_result("frida", results, {"config": config})
             self.ipc_channel.send_message(MessageType.RESULT, serialized)
 
@@ -1546,13 +1548,48 @@ class CrossToolOrchestrator:
             self.logger.exception("Frida analysis failed: %s", e)
             self.tool_monitor.status["frida"] = ToolStatus.FAILED
 
-            # Try recovery
             if self.failure_recovery.handle_failure("frida", e, config):
-                # Retry the analysis
                 self._run_frida_analysis_with_ipc(config)
             else:
                 with self.analysis_lock:
                     self.analysis_complete["frida"] = True
+
+        finally:
+            if spawned_proc is not None:
+                self._terminate_spawned_process(spawned_proc)
+
+    def _terminate_spawned_process(self, proc: Any) -> None:
+        """Safely terminate a spawned process.
+
+        Attempts graceful termination first, then forceful kill if needed.
+        Ensures process resources are properly cleaned up.
+
+        Args:
+            proc: The subprocess.Popen instance to terminate.
+        """
+        import subprocess
+
+        if not hasattr(proc, "poll") or proc.poll() is not None:
+            return
+
+        try:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.logger.warning("Process %d did not terminate gracefully, killing", proc.pid)
+                proc.kill()
+                proc.wait(timeout=3)
+        except OSError as e:
+            self.logger.debug("Error terminating process %d: %s", proc.pid, e)
+        finally:
+            try:
+                if proc.stdout:
+                    proc.stdout.close()
+                if proc.stderr:
+                    proc.stderr.close()
+            except Exception as cleanup_err:
+                self.logger.debug("Error cleaning up process streams: %s", cleanup_err)
 
     def _run_frida_analysis(self, config: dict[str, Any] | None = None) -> None:
         """Run Frida analysis (legacy method for compatibility).

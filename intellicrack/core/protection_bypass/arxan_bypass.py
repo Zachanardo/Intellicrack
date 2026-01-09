@@ -29,12 +29,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-capstone: types.ModuleType | None
-frida: types.ModuleType | None
-keystone: types.ModuleType | None
-lief: types.ModuleType | None
-pefile: types.ModuleType | None
-
 from intellicrack.core.analysis.arxan_analyzer import (
     ArxanAnalysisResult,
     ArxanAnalyzer,
@@ -45,6 +39,11 @@ from intellicrack.core.analysis.arxan_analyzer import (
 )
 from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
 
+capstone: types.ModuleType | None
+frida: types.ModuleType | None
+keystone: types.ModuleType | None
+lief: types.ModuleType | None
+pefile: types.ModuleType | None
 
 try:
     import capstone as _capstone

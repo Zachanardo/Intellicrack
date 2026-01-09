@@ -522,7 +522,9 @@ const DynamicScriptGenerator = {
                     for (const imp of imports) {
                         this.categorizeImport(imp, importAnalysis);
                     }
-                } catch { /* Silent fail - continue analysis */ }
+                } catch {
+                    /* Silent fail - continue analysis */
+                }
             }
 
             this.analysisResults.binaryInfo.imports = importAnalysis;
@@ -640,7 +642,9 @@ const DynamicScriptGenerator = {
 
                 try {
                     this.scanModuleForStrings(module, stringAnalysis);
-                } catch { /* Silent fail - continue analysis */ }
+                } catch {
+                    /* Silent fail - continue analysis */
+                }
             }
 
             this.analysisResults.stringPatterns = stringAnalysis;
@@ -691,8 +695,8 @@ const DynamicScriptGenerator = {
                 coalesce: false,
             }).filter(
                 range =>
-                    range.file?.path
-                    && range.file.path.toLowerCase().includes(module.name.toLowerCase())
+                    range.file?.path &&
+                    range.file.path.toLowerCase().includes(module.name.toLowerCase())
             );
 
             for (const range of ranges) {
@@ -714,8 +718,8 @@ const DynamicScriptGenerator = {
                                 const beforeByte = match.address.sub(1).readU8();
                                 const afterByte = match.address.add(keyword.length).readU8();
                                 if (
-                                    (beforeByte === 0 || beforeByte < 32)
-                                    && (afterByte === 0 || afterByte < 32)
+                                    (beforeByte === 0 || beforeByte < 32) &&
+                                    (afterByte === 0 || afterByte < 32)
                                 ) {
                                     context = 'string_table';
                                 } else {
@@ -751,7 +755,9 @@ const DynamicScriptGenerator = {
                                 range: range.protection,
                             });
                         }
-                    } catch { /* Silent fail - continue analysis */ }
+                    } catch {
+                        /* Silent fail - continue analysis */
+                    }
                 }
 
                 // Scan for URL patterns in this range
@@ -782,7 +788,9 @@ const DynamicScriptGenerator = {
                                 range: range.protection,
                             });
                         }
-                    } catch { /* Silent fail - continue analysis */ }
+                    } catch {
+                        /* Silent fail - continue analysis */
+                    }
                 }
             }
         } catch (moduleError) {
@@ -882,27 +890,27 @@ const DynamicScriptGenerator = {
         const packerSignatures = {
             UPX: {
                 sections: ['UPX0', 'UPX1', 'UPX2'],
-                entryPoint: [0x60, 0xBE], // PUSHA; MOV ESI
+                entryPoint: [0x60, 0xbe], // PUSHA; MOV ESI
                 magic: 0x21_58_50_55, // "UPX!"
             },
             Themida: {
                 sections: ['.themida', '.WinLicense'],
-                entryPoint: [0xB8, 0x00, 0x00, 0x00, 0x00, 0x60], // MOV EAX, 0; PUSHA
+                entryPoint: [0xb8, 0x00, 0x00, 0x00, 0x00, 0x60], // MOV EAX, 0; PUSHA
                 imports: ['SecureEngineCustom'],
             },
             VMProtect: {
                 sections: ['.vmp0', '.vmp1', '.vmp2'],
                 entryPoint: [0x68], // PUSH
-                patterns: [0x9C, 0x60, 0xE8], // PUSHFD; PUSHA; CALL
+                patterns: [0x9c, 0x60, 0xe8], // PUSHFD; PUSHA; CALL
             },
             ASProtect: {
                 sections: ['.aspack', '.adata', '.aspr'],
-                entryPoint: [0x60, 0xE8, 0x03], // PUSHA; CALL
+                entryPoint: [0x60, 0xe8, 0x03], // PUSHA; CALL
                 overlay: true,
             },
             Armadillo: {
                 sections: ['.text', '.data', '.pdata'],
-                entryPoint: [0x60, 0xE8, 0x00, 0x00, 0x00, 0x00], // PUSHA; CALL $+5
+                entryPoint: [0x60, 0xe8, 0x00, 0x00, 0x00, 0x00], // PUSHA; CALL $+5
                 debugCheck: true,
             },
         };
@@ -917,9 +925,9 @@ const DynamicScriptGenerator = {
         const peHeader = mainModule.base;
         const dos = peHeader.readU16();
 
-        if (dos === 0x5A_4D) {
+        if (dos === 0x5a_4d) {
             // MZ signature
-            const peOffset = peHeader.add(0x3C).readU32();
+            const peOffset = peHeader.add(0x3c).readU32();
             const peSignature = peHeader.add(peOffset).readU32();
 
             if (peSignature === 0x00_00_45_50) {
@@ -932,8 +940,8 @@ const DynamicScriptGenerator = {
 
                 // Check sections for packer indicators
                 const numberOfSections = peHeader.add(peOffset + 0x6).readU16();
-                const sectionHeaderOffset
-                    = optionalHeaderOffset + peHeader.add(peOffset + 0x14).readU16();
+                const sectionHeaderOffset =
+                    optionalHeaderOffset + peHeader.add(peOffset + 0x14).readU16();
 
                 for (const packerName in packerSignatures) {
                     if (!Object.hasOwn(packerSignatures, packerName)) {
@@ -1068,7 +1076,9 @@ const DynamicScriptGenerator = {
                         },
                     });
                 }
-            } catch { /* Silent fail - continue analysis */ }
+            } catch {
+                /* Silent fail - continue analysis */
+            }
         }
     },
 
@@ -1343,10 +1353,10 @@ const DynamicScriptGenerator = {
 
             const licenseStrings = strings.filter(
                 s =>
-                    s.string.includes('license')
-                    || s.string.includes('trial')
-                    || s.string.includes('registration')
-                    || s.string.includes('activation')
+                    s.string.includes('license') ||
+                    s.string.includes('trial') ||
+                    s.string.includes('registration') ||
+                    s.string.includes('activation')
             );
 
             if (licenseStrings.length > 0) {
@@ -1387,9 +1397,9 @@ const DynamicScriptGenerator = {
 
             const drmAPIs = imports.protectionAPIs.filter(
                 api =>
-                    api.name.toLowerCase().includes('crypt')
-                    || api.name.toLowerCase().includes('drm')
-                    || api.name.toLowerCase().includes('media')
+                    api.name.toLowerCase().includes('crypt') ||
+                    api.name.toLowerCase().includes('drm') ||
+                    api.name.toLowerCase().includes('media')
             );
 
             if (drmAPIs.length > 0) {
@@ -2133,8 +2143,8 @@ const DynamicScriptGenerator = {
                 : 0.5,
             protectionCount: analysisResults.protectionMechanisms.length,
             confidence:
-                analysisResults.protectionMechanisms.reduce((sum, m) => sum + m.confidence, 0)
-                / Math.max(analysisResults.protectionMechanisms.length, 1),
+                analysisResults.protectionMechanisms.reduce((sum, m) => sum + m.confidence, 0) /
+                Math.max(analysisResults.protectionMechanisms.length, 1),
         }),
     }),
 
@@ -3068,8 +3078,8 @@ const DynamicScriptGenerator = {
                 let modifiedCode = code;
                 for (let i = 0; i < numBlocks; i++) {
                     const randomPos = Math.floor(Math.random() * modifiedCode.length);
-                    const deadCode
-                        = deadCodeBlocks[Math.floor(Math.random() * deadCodeBlocks.length)];
+                    const deadCode =
+                        deadCodeBlocks[Math.floor(Math.random() * deadCodeBlocks.length)];
                     modifiedCode = `${modifiedCode.slice(0, randomPos)}\n${
                         deadCode
                     }\n${modifiedCode.slice(randomPos)}`;
@@ -3188,9 +3198,9 @@ const DynamicScriptGenerator = {
             generateSemanticAlias: name => {
                 const prefixes = ['enhanced', 'advanced', 'optimized', 'secure', 'dynamic'];
                 return (
-                    prefixes[Math.floor(Math.random() * prefixes.length)]
-                    + name.charAt(0).toUpperCase()
-                    + name.slice(1)
+                    prefixes[Math.floor(Math.random() * prefixes.length)] +
+                    name.charAt(0).toUpperCase() +
+                    name.slice(1)
                 );
             },
             restructureFunctionCalls: code =>
@@ -3243,8 +3253,8 @@ const DynamicScriptGenerator = {
             baseAddresses: new Map(),
             allocationStrategies: ['random_offset', 'segmented_allocation', 'interleaved_blocks'],
             randomizeLayout() {
-                const strategy
-                    = this.allocationStrategies[
+                const strategy =
+                    this.allocationStrategies[
                         Math.floor(Math.random() * this.allocationStrategies.length)
                     ];
                 const baseOffset = Math.floor(Math.random() * 0x10_00_00_00);
@@ -3473,7 +3483,7 @@ const DynamicScriptGenerator = {
                     if (baseAddr) {
                         try {
                             const _header = baseAddr.readPointer();
-                            const expectedSig = 0x4D_5A; // MZ signature
+                            const expectedSig = 0x4d_5a; // MZ signature
                             if (baseAddr.readU16() !== expectedSig) {
                                 issues.push(`memory_corruption_detected_in_${region}`);
                             }
@@ -4093,18 +4103,18 @@ const DynamicScriptGenerator = {
                         if (actualBehavior) {
                             // Compare prediction with what actually happened
                             if (
-                                prediction.type === 'api_call'
-                                && actualBehavior.apiCalled === prediction.predicted
+                                prediction.type === 'api_call' &&
+                                actualBehavior.apiCalled === prediction.predicted
                             ) {
                                 correctPredictions++;
                             } else if (
-                                prediction.type === 'memory_access'
-                                && Math.abs(actualBehavior.address - prediction.address) < 0x10_00
+                                prediction.type === 'memory_access' &&
+                                Math.abs(actualBehavior.address - prediction.address) < 0x10_00
                             ) {
                                 correctPredictions++;
                             } else if (
-                                prediction.type === 'registry_operation'
-                                && actualBehavior.key === prediction.key
+                                prediction.type === 'registry_operation' &&
+                                actualBehavior.key === prediction.key
                             ) {
                                 correctPredictions++;
                             }
@@ -4300,7 +4310,9 @@ const DynamicScriptGenerator = {
                         if (dataStr.includes('proprietary') || dataStr.includes('Proprietary')) {
                             patentIndicators += 7;
                         }
-                    } catch { /* Silent fail - continue analysis */ }
+                    } catch {
+                        /* Silent fail - continue analysis */
+                    }
                 });
 
                 return patentIndicators;
@@ -4319,10 +4331,10 @@ const DynamicScriptGenerator = {
                     // Check for advanced crypto/security libraries
                     imports.forEach(imp => {
                         if (
-                            imp.name
-                            && (imp.name.includes('crypto')
-                                || imp.name.includes('ssl')
-                                || imp.name.includes('tls'))
+                            imp.name &&
+                            (imp.name.includes('crypto') ||
+                                imp.name.includes('ssl') ||
+                                imp.name.includes('tls'))
                         ) {
                             complexityScore += 2;
                         }
@@ -4347,8 +4359,8 @@ const DynamicScriptGenerator = {
                     innovation_acceleration: Math.random(),
                 };
 
-                const disruptionLevel
-                    = Object.values(disruptionIndicators).reduce((sum, val) => sum + val, 0) / 4;
+                const disruptionLevel =
+                    Object.values(disruptionIndicators).reduce((sum, val) => sum + val, 0) / 4;
 
                 if (disruptionLevel > 0.7) {
                     send({
@@ -4478,10 +4490,10 @@ const DynamicScriptGenerator = {
                                 symbols.forEach(exp => {
                                     // Hook network functions to capture real endpoints
                                     if (
-                                        exp.name.includes('connect')
-                                        || exp.name.includes('send')
-                                        || exp.name.includes('HttpOpen')
-                                        || exp.name.includes('InternetConnect')
+                                        exp.name.includes('connect') ||
+                                        exp.name.includes('send') ||
+                                        exp.name.includes('HttpOpen') ||
+                                        exp.name.includes('InternetConnect')
                                     ) {
                                         Interceptor.attach(exp.address, {
                                             onEnter: args => {
@@ -4491,15 +4503,17 @@ const DynamicScriptGenerator = {
                                                     if (addr) {
                                                         const serverStr = addr.readUtf8String();
                                                         if (
-                                                            serverStr
-                                                            && (serverStr.includes('license')
-                                                                || serverStr.includes('activation')
-                                                                || serverStr.includes('validate'))
+                                                            serverStr &&
+                                                            (serverStr.includes('license') ||
+                                                                serverStr.includes('activation') ||
+                                                                serverStr.includes('validate'))
                                                         ) {
                                                             servers.push(serverStr);
                                                         }
                                                     }
-                                                } catch { /* Silent fail - continue analysis */ }
+                                                } catch {
+                                                    /* Silent fail - continue analysis */
+                                                }
                                             },
                                         });
                                     }
@@ -4686,7 +4700,9 @@ const DynamicScriptGenerator = {
                                 _detectedInteractions++;
                             },
                         });
-                    } catch { /* Silent fail - continue analysis */ }
+                    } catch {
+                        /* Silent fail - continue analysis */
+                    }
                 }
 
                 // Detect file access for credential decoys
@@ -4724,8 +4740,8 @@ const DynamicScriptGenerator = {
             calculateDecoyEffectiveness: decoy => {
                 const ageInHours = (Date.now() - decoy.deployment_time) / (1000 * 60 * 60);
                 const interactionRate = decoy.interactions / Math.max(1, ageInHours);
-                const typeMultiplier
-                    = {
+                const typeMultiplier =
+                    {
                         false_vulnerability_decoys: 0.9,
                         honeypot_process_decoys: 0.8,
                         credential_interception_decoys: 0.7,
@@ -4761,8 +4777,8 @@ const DynamicScriptGenerator = {
                     'improve_believability_factors',
                 ];
 
-                const selectedEnhancement
-                    = enhancements[Math.floor(Math.random() * enhancements.length)];
+                const selectedEnhancement =
+                    enhancements[Math.floor(Math.random() * enhancements.length)];
                 decoy.enhancements = decoy.enhancements || [];
                 decoy.enhancements.push(selectedEnhancement);
 
@@ -5021,8 +5037,8 @@ const DynamicScriptGenerator = {
 
                 // Monitor network activity for vulnerability reports
                 if (
-                    narrative.campaign_type === 'misleading_vulnerability_reports'
-                    || narrative.campaign_type === 'patch_bypass_information'
+                    narrative.campaign_type === 'misleading_vulnerability_reports' ||
+                    narrative.campaign_type === 'patch_bypass_information'
                 ) {
                     const HttpOpenRequest = Module.findExportByName(
                         'wininet.dll',
@@ -5071,8 +5087,8 @@ const DynamicScriptGenerator = {
 
                 return Math.min(
                     1,
-                    (engagementRate * 0.3 + actionRate * 0.4 + beliefRate * 0.3)
-                        * Math.min(1, ageInHours / 24)
+                    (engagementRate * 0.3 + actionRate * 0.4 + beliefRate * 0.3) *
+                        Math.min(1, ageInHours / 24)
                 );
             },
             adaptCampaignStrategies() {
@@ -5104,8 +5120,8 @@ const DynamicScriptGenerator = {
                     'add_social_proof_elements',
                 ];
 
-                const selectedEnhancement
-                    = enhancements[Math.floor(Math.random() * enhancements.length)];
+                const selectedEnhancement =
+                    enhancements[Math.floor(Math.random() * enhancements.length)];
                 narrative.enhancements = narrative.enhancements || [];
                 narrative.enhancements.push(selectedEnhancement);
 
@@ -5292,8 +5308,8 @@ const DynamicScriptGenerator = {
             },
             updateProtectionStrategies() {
                 this.protectionLayers.forEach((layer, protectionType) => {
-                    const effectivenessAssessment
-                        = this.assessProtectionEffectiveness(protectionType);
+                    const effectivenessAssessment =
+                        this.assessProtectionEffectiveness(protectionType);
 
                     if (effectivenessAssessment < 0.7) {
                         this.enhanceProtectionLayer(protectionType, layer);
@@ -5324,7 +5340,9 @@ const DynamicScriptGenerator = {
                                 )
                             );
                             effectivenessScore += 1;
-                        } catch { /* Silent fail - continue analysis */ }
+                        } catch {
+                            /* Silent fail - continue analysis */
+                        }
                     }
 
                     // Check PEB bypass
@@ -5334,7 +5352,9 @@ const DynamicScriptGenerator = {
                         const beingDebugged = peb.add(0x02); // PEB.BeingDebugged offset
                         beingDebugged.writeU8(0);
                         effectivenessScore += 1;
-                    } catch { /* Silent fail - continue analysis */ }
+                    } catch {
+                        /* Silent fail - continue analysis */
+                    }
                 }
 
                 // Test anti-instrumentation
@@ -5350,7 +5370,9 @@ const DynamicScriptGenerator = {
                                 onEnter: () => {},
                             });
                             hooksSuccessful++;
-                        } catch { /* Silent fail - continue analysis */ }
+                        } catch {
+                            /* Silent fail - continue analysis */
+                        }
                     }
 
                     effectivenessScore += hooksSuccessful / 10;
@@ -5377,7 +5399,9 @@ const DynamicScriptGenerator = {
                             if (entropy / bytes.length > 80) {
                                 obfuscatedStrings++;
                             }
-                        } catch { /* Silent fail - continue analysis */ }
+                        } catch {
+                            /* Silent fail - continue analysis */
+                        }
                     }
 
                     effectivenessScore += obfuscatedStrings / 5;
@@ -5393,8 +5417,8 @@ const DynamicScriptGenerator = {
                     'enhance_response_mechanisms',
                 ];
 
-                const selectedEnhancement
-                    = enhancements[Math.floor(Math.random() * enhancements.length)];
+                const selectedEnhancement =
+                    enhancements[Math.floor(Math.random() * enhancements.length)];
                 layer.enhancements = layer.enhancements || [];
                 layer.enhancements.push(selectedEnhancement);
 
@@ -5484,7 +5508,7 @@ const DynamicScriptGenerator = {
             },
 
             encryptStrings(code) {
-                const key = Math.floor(Math.random() * 0xFF_FF_FF_FF);
+                const key = Math.floor(Math.random() * 0xff_ff_ff_ff);
                 return code.replaceAll(/"([^"]*)"/g, (_match, str) => {
                     const encrypted = this.xorEncrypt(str, key);
                     return `__decrypt("${encrypted}", ${key})`;

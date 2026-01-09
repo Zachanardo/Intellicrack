@@ -1269,6 +1269,7 @@ class SuccessRateAnalyzer:
 
     def _start_background_tasks(self) -> None:
         """Start background analysis tasks."""
+
         def background_worker() -> None:
             while self.is_running:
                 try:
@@ -1724,6 +1725,7 @@ def track_success(
     Returns:
         Callable: Decorator function for automatic tracking.
     """
+
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             analyzer = get_success_rate_analyzer()
@@ -1790,6 +1792,7 @@ if __name__ == "__main__":
         Returns:
             dict[str, Callable[..., bool]]: Dictionary of hooked component functions.
         """
+
         # Track protection detection events
         @track_success(EventType.PROTECTION_DETECTION, ProtectionCategory.SERIAL_KEY, "protection_detector")
         def detect_serial_protection(binary_path: str) -> bool:

@@ -6,8 +6,8 @@ vulnerability scanning, and string extraction. Supports both single-file and bat
 analysis modes with configurable analysis options and multiple report formats.
 
 The AnalysisCLI class serves as the main interface, orchestrating various analysis
-engines and aggregating results into comprehensive reports. It detects file types
-(PE/ELF) and applies platform-specific analysis routines accordingly.
+engines and aggregating results into comprehensive reports. It analyzes Windows PE
+binaries and applies platform-specific analysis routines.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -42,7 +42,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 from intellicrack.core.binary_analyzer import BinaryAnalyzer
 from intellicrack.core.protection_analyzer import ProtectionAnalyzer
-from intellicrack.utils.binary.elf_analyzer import ELFAnalyzer
 from intellicrack.utils.binary.pe_analysis_common import PEAnalyzer
 from intellicrack.utils.report_generator import ReportGenerator
 from intellicrack.utils.system.os_detection import detect_file_type
@@ -159,7 +158,6 @@ class AnalysisCLI:
         self._perform_protection_analysis(file_path, options, results)
         self._perform_vulnerability_scan(file_path, options, results)
         self._perform_pe_analysis(file_path, file_type, options, results)
-        self._perform_elf_analysis(file_path, file_type, options, results)
         self._perform_string_extraction(file_path, options, results)
 
         self.logger.info("Analysis complete")
@@ -256,7 +254,7 @@ class AnalysisCLI:
 
         Args:
             file_path: Path to the binary file to analyze.
-            file_type: Detected file type (PE, ELF, etc.).
+            file_type: Detected file type (PE, etc.).
             options: Analysis options dictionary with pe_analysis flag.
             results: Results dictionary to update with PE-specific findings.
         """
@@ -277,32 +275,6 @@ class AnalysisCLI:
                         )
             except Exception as e:
                 self.logger.exception("PE analysis failed: %s", e)
-
-    def _perform_elf_analysis(self, file_path: str, file_type: str, options: dict[str, Any], results: dict[str, Any]) -> None:
-        """Perform Unix/Linux ELF-specific binary analysis.
-
-        Analyzes ELF (Executable and Linkable Format) binaries specific to Unix-like
-        systems, including security features, symbol tables, and section analysis.
-        Only executes if the file type is detected as ELF.
-
-        Args:
-            file_path: Path to the binary file to analyze.
-            file_type: Detected file type (PE, ELF, etc.).
-            options: Analysis options dictionary with elf_analysis flag.
-            results: Results dictionary to update with ELF-specific findings.
-        """
-        if file_type == "ELF" and options.get("elf_analysis", True):
-            self.logger.info("Performing ELF-specific analysis...")
-            try:
-                elf_analyzer = ELFAnalyzer(file_path)
-                elf_results = elf_analyzer.analyze()
-                results["metadata"]["elf_analysis"] = elf_results
-                if "security_features" in elf_results:
-                    for feature, enabled in elf_results["security_features"].items():
-                        if not enabled:
-                            results["recommendations"].append(f"Enable {feature} for improved security")
-            except Exception as e:
-                self.logger.exception("ELF analysis failed: %s", e)
 
     def _perform_string_extraction(self, file_path: str, options: dict[str, Any], results: dict[str, Any]) -> None:
         """Extract and analyze strings from the binary.
@@ -613,8 +585,6 @@ def main() -> None:
 
     parser.add_argument("--no-pe-analysis", action="store_true", help="Skip PE-specific analysis")
 
-    parser.add_argument("--no-elf-analysis", action="store_true", help="Skip ELF-specific analysis")
-
     parser.add_argument("--no-strings", action="store_true", help="Skip string extraction")
 
     parser.add_argument("-b", "--batch", action="store_true", help="Batch mode - analyze all files in directory")
@@ -624,7 +594,7 @@ def main() -> None:
     parser.add_argument(
         "--extensions",
         nargs="+",
-        default=[".exe", ".dll", ".so", ".elf", ".bin"],
+        default=[".exe", ".dll", ".bin"],
         help="File extensions to analyze in batch mode",
     )
 
@@ -651,7 +621,6 @@ def main() -> None:
         "protection_analysis": not args.no_protection_analysis,
         "vulnerability_scan": not args.no_vulnerability_scan,
         "pe_analysis": not args.no_pe_analysis,
-        "elf_analysis": not args.no_elf_analysis,
         "extract_strings": not args.no_strings,
     }
 

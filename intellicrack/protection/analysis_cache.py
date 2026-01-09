@@ -28,11 +28,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from threading import Lock
 
-from ..utils.core.secure_serialization import (
-    RestrictedUnpickler,
-    secure_pickle_dump,
-    secure_pickle_load,
-)
+from ..utils.core.secure_serialization import RestrictedUnpickler, secure_pickle_dump, secure_pickle_load
 from ..utils.logger import get_logger
 
 

@@ -272,9 +272,9 @@ const CloudLicensingBypass = {
 
                         // Try to get URL from headers
                         if (
-                            this.lpszHeaders
-                            && !this.lpszHeaders.isNull()
-                            && this.dwHeadersLength > 0
+                            this.lpszHeaders &&
+                            !this.lpszHeaders.isNull() &&
+                            this.dwHeadersLength > 0
                         ) {
                             const headers = this.lpszHeaders.readUtf16String(this.dwHeadersLength);
                             details.headers = headers;
@@ -288,9 +288,9 @@ const CloudLicensingBypass = {
 
                         // Get request body if present
                         if (
-                            this.lpOptional
-                            && !this.lpOptional.isNull()
-                            && this.dwOptionalLength > 0
+                            this.lpOptional &&
+                            !this.lpOptional.isNull() &&
+                            this.dwOptionalLength > 0
                         ) {
                             try {
                                 const body = this.lpOptional.readUtf8String(this.dwOptionalLength);
@@ -390,11 +390,11 @@ const CloudLicensingBypass = {
 
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.lpBuffer
-                        && !this.lpBuffer.isNull()
-                        && this.lpdwNumberOfBytesRead
-                        && !this.lpdwNumberOfBytesRead.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.lpBuffer &&
+                        !this.lpBuffer.isNull() &&
+                        this.lpdwNumberOfBytesRead &&
+                        !this.lpdwNumberOfBytesRead.isNull()
                     ) {
                         const bytesRead = this.lpdwNumberOfBytesRead.readU32();
                         if (bytesRead > 0) {
@@ -416,8 +416,8 @@ const CloudLicensingBypass = {
                         if (shouldSpoof) {
                             const spoofedResponse = this.generateSpoofedResponse(responseData);
                             if (
-                                spoofedResponse
-                                && spoofedResponse.length <= this.dwNumberOfBytesToRead
+                                spoofedResponse &&
+                                spoofedResponse.length <= this.dwNumberOfBytesToRead
                             ) {
                                 // Write spoofed response
                                 this.lpBuffer.writeUtf8String(spoofedResponse);
@@ -625,11 +625,11 @@ const CloudLicensingBypass = {
 
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.lpBuffer
-                        && !this.lpBuffer.isNull()
-                        && this.lpdwNumberOfBytesRead
-                        && !this.lpdwNumberOfBytesRead.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.lpBuffer &&
+                        !this.lpBuffer.isNull() &&
+                        this.lpdwNumberOfBytesRead &&
+                        !this.lpdwNumberOfBytesRead.isNull()
                     ) {
                         const bytesRead = this.lpdwNumberOfBytesRead.readU32();
                         if (bytesRead > 0) {
@@ -647,11 +647,11 @@ const CloudLicensingBypass = {
 
                         const responseData = this.lpBuffer.readUtf8String(bytesRead);
                         if (this.shouldSpoofWinINetResponse(responseData)) {
-                            const spoofedResponse
-                                = this.generateWinINetSpoofedResponse(responseData);
+                            const spoofedResponse =
+                                this.generateWinINetSpoofedResponse(responseData);
                             if (
-                                spoofedResponse
-                                && spoofedResponse.length <= this.dwNumberOfBytesToRead
+                                spoofedResponse &&
+                                spoofedResponse.length <= this.dwNumberOfBytesToRead
                             ) {
                                 this.lpBuffer.writeUtf8String(spoofedResponse);
                                 this.lpdwNumberOfBytesRead.writeU32(spoofedResponse.length);
@@ -680,10 +680,10 @@ const CloudLicensingBypass = {
                     }
                     const lowerResponse = responseData.toLowerCase();
                     return (
-                        lowerResponse.includes('license')
-                        || lowerResponse.includes('activation')
-                        || lowerResponse.includes('genuine')
-                        || lowerResponse.includes('valid')
+                        lowerResponse.includes('license') ||
+                        lowerResponse.includes('activation') ||
+                        lowerResponse.includes('genuine') ||
+                        lowerResponse.includes('valid')
                     );
                 },
 
@@ -803,8 +803,8 @@ const CloudLicensingBypass = {
         for (const module of modules) {
             // Skip system modules
             if (
-                module.name.toLowerCase().includes('ntdll')
-                || module.name.toLowerCase().includes('kernel32')
+                module.name.toLowerCase().includes('ntdll') ||
+                module.name.toLowerCase().includes('kernel32')
             ) {
                 continue;
             }
@@ -1283,11 +1283,11 @@ const CloudLicensingBypass = {
 
                     looksLikeToken: str =>
                         // Basic token pattern detection
-                        str.length > 10
-                        && (str.includes('Bearer')
-                            || str.includes('OAuth')
-                            || str.includes('eyJ')
-                            || str.match(/^[\d+/=A-Za-z]{20,}$/)),
+                        str.length > 10 &&
+                        (str.includes('Bearer') ||
+                            str.includes('OAuth') ||
+                            str.includes('eyJ') ||
+                            str.match(/^[\d+/=A-Za-z]{20,}$/)),
                 });
 
                 this.hooksInstalled[`${functionName}_${moduleName}`] = true;
@@ -1361,9 +1361,9 @@ const CloudLicensingBypass = {
                     return (
                         tokenPatterns.some(
                             pattern => str1?.includes(pattern) || str2?.includes(pattern)
-                        )
-                        || this.looksLikeJWT(str1)
-                        || this.looksLikeJWT(str2)
+                        ) ||
+                        this.looksLikeJWT(str1) ||
+                        this.looksLikeJWT(str2)
                     );
                 },
 
@@ -1942,12 +1942,12 @@ const CloudLicensingBypass = {
 
                         if (family === 2) {
                             // AF_INET
-                            const port
-                                = (this.addr.add(2).readU8() << 8) | this.addr.add(3).readU8();
+                            const port =
+                                (this.addr.add(2).readU8() << 8) | this.addr.add(3).readU8();
                             const ip = this.addr.add(4).readU32();
 
-                            const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${(ip >> 16) & 0xFF}.${
-                                (ip >> 24) & 0xFF
+                            const ipStr = `${ip & 0xff}.${(ip >> 8) & 0xff}.${(ip >> 16) & 0xff}.${
+                                (ip >> 24) & 0xff
                             }`;
 
                             return {
@@ -2150,9 +2150,9 @@ const CloudLicensingBypass = {
 
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.pPolicyStatus
-                        && !this.pPolicyStatus.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.pPolicyStatus &&
+                        !this.pPolicyStatus.isNull()
                     ) {
                         // Force certificate validation to succeed
                         this.pPolicyStatus.writeU32(0); // No errors
@@ -2209,54 +2209,54 @@ const CloudLicensingBypass = {
 
             for (const hook in this.hooksInstalled) {
                 if (
-                    hook.includes('Http')
-                    || hook.includes('SSL')
-                    || hook.includes('curl')
-                    || hook.includes('Schannel')
+                    hook.includes('Http') ||
+                    hook.includes('SSL') ||
+                    hook.includes('curl') ||
+                    hook.includes('Schannel')
                 ) {
                     categories['HTTP/HTTPS Interception']++;
                 } else if (
-                    hook.includes('token')
-                    || hook.includes('Token')
-                    || hook.includes('oauth')
-                    || hook.includes('OAuth')
+                    hook.includes('token') ||
+                    hook.includes('Token') ||
+                    hook.includes('oauth') ||
+                    hook.includes('OAuth')
                 ) {
                     categories['OAuth Token Manipulation']++;
                 } else if (
-                    hook.includes('jwt')
-                    || hook.includes('JWT')
-                    || hook.includes('base64')
-                    || hook.includes('Base64')
+                    hook.includes('jwt') ||
+                    hook.includes('JWT') ||
+                    hook.includes('base64') ||
+                    hook.includes('Base64')
                 ) {
                     categories['JWT Token Spoofing']++;
                 } else if (
-                    hook.includes('License')
-                    || hook.includes('license')
-                    || hook.includes('Validation')
-                    || hook.includes('validation')
-                    || hook.includes('Activation')
-                    || hook.includes('activation')
-                    || hook.includes('Subscription')
-                    || hook.includes('subscription')
+                    hook.includes('License') ||
+                    hook.includes('license') ||
+                    hook.includes('Validation') ||
+                    hook.includes('validation') ||
+                    hook.includes('Activation') ||
+                    hook.includes('activation') ||
+                    hook.includes('Subscription') ||
+                    hook.includes('subscription')
                 ) {
                     categories['License API Hooks']++;
                 } else if (
-                    hook.includes('socket')
-                    || hook.includes('Socket')
-                    || hook.includes('connect')
+                    hook.includes('socket') ||
+                    hook.includes('Socket') ||
+                    hook.includes('connect')
                 ) {
                     categories['Network Connection Control']++;
                 } else if (
-                    hook.includes('getaddr')
-                    || hook.includes('gethostby')
-                    || hook.includes('dns')
-                    || hook.includes('DNS')
+                    hook.includes('getaddr') ||
+                    hook.includes('gethostby') ||
+                    hook.includes('dns') ||
+                    hook.includes('DNS')
                 ) {
                     categories['DNS Resolution Blocking']++;
                 } else if (
-                    hook.includes('Cert')
-                    || hook.includes('cert')
-                    || hook.includes('Certificate')
+                    hook.includes('Cert') ||
+                    hook.includes('cert') ||
+                    hook.includes('Certificate')
                 ) {
                     categories['Certificate Validation']++;
                 }

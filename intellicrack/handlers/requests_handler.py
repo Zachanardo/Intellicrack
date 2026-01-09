@@ -348,9 +348,7 @@ except ImportError as e:
             for i in range(0, len(self.content), chunk_size):
                 yield self.content[i : i + chunk_size]
 
-        def iter_lines(
-            self, chunk_size: int = 512, decode_unicode: bool = True
-        ) -> Generator[str, None, None]:
+        def iter_lines(self, chunk_size: int = 512, decode_unicode: bool = True) -> Generator[str, None, None]:
             """Iterate over response lines.
 
             Args:
@@ -613,7 +611,7 @@ except ImportError as e:
             provided for API compatibility with the requests library.
             """
 
-        def __enter__(self) -> "_FallbackSession":
+        def __enter__(self) -> _FallbackSession:
             """Context manager entry.
 
             Returns:

@@ -34,6 +34,7 @@ from typing import TYPE_CHECKING, Any, Literal, Protocol
 from intellicrack.utils.logger import logger
 from intellicrack.utils.path_resolver import get_qemu_images_dir
 
+from ..process_registry import process_registry
 from .base_snapshot_handler import BaseSnapshotHandler
 
 
@@ -317,12 +318,13 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             self.logger.info("Starting QEMU system: %s...", " ".join(qemu_cmd[:5]))
 
             # Start QEMU process
-            self.qemu_process = subprocess.Popen(  # nosec S603 - Using QEMU for secure virtual testing environment in security research
+            self.qemu_process = subprocess.Popen(  # nosec S603
                 qemu_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
             )
+            process_registry.register(self.qemu_process, f"qemu-{self.architecture}")
 
             if boot_success := self._wait_for_boot():
                 self.logger.info("QEMU system started successfully (boot result: %s)", boot_success)
@@ -490,13 +492,13 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             self.logger.warning("No QEMU process to stop")
             return True
 
+        pid = self.qemu_process.pid
+
         try:
             if not force:
-                # Try graceful shutdown first
                 self.logger.info("Attempting graceful QEMU shutdown")
                 self._send_monitor_command("system_powerdown")
 
-                # Wait for graceful shutdown
                 try:
                     self.qemu_process.wait(timeout=30)
                     self.logger.info("QEMU shutdown gracefully")
@@ -504,31 +506,35 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 except subprocess.TimeoutExpired:
                     self.logger.warning("Graceful shutdown timed out, forcing termination")
 
-            # Force termination
             self.logger.info("Force terminating QEMU process")
             self.qemu_process.terminate()
 
             try:
                 self.qemu_process.wait(timeout=10)
-            except subprocess.TimeoutExpired as e:
-                logger.error("Subprocess timeout in qemu_emulator: %s", e)
+            except subprocess.TimeoutExpired:
+                logger.warning("Subprocess timeout in qemu_emulator, killing process")
                 self.qemu_process.kill()
                 self.qemu_process.wait()
 
             self.logger.info("QEMU process terminated")
             return True
 
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.exception("Error stopping QEMU system: %s", e)
+        except (OSError, ValueError, RuntimeError):
+            self.logger.exception("Error stopping QEMU system")
             return False
         finally:
+            process_registry.unregister(pid)
             self.qemu_process = None
-            # Clean up monitor socket
             if self.monitor_socket and os.path.exists(self.monitor_socket):
                 try:
                     Path(self.monitor_socket).unlink()
-                except OSError as e:
-                    logger.error("OS error in qemu_emulator: %s", e)
+                except OSError:
+                    logger.warning("Failed to clean up monitor socket")
+
+    def __del__(self) -> None:
+        """Destructor to ensure process cleanup."""
+        if self.qemu_process is not None and self.qemu_process.poll() is None:
+            self.cleanup()
 
     def execute_command(self, command: str, timeout: int = 30) -> str | None:
         """Execute a command in the guest system.

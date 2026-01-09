@@ -42,9 +42,7 @@ class TensorFlowDeviceProtocol(Protocol):
 class TensorFlowExperimentalProtocol(Protocol):
     """Protocol for TensorFlow config.experimental interface."""
 
-    def list_physical_devices(
-        self, device_type: str = "GPU"
-    ) -> list[TensorFlowDeviceProtocol]:
+    def list_physical_devices(self, device_type: str = "GPU") -> list[TensorFlowDeviceProtocol]:
         """List physical devices.
 
         Args:
@@ -54,7 +52,7 @@ class TensorFlowExperimentalProtocol(Protocol):
             List of physical devices of the specified type.
 
         """
-        ...
+        return []
 
     def get_memory_growth(self, device: TensorFlowDeviceProtocol) -> bool:
         """Get memory growth setting for a device.
@@ -66,7 +64,7 @@ class TensorFlowExperimentalProtocol(Protocol):
             Whether memory growth is enabled for the device.
 
         """
-        ...
+        return False
 
 
 class TensorFlowConfigProtocol(Protocol):
@@ -74,9 +72,7 @@ class TensorFlowConfigProtocol(Protocol):
 
     experimental: TensorFlowExperimentalProtocol
 
-    def set_visible_devices(
-        self, devices: list[object], device_type: str
-    ) -> None:
+    def set_visible_devices(self, devices: list[object], device_type: str) -> None:
         """Set visible devices for TensorFlow.
 
         Args:
@@ -84,11 +80,9 @@ class TensorFlowConfigProtocol(Protocol):
             device_type: Type of devices (e.g., "GPU", "CPU").
 
         """
-        ...
+        return
 
-    def get_visible_devices(
-        self, device_type: str | None = None
-    ) -> list[object]:
+    def get_visible_devices(self, device_type: str | None = None) -> list[object]:
         """Get visible devices.
 
         Args:
@@ -98,11 +92,9 @@ class TensorFlowConfigProtocol(Protocol):
             List of visible devices.
 
         """
-        ...
+        return []
 
-    def list_physical_devices(
-        self, device_type: str = "GPU"
-    ) -> list[object]:
+    def list_physical_devices(self, device_type: str = "GPU") -> list[object]:
         """List physical devices.
 
         Args:
@@ -112,7 +104,7 @@ class TensorFlowConfigProtocol(Protocol):
             List of physical devices of the specified type.
 
         """
-        ...
+        return []
 
 
 class TensorFlowKerasProtocol(Protocol):
@@ -132,7 +124,7 @@ class TensorFlowKerasProtocol(Protocol):
             The attribute value.
 
         """
-        ...
+        return None
 
 
 class TensorFlowProtocol(Protocol):
@@ -159,11 +151,9 @@ class TensorFlowProtocol(Protocol):
             A constant tensor object.
 
         """
-        ...
+        return value
 
-    def reduce_sum(
-        self, tensor: object, axis: int | None = None
-    ) -> Any:
+    def reduce_sum(self, tensor: object, axis: int | None = None) -> Any:
         """Reduce tensor by summing elements.
 
         Args:
@@ -174,7 +164,7 @@ class TensorFlowProtocol(Protocol):
             The reduced tensor result.
 
         """
-        ...
+        return tensor
 
 
 # Configure TensorFlow environment ONCE at module level before any imports
@@ -212,13 +202,19 @@ def _get_tensorflow() -> tuple[TensorFlowProtocol | None, bool]:
 
             ensure_tensorflow_loaded()
             if tf is not None and hasattr(tf, "config") and hasattr(tf, "__version__"):
+                try:
+                    _ = callable(getattr(tf.config, "set_visible_devices", None))
+                    _ = callable(getattr(tf.config, "get_visible_devices", None))
+                except (AttributeError, TypeError) as attr_err:
+                    raise AttributeError(f"TensorFlow config missing required methods: {attr_err}") from attr_err
+
                 _tf_module = cast("TensorFlowProtocol", tf)
                 _tf_available = True
                 _tf_module.config.set_visible_devices([], "GPU")
                 logger.info("TensorFlow: Imported successfully (version: %s). GPU devices set to invisible.", _tf_module.__version__)
                 logger.debug("TensorFlow: Visible devices after configuration: %s", _tf_module.config.get_visible_devices())
             else:
-                raise AttributeError("TensorFlow module missing required attributes")
+                raise AttributeError("TensorFlow module missing required attributes (config or __version__)")
         except Exception as e:
             logger.warning("TensorFlow: Import failed: %s", e, exc_info=True)
             _tf_available = False

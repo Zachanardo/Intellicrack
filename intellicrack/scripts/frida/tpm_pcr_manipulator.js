@@ -135,7 +135,7 @@ function hookTbsipSubmitCommandForPCR() {
 
                             break;
                         }
-                        case 0x00_00_01_7E: {
+                        case 0x00_00_01_7e: {
                             console.log('[*] PCR_Read detected');
 
                             if (Object.keys(spoofedPCRValues).length > 0) {
@@ -167,7 +167,7 @@ function hookTbsipSubmitCommandForPCR() {
 
                             break;
                         }
-                        case 0x00_00_01_7F: {
+                        case 0x00_00_01_7f: {
                             console.log('[*] PolicyPCR detected - PCR policy check');
 
                             if (Object.keys(spoofedPCRValues).length > 0) {

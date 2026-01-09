@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 class CacheEntry(TypedDict):
     """Type definition for cache entries."""
 
-    result: "CoordinatedResult"
+    result: CoordinatedResult
     timestamp: datetime
 
 
@@ -133,8 +133,8 @@ class AICoordinationLayer:
 
     def __init__(
         self,
-        shared_context: "AISharedContext | None" = None,
-        event_bus: "AIEventBus | None" = None,
+        shared_context: AISharedContext | None = None,
+        event_bus: AIEventBus | None = None,
     ) -> None:
         """Initialize the coordination layer.
 

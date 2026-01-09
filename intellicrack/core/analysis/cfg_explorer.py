@@ -25,6 +25,8 @@ import re
 import struct
 import time
 import traceback
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 from intellicrack.utils.logger import logger
@@ -827,10 +829,10 @@ try:
         CS_MODE_32,
         CS_MODE_64,
         CS_OPT_DETAIL,
-        Cs,
         X86_OP_IMM,
         X86_OP_MEM,
         X86_OP_REG,
+        Cs,
         capstone,
     )
 
@@ -870,10 +872,6 @@ try:
 except ImportError as e:
     logger.exception("Import error in cfg_explorer: %s", e)
     PYQT_AVAILABLE = False
-
-
-from dataclasses import dataclass, field
-from enum import Enum
 
 
 class BlockType(Enum):
@@ -1090,15 +1088,9 @@ class CFGBuilder:
                 if count >= max_instructions:
                     break
 
-                is_jump: bool = (
-                    CS_GRP_JUMP in insn.groups if hasattr(insn, "groups") and CS_GRP_JUMP is not None else False
-                )
-                is_call: bool = (
-                    CS_GRP_CALL in insn.groups if hasattr(insn, "groups") and CS_GRP_CALL is not None else False
-                )
-                is_return: bool = (
-                    CS_GRP_RET in insn.groups if hasattr(insn, "groups") and CS_GRP_RET is not None else False
-                )
+                is_jump: bool = CS_GRP_JUMP in insn.groups if hasattr(insn, "groups") and CS_GRP_JUMP is not None else False
+                is_call: bool = CS_GRP_CALL in insn.groups if hasattr(insn, "groups") and CS_GRP_CALL is not None else False
+                is_return: bool = CS_GRP_RET in insn.groups if hasattr(insn, "groups") and CS_GRP_RET is not None else False
 
                 is_conditional: bool = False
                 jump_target: int | None = None
@@ -1240,9 +1232,7 @@ class CFGBuilder:
 
             if last_insn.is_jump:
                 if last_insn.jump_target and last_insn.jump_target in blocks:
-                    edge_type: EdgeType = (
-                        EdgeType.CONDITIONAL_TRUE if last_insn.is_conditional else EdgeType.UNCONDITIONAL
-                    )
+                    edge_type: EdgeType = EdgeType.CONDITIONAL_TRUE if last_insn.is_conditional else EdgeType.UNCONDITIONAL
 
                     block.successors.append(last_insn.jump_target)
                     blocks[last_insn.jump_target].predecessors.append(block_addr)
@@ -1431,9 +1421,7 @@ class CFGBuilder:
 
         self._build_dom_tree_dict(blocks, cfg)
 
-    def _find_immediate_dominator(
-        self, node: int, blocks: dict[int, BasicBlock], dominators: dict[int, set[int]]
-    ) -> None:
+    def _find_immediate_dominator(self, node: int, blocks: dict[int, BasicBlock], dominators: dict[int, set[int]]) -> None:
         """Find immediate dominator for a node.
 
         Args:
@@ -1692,15 +1680,13 @@ class CFGAnalyzer:
                 reasons.append("Binary branching pattern")
 
             if license_score >= 5:
-                license_paths.append(
-                    {
-                        "address": hex(addr),
-                        "score": license_score,
-                        "reasons": reasons,
-                        "block_type": block.block_type.value,
-                        "successors": [hex(s) for s in block.successors],
-                    }
-                )
+                license_paths.append({
+                    "address": hex(addr),
+                    "score": license_score,
+                    "reasons": reasons,
+                    "block_type": block.block_type.value,
+                    "successors": [hex(s) for s in block.successors],
+                })
 
         return license_paths
 

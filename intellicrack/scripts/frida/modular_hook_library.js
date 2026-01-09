@@ -2190,8 +2190,8 @@ const modularHookLibrary = {
                 action: 'runtime_statistic',
                 metric: 'cache_hit_rate',
                 value: `${(
-                    (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses))
-                    * 100
+                    (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses)) *
+                    100
                 ).toFixed(1)}%`,
             });
 
@@ -2852,7 +2852,7 @@ const modularHookLibrary = {
 
         // ChaCha20-Poly1305 implementation for real encryption
         encryption.chacha20Block = (key, counter, nonce) => {
-            const constants = [0x61_70_78_65, 0x33_20_64_6E, 0x79_62_2D_32, 0x6B_20_65_74];
+            const constants = [0x61_70_78_65, 0x33_20_64_6e, 0x79_62_2d_32, 0x6b_20_65_74];
             const state = new Uint32Array(16);
 
             // Initialize state
@@ -2901,10 +2901,10 @@ const modularHookLibrary = {
 
             // Generate unique key for each module
             for (let i = 0; i < 8; i++) {
-                key[i] = Math.floor(Math.random() * 0xFF_FF_FF_FF);
+                key[i] = Math.floor(Math.random() * 0xff_ff_ff_ff);
             }
             for (let i = 0; i < 3; i++) {
-                nonce[i] = Math.floor(Math.random() * 0xFF_FF_FF_FF);
+                nonce[i] = Math.floor(Math.random() * 0xff_ff_ff_ff);
             }
 
             this.encryptionKeys.set(moduleId, { key, nonce });
@@ -2922,7 +2922,7 @@ const modularHookLibrary = {
                 const keystream = this.chacha20Block(key, counter++, nonce);
                 for (let j = 0; j < 64 && i + j < codeBytes.length; j++) {
                     encrypted.push(
-                        codeBytes[i + j] ^ ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xFF)
+                        codeBytes[i + j] ^ ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xff)
                     );
                 }
             }
@@ -2939,7 +2939,7 @@ const modularHookLibrary = {
                 // Calculate checksum for integrity
                 let checksum = 0;
                 for (let i = 0; i < size; i++) {
-                    checksum = (checksum + address.add(i).readU8()) & 0xFF_FF_FF_FF;
+                    checksum = (checksum + address.add(i).readU8()) & 0xff_ff_ff_ff;
                 }
 
                 this.codeSignatures.set(address.toString(), {
@@ -2963,8 +2963,8 @@ const modularHookLibrary = {
                 try {
                     let currentChecksum = 0;
                     for (let i = 0; i < size; i++) {
-                        currentChecksum
-                            = (currentChecksum + address.add(i).readU8()) & 0xFF_FF_FF_FF;
+                        currentChecksum =
+                            (currentChecksum + address.add(i).readU8()) & 0xff_ff_ff_ff;
                     }
 
                     if (currentChecksum !== expectedChecksum) {
@@ -3012,8 +3012,8 @@ const modularHookLibrary = {
                 const keystream = this.chacha20Block(keys.key, counter++, keys.nonce);
                 for (let j = 0; j < 64 && i + j < protectedData.encrypted.length; j++) {
                     decrypted.push(
-                        protectedData.encrypted[i + j]
-                            ^ ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xFF)
+                        protectedData.encrypted[i + j] ^
+                            ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xff)
                     );
                 }
             }
@@ -3236,13 +3236,13 @@ const modularHookLibrary = {
 
             return common.length > 0
                 ? {
-                    hasConflict: true,
-                    commonDependents: common,
-                    severity: common.length / Math.max(deps1.length, deps2.length),
-                }
+                      hasConflict: true,
+                      commonDependents: common,
+                      severity: common.length / Math.max(deps1.length, deps2.length),
+                  }
                 : {
-                    hasConflict: false,
-                };
+                      hasConflict: false,
+                  };
         };
 
         this.dependencyResolver = resolver;
@@ -3558,10 +3558,10 @@ const modularHookLibrary = {
 
                         // Look for patterns indicating security checks
                         const patterns = [
-                            [0x48, 0x83, 0xEC], // sub rsp, XX (stack frame)
-                            [0x48, 0x89, 0x5C, 0x24], // mov [rsp+XX], rbx (save registers)
-                            [0xE8], // call
-                            [0xFF, 0x15], // call [rip+XX]
+                            [0x48, 0x83, 0xec], // sub rsp, XX (stack frame)
+                            [0x48, 0x89, 0x5c, 0x24], // mov [rsp+XX], rbx (save registers)
+                            [0xe8], // call
+                            [0xff, 0x15], // call [rip+XX]
                         ];
 
                         for (let i = 0; i < bytes.length - 4; i++) {
@@ -3658,7 +3658,7 @@ const modularHookLibrary = {
                     // Generation 2: Add decoy operations
                     if (generation >= 2) {
                         const decoy = Memory.alloc(16);
-                        Memory.writeU32(decoy, Math.random() * 0xFF_FF_FF_FF);
+                        Memory.writeU32(decoy, Math.random() * 0xff_ff_ff_ff);
                         Memory.readU32(decoy);
                     }
 
@@ -3879,8 +3879,8 @@ const modularHookLibrary = {
 
                 target.commits.forEach(targetCommit => {
                     if (
-                        commit.hookId === targetCommit.hookId
-                        && commit.address === targetCommit.address
+                        commit.hookId === targetCommit.hookId &&
+                        commit.address === targetCommit.address
                     ) {
                         hasConflict = true;
                         conflicts.push({

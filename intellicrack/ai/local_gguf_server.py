@@ -87,7 +87,10 @@ except Exception as e:
 
 # Check for Intel GPU support via OpenVINO
 try:
-    from openvino.runtime import Core
+    try:
+        from openvino import Core
+    except ImportError:
+        from openvino.runtime import Core
 
     HAS_OPENVINO = True
 except ImportError:

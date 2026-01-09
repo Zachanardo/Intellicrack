@@ -69,6 +69,33 @@ class FridaProtectionBypasser:
         self.script: frida.core.Script | None = None
         self.detected_protections: list[ProtectionInfo] = []
 
+    def cleanup(self) -> None:
+        """Clean up Frida session and script resources.
+
+        Safely unloads the active script and detaches the session to release
+        all instrumentation resources. Handles errors gracefully.
+
+        """
+        if self.script is not None:
+            try:
+                self.script.unload()
+            except Exception:
+                pass
+            finally:
+                self.script = None
+
+        if self.session is not None:
+            try:
+                self.session.detach()
+            except Exception:
+                pass
+            finally:
+                self.session = None
+
+    def __del__(self) -> None:
+        """Destructor to ensure Frida resources are cleaned up."""
+        self.cleanup()
+
     def attach(self) -> bool:
         """Attach to target process.
 

@@ -34,6 +34,7 @@ from typing import Any, Protocol, TypedDict, Unpack, runtime_checkable
 
 from defusedxml import ElementTree as ET
 
+
 logger = logging.getLogger(__name__)
 
 try:

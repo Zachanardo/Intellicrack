@@ -15,6 +15,7 @@ from pathlib import Path
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
+    QCloseEvent,
     QColor,
     QComboBox,
     QDialog,
@@ -32,7 +33,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QPushButton,
     QSplitter,
     QStandardItem,
-    QCloseEvent,
     QStandardItemModel,
     QSyntaxHighlighter,
     Qt,

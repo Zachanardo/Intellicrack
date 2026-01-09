@@ -567,9 +567,7 @@ class R2LicenseAnalyzer:
             if self._has_license_control_pattern(blocks):
                 lic_func.confidence *= 1.2
 
-    def _has_license_control_pattern(
-        self, blocks: list[dict[str, int | str | list[Any]]]
-    ) -> bool:
+    def _has_license_control_pattern(self, blocks: list[dict[str, int | str | list[Any]]]) -> bool:
         """Check for common license validation patterns.
 
         Args:
@@ -1000,9 +998,7 @@ class R2LicenseAnalyzer:
                 indent=2,
             )
 
-    def _find_patch_location(
-        self, lic_func: LicenseFunction
-    ) -> tuple[int | None, bytes | None]:
+    def _find_patch_location(self, lic_func: LicenseFunction) -> tuple[int | None, bytes | None]:
         """Find optimal patch location using capstone disassembly.
 
         Args:
@@ -1092,9 +1088,7 @@ class R2LicenseAnalyzer:
 
         return None, None
 
-    def _find_patch_location_fallback(
-        self, lic_func: LicenseFunction, func_bytes: list[int]
-    ) -> tuple[int | None, bytes | None]:
+    def _find_patch_location_fallback(self, lic_func: LicenseFunction, func_bytes: list[int]) -> tuple[int | None, bytes | None]:
         """Fallback instruction detection without capstone using opcode patterns.
 
         Args:

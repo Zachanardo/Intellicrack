@@ -1616,7 +1616,7 @@ class TimeManipulator:
         is_wow64 = ctypes.c_bool()
 
         # Check if this is a WOW64 process (32-bit on 64-bit Windows)
-        if hasattr(kernel32, 'IsWow64Process'):
+        if hasattr(kernel32, "IsWow64Process"):
             if kernel32.IsWow64Process(hProcess, ctypes.byref(is_wow64)):
                 # If IsWow64Process returns TRUE, it's a 32-bit process on 64-bit Windows
                 # If it returns FALSE, check system architecture
@@ -1625,18 +1625,15 @@ class TimeManipulator:
 
         # Check system architecture
         import platform
-        is_64bit_os = platform.machine().endswith('64')
+
+        is_64bit_os = platform.machine().endswith("64")
 
         # If running on 64-bit OS and not WOW64, it's 64-bit
         # If running on 32-bit OS, it's 32-bit
         return is_64bit_os and not is_wow64.value
 
     def _resolve_target_process_functions(
-        self,
-        hProcess: int,
-        pid: int,
-        kernel32_base: int,
-        function_names: list[bytes]
+        self, hProcess: int, pid: int, kernel32_base: int, function_names: list[bytes]
     ) -> list[int | None]:
         """Resolve function addresses in target process accounting for ASLR.
 
@@ -1678,12 +1675,7 @@ class TimeManipulator:
         # Get host process handle
         host_process = kernel32.GetCurrentProcess()
 
-        if not psapi.GetModuleInformation(
-            host_process,
-            host_kernel32_handle,
-            ctypes.byref(host_module_info),
-            ctypes.sizeof(MODULEINFO)
-        ):
+        if not psapi.GetModuleInformation(host_process, host_kernel32_handle, ctypes.byref(host_module_info), ctypes.sizeof(MODULEINFO)):
             logger.warning("Failed to get kernel32.dll module information in host process")
             return [None] * len(function_names)
 
@@ -1707,11 +1699,7 @@ class TimeManipulator:
                 target_func_addr = kernel32_base + func_rva
 
                 logger.debug(
-                    "Resolved '%s': Host=0x%X, RVA=0x%X, Target=0x%X",
-                    func_name.decode(),
-                    host_func_addr,
-                    func_rva,
-                    target_func_addr
+                    "Resolved '%s': Host=0x%X, RVA=0x%X, Target=0x%X", func_name.decode(), host_func_addr, func_rva, target_func_addr
                 )
 
                 resolved_addresses.append(target_func_addr)
@@ -1744,11 +1732,7 @@ class TimeManipulator:
         PROCESS_QUERY_INFORMATION = 0x0400
         PROCESS_VM_READ = 0x0010
 
-        hProcess = kernel32.OpenProcess(
-            PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-            False,
-            pid
-        )
+        hProcess = kernel32.OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, pid)
 
         if not hProcess:
             error_code = kernel32.GetLastError()
@@ -1761,12 +1745,7 @@ class TimeManipulator:
             hModules = (wintypes.HMODULE * max_modules)()
             needed = wintypes.DWORD()
 
-            if not psapi.EnumProcessModules(
-                hProcess,
-                ctypes.byref(hModules),
-                ctypes.sizeof(hModules),
-                ctypes.byref(needed)
-            ):
+            if not psapi.EnumProcessModules(hProcess, ctypes.byref(hModules), ctypes.sizeof(hModules), ctypes.byref(needed)):
                 error_code = kernel32.GetLastError()
                 logger.warning("EnumProcessModules failed for PID %d (error %d)", pid, error_code)
                 return modules
@@ -1779,12 +1758,7 @@ class TimeManipulator:
 
                 # Get module name
                 module_name_buffer = ctypes.create_unicode_buffer(260)
-                if psapi.GetModuleBaseNameW(
-                    hProcess,
-                    hModule,
-                    module_name_buffer,
-                    ctypes.sizeof(module_name_buffer)
-                ):
+                if psapi.GetModuleBaseNameW(hProcess, hModule, module_name_buffer, ctypes.sizeof(module_name_buffer)):
                     module_name = module_name_buffer.value
 
                     # Get module information
@@ -1796,24 +1770,13 @@ class TimeManipulator:
                         ]
 
                     module_info = MODULEINFO()
-                    if psapi.GetModuleInformation(
-                        hProcess,
-                        hModule,
-                        ctypes.byref(module_info),
-                        ctypes.sizeof(MODULEINFO)
-                    ):
+                    if psapi.GetModuleInformation(hProcess, hModule, ctypes.byref(module_info), ctypes.sizeof(MODULEINFO)):
                         base_addr = module_info.lpBaseOfDll
                         size = module_info.SizeOfImage
 
                         modules[module_name.lower()] = (base_addr, size)
 
-                        logger.debug(
-                            "Found module '%s' at 0x%X (size: 0x%X) in PID %d",
-                            module_name,
-                            base_addr,
-                            size,
-                            pid
-                        )
+                        logger.debug("Found module '%s' at 0x%X (size: 0x%X) in PID %d", module_name, base_addr, size, pid)
 
         except Exception as e:
             logger.warning("Error enumerating modules for PID %d: %s", pid, e)
@@ -2157,10 +2120,7 @@ class TimeManipulator:
 
                     # Get function addresses in target process using ASLR-aware resolution
                     target_func_addrs = self._resolve_target_process_functions(
-                        hProcess,
-                        pid,
-                        kernel32_base,
-                        [name for name, _ in functions_to_hook]
+                        hProcess, pid, kernel32_base, [name for name, _ in functions_to_hook]
                     )
 
                     # Apply hooks to resolved addresses
@@ -2170,7 +2130,7 @@ class TimeManipulator:
                                 "Hooking function '%s' at 0x%X (target process) with hook at 0x%X",
                                 func_name.decode(),
                                 target_func_addr,
-                                hook_addr
+                                hook_addr,
                             )
 
                             # Determine architecture and build appropriate JMP hook
@@ -2195,11 +2155,7 @@ class TimeManipulator:
                                 PAGE_EXECUTE_READWRITE,
                                 ctypes.byref(old_protect),
                             ):
-                                logger.warning(
-                                    "Failed to change protection for '%s' at 0x%X",
-                                    func_name.decode(),
-                                    target_func_addr
-                                )
+                                logger.warning("Failed to change protection for '%s' at 0x%X", func_name.decode(), target_func_addr)
                                 continue
 
                             # Write hook
@@ -2210,11 +2166,7 @@ class TimeManipulator:
                                 len(jmp_code),
                                 ctypes.byref(bytes_written),
                             ):
-                                logger.warning(
-                                    "Failed to write hook for '%s' at 0x%X",
-                                    func_name.decode(),
-                                    target_func_addr
-                                )
+                                logger.warning("Failed to write hook for '%s' at 0x%X", func_name.decode(), target_func_addr)
                                 continue
 
                             # Restore protection
@@ -2227,10 +2179,7 @@ class TimeManipulator:
                             )
                             logger.debug("Successfully hooked '%s'.", func_name.decode())
                         else:
-                            logger.warning(
-                                "Failed to resolve address for '%s' in target process",
-                                func_name.decode()
-                            )
+                            logger.warning("Failed to resolve address for '%s' in target process", func_name.decode())
 
                 return True
 

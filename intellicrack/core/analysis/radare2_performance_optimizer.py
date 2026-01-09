@@ -619,9 +619,7 @@ class R2PerformanceOptimizer:
             self.logger.info("Resource monitoring started")
 
     def stop_monitoring(self) -> None:
-        """Stop resource monitoring.
-
-        """
+        """Stop resource monitoring."""
         self._monitoring = False
         if self._monitor_thread:
             self._monitor_thread.join(timeout=5)

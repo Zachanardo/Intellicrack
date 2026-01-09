@@ -60,9 +60,9 @@ const Http3QuicInterceptor = {
         // QUIC versions to support
         versions: [
             0x00_00_00_01, // QUIC version 1 (RFC 9000)
-            0xFF_00_00_1D, // draft-29
-            0xFF_00_00_1C, // draft-28
-            0xFF_00_00_1B, // draft-27
+            0xff_00_00_1d, // draft-29
+            0xff_00_00_1c, // draft-28
+            0xff_00_00_1b, // draft-27
         ],
 
         // License-related headers to intercept
@@ -695,7 +695,7 @@ const Http3QuicInterceptor = {
                         if (sa_family === 2) {
                             // AF_INET
                             let port = dest_addr.add(2).readU16();
-                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
+                            port = ((port & 0xff) << 8) | ((port & 0xff_00) >> 8);
 
                             if (self.config.quicPorts.includes(port)) {
                                 // Check for QUIC packet
@@ -739,7 +739,7 @@ const Http3QuicInterceptor = {
                             if (sa_family === 2) {
                                 // AF_INET
                                 let port = addr.add(2).readU16();
-                                port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
+                                port = ((port & 0xff) << 8) | ((port & 0xff_00) >> 8);
 
                                 if (self.config.quicPorts.includes(port)) {
                                     const firstByte = this.buf.readU8();
@@ -862,7 +862,7 @@ const Http3QuicInterceptor = {
         // 0x04 = SETTINGS
         // 0x05 = PUSH_PROMISE
         // 0x07 = GOAWAY
-        return frameType <= 0x0F;
+        return frameType <= 0x0f;
     },
 
     // Check if data is license-related
@@ -1044,8 +1044,8 @@ const Http3QuicInterceptor = {
                     const statusInt = Number.parseInt(status, 10);
 
                     if (this.config.responseMods.statusCodes[statusInt]) {
-                        const newStatus
-                            = this.config.responseMods.statusCodes[statusInt].toString();
+                        const newStatus =
+                            this.config.responseMods.statusCodes[statusInt].toString();
                         const newStatusBuf = Memory.allocUtf8String(newStatus);
 
                         header.add(Process.pointerSize).writePointer(newStatusBuf);
@@ -1168,17 +1168,17 @@ const Http3QuicInterceptor = {
         // Extended QUIC versions including latest standards
         this.modernQuicVersions = [
             // QUIC v2 (RFC 9369)
-            0x6B_33_43_CF,
+            0x6b_33_43_cf,
             // QUIC v1 (RFC 9000)
             0x00_00_00_01,
             // Experimental versions (2024-2025)
-            0xFF_00_00_30, // draft-48
-            0xFF_00_00_2F, // draft-47
-            0xFF_00_00_2E, // draft-46
-            0xFA_CE_B0_02, // Facebook's QUIC
-            0x51_47_4F_2E, // Google QUIC experimental
-            0x4D_53_51_43, // Microsoft experimental
-            0x43_4C_44_46, // Cloudflare experimental
+            0xff_00_00_30, // draft-48
+            0xff_00_00_2f, // draft-47
+            0xff_00_00_2e, // draft-46
+            0xfa_ce_b0_02, // Facebook's QUIC
+            0x51_47_4f_2e, // Google QUIC experimental
+            0x4d_53_51_43, // Microsoft experimental
+            0x43_4c_44_46, // Cloudflare experimental
         ];
 
         // Version negotiation packet detection
@@ -1281,7 +1281,7 @@ const Http3QuicInterceptor = {
                         });
 
                         // Prevent connection close for license-related errors
-                        if (reasonCode >= 0x2_00 && reasonCode <= 0x2_0F) {
+                        if (reasonCode >= 0x2_00 && reasonCode <= 0x2_0f) {
                             send({
                                 type: 'bypass',
                                 target: 'http3_quic_interceptor',
@@ -1355,7 +1355,7 @@ const Http3QuicInterceptor = {
         });
 
         // Priority Update Frame Type = 0x0F
-        this.PRIORITY_UPDATE_FRAME = 0x0F;
+        this.PRIORITY_UPDATE_FRAME = 0x0f;
 
         // HTTP/3 Priority levels
         this.priorityLevels = {
@@ -1678,9 +1678,9 @@ const Http3QuicInterceptor = {
 
             checkForRebinding(sourceIp, sourcePort) {
                 if (
-                    this.lastSourceIp
-                    && this.lastSourcePort
-                    && (this.lastSourceIp !== sourceIp || this.lastSourcePort !== sourcePort)
+                    this.lastSourceIp &&
+                    this.lastSourcePort &&
+                    (this.lastSourceIp !== sourceIp || this.lastSourcePort !== sourcePort)
                 ) {
                     this.rebindingCount++;
 
@@ -1717,11 +1717,11 @@ const Http3QuicInterceptor = {
                             if (family === 2) {
                                 // AF_INET
                                 let port = addr.add(2).readU16();
-                                port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
+                                port = ((port & 0xff) << 8) | ((port & 0xff_00) >> 8);
                                 const ip = addr.add(4).readU32();
-                                const ipStr = `${(ip >> 24) & 0xFF}.${(ip >> 16) & 0xFF}.${
-                                    (ip >> 8) & 0xFF
-                                }.${ip & 0xFF}`;
+                                const ipStr = `${(ip >> 24) & 0xff}.${(ip >> 16) & 0xff}.${
+                                    (ip >> 8) & 0xff
+                                }.${ip & 0xff}`;
 
                                 if (self.natRebindingDetector.checkForRebinding(ipStr, port)) {
                                     send({
@@ -2233,10 +2233,10 @@ const Http3QuicInterceptor = {
                     const dataLen = args[2] ? args[2].toInt32() : 0;
 
                     if (
-                        streamId
-                        && data
-                        && dataLen > 0
-                        && this.serverPushState.pushStreams[streamId]
+                        streamId &&
+                        data &&
+                        dataLen > 0 &&
+                        this.serverPushState.pushStreams[streamId]
                     ) {
                         const pushStream = this.serverPushState.pushStreams[streamId];
                         pushStream.bytesReceived += dataLen;
@@ -2404,11 +2404,11 @@ const Http3QuicInterceptor = {
 
                             const licenseHeaders = headers.filter(
                                 h =>
-                                    h.name.toLowerCase().includes('license')
-                                    || h.name.toLowerCase().includes('activation')
-                                    || h.name.toLowerCase().includes('auth')
-                                    || h.value.toLowerCase().includes('license')
-                                    || h.value.toLowerCase().includes('activation')
+                                    h.name.toLowerCase().includes('license') ||
+                                    h.name.toLowerCase().includes('activation') ||
+                                    h.name.toLowerCase().includes('auth') ||
+                                    h.value.toLowerCase().includes('license') ||
+                                    h.value.toLowerCase().includes('activation')
                             );
 
                             if (licenseHeaders.length > 0) {
@@ -2428,8 +2428,8 @@ const Http3QuicInterceptor = {
 
                                 licenseHeaders.forEach(header => {
                                     if (
-                                        header.value.includes('expired')
-                                        || header.value.includes('invalid')
+                                        header.value.includes('expired') ||
+                                        header.value.includes('invalid')
                                     ) {
                                         const modifiedHeaders = [...headers];
                                         const headerIndex = modifiedHeaders.findIndex(
@@ -2474,10 +2474,10 @@ const Http3QuicInterceptor = {
                                     let headerValue = header.value ? header.value.toString() : '';
 
                                     if (
-                                        (headerName.toLowerCase().includes('license')
-                                            || headerName.toLowerCase().includes('activation'))
-                                        && (headerValue.includes('check')
-                                            || headerValue.includes('validate'))
+                                        (headerName.toLowerCase().includes('license') ||
+                                            headerName.toLowerCase().includes('activation')) &&
+                                        (headerValue.includes('check') ||
+                                            headerValue.includes('validate'))
                                     ) {
                                         headerValue = headerValue
                                             .replaceAll(/check/gi, 'bypass')
@@ -2523,8 +2523,8 @@ const Http3QuicInterceptor = {
                             const value = headerField.value ? headerField.value.toString() : '';
 
                             if (
-                                name.toLowerCase().includes('license')
-                                && (value.includes('expired') || value.includes('invalid'))
+                                name.toLowerCase().includes('license') &&
+                                (value.includes('expired') || value.includes('invalid'))
                             ) {
                                 const HeaderField = Java.use(
                                     'com.android.org.conscrypt.ct.HeaderField'
@@ -2580,8 +2580,8 @@ const Http3QuicInterceptor = {
                 const NetworkPath = Java.use('com.android.org.conscrypt.QuicNetworkPath');
 
                 if (CongestionController) {
-                    CongestionController.onCongestionEvent.overload('long', 'int').implementation
-                        = function (timestamp, congestionType) {
+                    CongestionController.onCongestionEvent.overload('long', 'int').implementation =
+                        function (timestamp, congestionType) {
                             try {
                                 if (congestionType === 3) {
                                     send({
@@ -2749,10 +2749,10 @@ const Http3QuicInterceptor = {
                             const payloadStr = payload ? Java.array('byte', payload).join('') : '';
 
                             if (
-                                payloadStr.includes('license')
-                                || payloadStr.includes('activation')
-                                || payloadStr.includes('validation')
-                                || protocol.includes('license')
+                                payloadStr.includes('license') ||
+                                payloadStr.includes('activation') ||
+                                payloadStr.includes('validation') ||
+                                protocol.includes('license')
                             ) {
                                 const modifiedPayload = payloadStr
                                     .replaceAll(/license.*?expired/gi, 'license_valid')
@@ -2795,8 +2795,8 @@ const Http3QuicInterceptor = {
                                 : '';
 
                             if (
-                                responseStr.includes('license')
-                                && (status === 403 || status === 401 || status === 402)
+                                responseStr.includes('license') &&
+                                (status === 403 || status === 401 || status === 402)
                             ) {
                                 send({
                                     type: 'bypass',
@@ -2833,8 +2833,8 @@ const Http3QuicInterceptor = {
                     ).implementation = function (protocolValue) {
                         try {
                             if (
-                                protocolValue.includes('license-check')
-                                || protocolValue.includes('activation-verify')
+                                protocolValue.includes('license-check') ||
+                                protocolValue.includes('activation-verify')
                             ) {
                                 const bypassedProtocol = protocolValue
                                     .replaceAll(/license-check/gi, 'license-bypass')
@@ -2865,9 +2865,9 @@ const Http3QuicInterceptor = {
                     ).implementation = function (protocol) {
                         try {
                             if (
-                                protocol.includes('license')
-                                || protocol.includes('drm')
-                                || protocol.includes('protection')
+                                protocol.includes('license') ||
+                                protocol.includes('drm') ||
+                                protocol.includes('protection')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -2897,9 +2897,9 @@ const Http3QuicInterceptor = {
 
                             const licenseProtocols = protocols.filter(
                                 p =>
-                                    p.includes('license')
-                                    || p.includes('activation')
-                                    || p.includes('drm')
+                                    p.includes('license') ||
+                                    p.includes('activation') ||
+                                    p.includes('drm')
                             );
 
                             if (licenseProtocols.length > 0) {
@@ -2958,10 +2958,10 @@ const Http3QuicInterceptor = {
                             const address = remoteAddress.toString();
 
                             if (
-                                address.includes('licensing')
-                                || address.includes('activation')
-                                || address.includes('drm')
-                                || address.includes('validation')
+                                address.includes('licensing') ||
+                                address.includes('activation') ||
+                                address.includes('drm') ||
+                                address.includes('validation')
                             ) {
                                 const originalPort = remoteAddress.getPort();
                                 let alternativePort;
@@ -3027,8 +3027,8 @@ const Http3QuicInterceptor = {
                             const pathInfo = path ? path.toString() : '';
 
                             if (
-                                pathInfo.includes('license-server')
-                                || pathInfo.includes('activation-service')
+                                pathInfo.includes('license-server') ||
+                                pathInfo.includes('activation-service')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3055,8 +3055,8 @@ const Http3QuicInterceptor = {
                             const pathStr = failedPath ? failedPath.toString() : '';
 
                             if (
-                                pathStr.includes('license')
-                                && (errorCode === 404 || errorCode === 403 || errorCode === 401)
+                                pathStr.includes('license') &&
+                                (errorCode === 404 || errorCode === 403 || errorCode === 401)
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3085,10 +3085,10 @@ const Http3QuicInterceptor = {
                             const endpoint = remoteEndpoint.toString();
 
                             if (
-                                endpoint.includes('license')
-                                || endpoint.includes('activation')
-                                || endpoint.includes('validation')
-                                || endpoint.includes('drm')
+                                endpoint.includes('license') ||
+                                endpoint.includes('activation') ||
+                                endpoint.includes('validation') ||
+                                endpoint.includes('drm')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3117,8 +3117,8 @@ const Http3QuicInterceptor = {
                             const addressStr = address.toString();
 
                             if (
-                                addressStr.includes('licensing')
-                                || addressStr.includes('activation')
+                                addressStr.includes('licensing') ||
+                                addressStr.includes('activation')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3176,12 +3176,12 @@ const Http3QuicInterceptor = {
                                 const issuer = cert.getIssuerDN().toString();
 
                                 if (
-                                    subject.includes('license')
-                                    || subject.includes('activation')
-                                    || subject.includes('drm')
-                                    || issuer.includes('license')
-                                    || issuer.includes('activation')
-                                    || issuer.includes('drm')
+                                    subject.includes('license') ||
+                                    subject.includes('activation') ||
+                                    subject.includes('drm') ||
+                                    issuer.includes('license') ||
+                                    issuer.includes('activation') ||
+                                    issuer.includes('drm')
                                 ) {
                                     send({
                                         type: 'bypass',
@@ -3217,11 +3217,11 @@ const Http3QuicInterceptor = {
                     ).implementation = function (chain, authType, host) {
                         try {
                             if (
-                                host
-                                && (host.includes('license')
-                                    || host.includes('activation')
-                                    || host.includes('drm')
-                                    || host.includes('protection'))
+                                host &&
+                                (host.includes('license') ||
+                                    host.includes('activation') ||
+                                    host.includes('drm') ||
+                                    host.includes('protection'))
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3240,10 +3240,10 @@ const Http3QuicInterceptor = {
                                     const subject = cert.getSubjectDN().toString().toLowerCase();
 
                                     if (
-                                        subject.includes('license')
-                                        || subject.includes('activation')
-                                        || subject.includes('drm')
-                                        || subject.includes('protection')
+                                        subject.includes('license') ||
+                                        subject.includes('activation') ||
+                                        subject.includes('drm') ||
+                                        subject.includes('protection')
                                     ) {
                                         send({
                                             type: 'bypass',
@@ -3278,9 +3278,9 @@ const Http3QuicInterceptor = {
                             const subject = cert.getSubjectDN().toString().toLowerCase();
 
                             if (
-                                subject.includes('license')
-                                || subject.includes('activation')
-                                || subject.includes('drm')
+                                subject.includes('license') ||
+                                subject.includes('activation') ||
+                                subject.includes('drm')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3319,9 +3319,9 @@ const Http3QuicInterceptor = {
                                             .toLowerCase();
 
                                         if (
-                                            subject.includes('license')
-                                            || subject.includes('activation')
-                                            || subject.includes('drm')
+                                            subject.includes('license') ||
+                                            subject.includes('activation') ||
+                                            subject.includes('drm')
                                         ) {
                                             hasLicenseCert = true;
                                             break;
@@ -3377,8 +3377,8 @@ const Http3QuicInterceptor = {
                 }
 
                 const SSLContext = Java.use('javax.net.ssl.SSLContext');
-                const originalGetInstanceMethod
-                    = SSLContext.getInstance.overload('java.lang.String');
+                const originalGetInstanceMethod =
+                    SSLContext.getInstance.overload('java.lang.String');
 
                 SSLContext.getInstance.overload('java.lang.String').implementation = function (
                     protocol

@@ -379,7 +379,7 @@ class R2UIManager(QObject):
                     )
                     # Enforce history size limit to prevent memory growth
                     if len(self.analysis_history) > self._max_history_size:
-                        self.analysis_history = self.analysis_history[-self._max_history_size:]
+                        self.analysis_history = self.analysis_history[-self._max_history_size :]
 
                     # Emit signal
                     self.analysis_started.emit(analysis_type)

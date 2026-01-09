@@ -21,9 +21,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import os
-import re
-import shutil
-import subprocess
 import sys
 import time
 from dataclasses import asdict, dataclass
@@ -38,8 +35,6 @@ logger = logging.getLogger(__name__)
 
 # Platform detection
 IS_WINDOWS = sys.platform.startswith("win")
-IS_LINUX = sys.platform.startswith("linux")
-IS_MACOS = sys.platform.startswith("darwin")
 
 # Windows registry imports
 if IS_WINDOWS:
@@ -85,7 +80,7 @@ class ProgramInfo:
 class ProgramDiscoveryEngine:
     """Engine for discovering installed programs and potential analysis targets."""
 
-    # Common executable directories for different platforms
+    # Common executable directories for Windows
     COMMON_EXECUTABLE_DIRS: dict[str, list[str]] = {
         "windows": [
             r"C:\Program Files",
@@ -95,23 +90,6 @@ class ProgramDiscoveryEngine:
             r"C:\Windows\SysWOW64",
             r"C:\Users\{username}\AppData\Local",
             r"C:\Users\{username}\AppData\Roaming",
-        ],
-        "linux": [
-            "/usr/bin",
-            "/usr/local/bin",
-            "/opt",
-            "/snap",
-            "/usr/share",
-            "/home/{username}/.local/bin",
-            "/home/{username}/bin",
-        ],
-        "macos": [
-            "/Applications",
-            "/System/Applications",
-            "/usr/local/bin",
-            "/opt",
-            "/Users/{username}/Applications",
-            "/Users/{username}/.local/bin",
         ],
     }
 
@@ -233,11 +211,8 @@ class ProgramDiscoveryEngine:
             version = "Unknown"
             publisher = "Unknown"
 
-            if executable_path and executable_path.exists():
-                if IS_WINDOWS:
-                    version, publisher = self._get_windows_version_info(executable_path)
-                else:
-                    version, publisher = self._get_unix_version_info(executable_path)
+            if executable_path and executable_path.exists() and IS_WINDOWS:
+                version, publisher = self._get_windows_version_info(executable_path)
 
             # Analyze installation folder for additional info
             folder_analysis = self._analyze_installation_folder(install_location)
@@ -313,10 +288,6 @@ class ProgramDiscoveryEngine:
 
         if IS_WINDOWS:
             programs.extend(self._get_windows_programs())
-        elif IS_LINUX:
-            programs.extend(self._get_linux_programs())
-        elif IS_MACOS:
-            programs.extend(self._get_macos_programs())
 
         return programs
 
@@ -329,15 +300,10 @@ class ProgramDiscoveryEngine:
         """
         programs: list[ProgramInfo] = []
 
-        # Get platform-specific directories
-        if IS_WINDOWS:
-            dirs = self.COMMON_EXECUTABLE_DIRS["windows"]
-        elif IS_LINUX:
-            dirs = self.COMMON_EXECUTABLE_DIRS["linux"]
-        elif IS_MACOS:
-            dirs = self.COMMON_EXECUTABLE_DIRS["macos"]
-        else:
+        if not IS_WINDOWS:
             return programs
+
+        dirs = self.COMMON_EXECUTABLE_DIRS["windows"]
 
         # Substitute {username} token with actual username in directory paths
         username = os.environ.get("USER", os.environ.get("USERNAME", "user"))
@@ -579,34 +545,6 @@ class ProgramDiscoveryEngine:
 
         return "Unknown", "Unknown"
 
-    def _get_unix_version_info(self, exe_path: Path) -> tuple[str, str]:
-        """Get version and publisher info from Unix executable.
-
-        Args:
-            exe_path: Path to Unix executable file.
-
-        Returns:
-            Tuple of (version, publisher) strings. Returns ("Unknown", "Unknown") if extraction fails.
-
-        """
-        try:
-            # Try to get version from --version flag
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                [str(exe_path), "--version"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            if result.returncode == 0 and result.stdout:
-                version_line = result.stdout.split("\n")[0]
-                if version_match := re.search(r"(\d+\.\d+\.\d+)", version_line):
-                    return version_match[1], "Unknown"
-        except Exception as e:
-            self.logger.debug("Error getting Unix version info for %s: %s", exe_path, e)
-
-        return "Unknown", "Unknown"
-
     def _calculate_analysis_priority(self, program_name: str, install_path: str) -> int:
         """Calculate analysis priority for a program.
 
@@ -647,163 +585,6 @@ class ProgramDiscoveryEngine:
                 continue
 
             programs.extend(self._scan_registry_path(hkey, path, False))
-
-        return programs
-
-    def _get_linux_programs(self) -> list[ProgramInfo]:
-        """Get Linux programs from package managers.
-
-        Returns:
-            List of installed programs from dpkg and rpm package managers.
-
-        """
-        programs = []
-
-        # Try different package managers
-        try:
-            if dpkg_path := shutil.which("dpkg"):
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                    [dpkg_path, "-l"],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=30,
-                    shell=False,  # Explicitly secure - using list format prevents shell injection
-                )
-                if result.returncode == 0:
-                    programs.extend(self._parse_dpkg_output(result.stdout))
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            self.logger.exception("Error in program_discovery: %s", e)
-
-        try:
-            if rpm_path := shutil.which("rpm"):
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                    [rpm_path, "-qa"],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=30,
-                    shell=False,  # Explicitly secure - using list format prevents shell injection
-                )
-                if result.returncode == 0:
-                    programs.extend(self._parse_rpm_output(result.stdout))
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            self.logger.exception("Error in program_discovery: %s", e)
-
-        return programs
-
-    def _get_macos_programs(self) -> list[ProgramInfo]:
-        """Get macOS programs from Applications folder.
-
-        Returns:
-            List of applications found in macOS Applications directories.
-
-        """
-        programs = []
-
-        app_dirs = ["/Applications", "/System/Applications"]
-        if user_home := os.path.expanduser("~"):
-            app_dirs.append(os.path.join(user_home, "Applications"))
-
-        for app_dir in app_dirs:
-            if os.path.exists(app_dir):
-                try:
-                    for item in os.listdir(app_dir):
-                        if item.endswith(".app"):
-                            app_path = os.path.join(app_dir, item)
-                            if program := self.analyze_program_from_path(app_path):
-                                programs.append(program)
-                except PermissionError as e:
-                    self.logger.exception("Permission error in program_discovery: %s", e)
-                    continue
-
-        return programs
-
-    def _parse_dpkg_output(self, output: str) -> list[ProgramInfo]:
-        """Parse dpkg output to extract program information.
-
-        Args:
-            output: Raw dpkg -l command output string.
-
-        Returns:
-            List of installed programs extracted from dpkg output.
-
-        """
-        programs = []
-
-        for line in output.split("\n")[5:]:  # Skip header lines
-            if line.startswith("ii"):  # Installed packages
-                parts = line.split()
-                if len(parts) >= 4:
-                    name = parts[1]
-                    version = parts[2]
-                    description = " ".join(parts[3:])
-
-                    programs.append(
-                        ProgramInfo(
-                            name=name,
-                            display_name=name,
-                            version=version,
-                            publisher="Unknown",
-                            install_location="/usr",
-                            executable_paths=[],
-                            icon_path=None,
-                            uninstall_string=f"apt remove {name}",
-                            install_date=None,
-                            estimated_size=None,
-                            architecture="Unknown",
-                            file_types=[],
-                            description=description,
-                            registry_key=None,
-                            discovery_method="dpkg",
-                            confidence_score=0.9,
-                            analysis_priority=self._calculate_analysis_priority(name, "/usr"),
-                        ),
-                    )
-
-        return programs
-
-    def _parse_rpm_output(self, output: str) -> list[ProgramInfo]:
-        """Parse rpm output to extract program information.
-
-        Args:
-            output: Raw rpm -qa command output string.
-
-        Returns:
-            List of installed programs extracted from rpm output.
-
-        """
-        programs = []
-
-        for line in output.split("\n"):
-            if line.strip():
-                if match := re.match(r"^(.+?)-([^-]+)-([^-]+)\.(.+)$", line.strip()):
-                    name = match[1]
-                    version = match[2]
-                    release = match[3]
-                    arch = match[4]
-
-                    programs.append(
-                        ProgramInfo(
-                            name=name,
-                            display_name=name,
-                            version=f"{version}-{release}",
-                            publisher="Unknown",
-                            install_location="/usr",
-                            executable_paths=[],
-                            icon_path=None,
-                            uninstall_string=f"rpm -e {name}",
-                            install_date=None,
-                            estimated_size=None,
-                            architecture=arch,
-                            file_types=[],
-                            description=f"RPM package {name}",
-                            registry_key=None,
-                            discovery_method="rpm",
-                            confidence_score=0.9,
-                            analysis_priority=self._calculate_analysis_priority(name, "/usr"),
-                        ),
-                    )
 
         return programs
 

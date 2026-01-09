@@ -19,14 +19,8 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 
 from .config import TIMEOUT, WORKING_DIR
-from .tools.config_linters import register_config_linter_tools
 from .tools.formatters import register_formatter_tools
-from .tools.java_tools import register_java_tools
-from .tools.js_tools import register_js_tools
-from .tools.python_complexity import register_complexity_tools
-from .tools.python_dead_code import register_dead_code_tools
 from .tools.python_linting import register_python_linting_tools
-from .tools.rust_tools import register_rust_tools
 from .tools.testing import register_testing_tools
 from .tools.vcs import register_vcs_tools
 
@@ -104,11 +98,8 @@ def log_tool_invocation(
 
 
 _TOOL_NAMES = frozenset({
-    "ruff", "mypy", "pyright", "bandit", "flake8", "vulture",
-    "pytest", "coverage", "git", "cargo", "rustfmt", "clippy",
-    "eslint", "biome", "knip", "prettier", "markdownlint",
-    "yamllint", "shellcheck", "radon", "xenon", "dead",
-    "uncalled", "deadcode", "pydocstyle", "darglint", "ty",
+    "ruff", "mypy", "bandit", "pydocstyle", "darglint",
+    "pytest", "coverage", "git",
 })
 
 
@@ -117,11 +108,6 @@ def _detect_tool_name(args: list[str]) -> str | None:
     for arg in args:
         if arg in _TOOL_NAMES:
             return arg
-        arg_lower = arg.lower()
-        if "pmd" in arg_lower:
-            return "pmd"
-        if "checkstyle" in arg_lower:
-            return "checkstyle"
     return None
 
 
@@ -276,12 +262,6 @@ def error_result(message: str) -> dict[str, Any]:
 
 register_python_linting_tools(mcp, run_command, error_result)
 register_formatter_tools(mcp, run_command, error_result)
-register_rust_tools(mcp, run_command, error_result)
-register_js_tools(mcp, run_command, error_result)
-register_java_tools(mcp, run_command, error_result)
-register_config_linter_tools(mcp, run_command, error_result)
-register_complexity_tools(mcp, run_command, error_result)
-register_dead_code_tools(mcp, run_command, error_result)
 register_testing_tools(mcp, run_command, error_result)
 register_vcs_tools(mcp, run_command, error_result)
 

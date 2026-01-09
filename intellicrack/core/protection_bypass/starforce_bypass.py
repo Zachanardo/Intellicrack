@@ -962,7 +962,7 @@ class StarForceBypass:
         )
 
     def _spoof_disk_serial(self) -> bool:
-        """Spoof disk volume serial number.
+        r"""Spoof disk volume serial number.
 
         Modifies the registry entry for disk enumeration to present an alternate
         disk serial number to the system. Updates the SYSTEM\CurrentControlSet\Services\Disk\Enum
@@ -1025,7 +1025,7 @@ class StarForceBypass:
             return False
 
     def _spoof_cpu_id(self) -> bool:
-        """Spoof CPU identification.
+        r"""Spoof CPU identification.
 
         Modifies processor registry entries to present alternate CPU identification
         strings to the system. Updates the HARDWARE\DESCRIPTION\System\CentralProcessor

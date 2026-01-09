@@ -310,9 +310,7 @@ class UIConfigManager:
         self.layout = self._load_config_section(ui_config, "layout", LayoutConfig, LayoutConfig())
         self.editor = self._load_config_section(ui_config, "editor", EditorConfig, EditorConfig())
         self.animation = self._load_config_section(ui_config, "animation", AnimationConfig, AnimationConfig())
-        self.accessibility = self._load_config_section(
-            ui_config, "accessibility", AccessibilityConfig, AccessibilityConfig()
-        )
+        self.accessibility = self._load_config_section(ui_config, "accessibility", AccessibilityConfig, AccessibilityConfig())
 
         # Load custom themes
         self.custom_themes = {}

@@ -412,9 +412,7 @@ class HexViewerWidget(QWidget):
         """Set focus to the search box."""
         self.search_box.setFocus()
 
-    def _add_export_actions_to_menu(
-        self, menu: QMenu, *, has_selection: bool, has_data: bool
-    ) -> None:
+    def _add_export_actions_to_menu(self, menu: QMenu, *, has_selection: bool, has_data: bool) -> None:
         """Add export-related actions to the context menu.
 
         Args:
@@ -454,7 +452,7 @@ class HexViewerWidget(QWidget):
         if self.selection_start < 0 or self.selection_end <= self.selection_start:
             return
 
-        selected_data = self.data[self.selection_start:self.selection_end]
+        selected_data = self.data[self.selection_start : self.selection_end]
         hex_str = " ".join(f"{b:02X}" for b in selected_data)
 
         clipboard = QApplication.clipboard()
@@ -469,11 +467,8 @@ class HexViewerWidget(QWidget):
         if self.selection_start < 0 or self.selection_end <= self.selection_start:
             return
 
-        selected_data = self.data[self.selection_start:self.selection_end]
-        ascii_str = "".join(
-            chr(b) if ASCII_PRINTABLE_START <= b <= ASCII_PRINTABLE_END else "."
-            for b in selected_data
-        )
+        selected_data = self.data[self.selection_start : self.selection_end]
+        ascii_str = "".join(chr(b) if ASCII_PRINTABLE_START <= b <= ASCII_PRINTABLE_END else "." for b in selected_data)
 
         clipboard = QApplication.clipboard()
         if clipboard:
@@ -487,10 +482,10 @@ class HexViewerWidget(QWidget):
         if self.selection_start < 0 or self.selection_end <= self.selection_start:
             return
 
-        selected_data = self.data[self.selection_start:self.selection_end]
+        selected_data = self.data[self.selection_start : self.selection_end]
         lines: list[str] = []
         for i in range(0, len(selected_data), 16):
-            chunk = selected_data[i:i + 16]
+            chunk = selected_data[i : i + 16]
             hex_values = ", ".join(f"0x{b:02X}" for b in chunk)
             lines.append(f"    {hex_values},")
 
@@ -508,7 +503,7 @@ class HexViewerWidget(QWidget):
         if self.selection_start < 0 or self.selection_end <= self.selection_start:
             return
 
-        selected_data = self.data[self.selection_start:self.selection_end]
+        selected_data = self.data[self.selection_start : self.selection_end]
         hex_str = "".join(f"\\x{b:02x}" for b in selected_data)
         python_bytes = f'b"{hex_str}"'
 
@@ -541,7 +536,7 @@ class HexViewerWidget(QWidget):
         end_pos = min(self.selection_start + len(new_bytes), len(self.data))
         bytes_to_write = end_pos - self.selection_start
 
-        self.data[self.selection_start:end_pos] = new_bytes[:bytes_to_write]
+        self.data[self.selection_start : end_pos] = new_bytes[:bytes_to_write]
         self.data_modified.emit(self.selection_start, bytes(new_bytes[:bytes_to_write]))
         self.hex_display.update()
         self.status_label.setText(f"Pasted {bytes_to_write} bytes at 0x{self.selection_start:08X}")
@@ -567,12 +562,10 @@ class HexViewerWidget(QWidget):
 
                 fill_len = self.selection_end - self.selection_start
                 fill_data = bytes([fill_byte]) * fill_len
-                self.data[self.selection_start:self.selection_end] = fill_data
+                self.data[self.selection_start : self.selection_end] = fill_data
                 self.data_modified.emit(self.selection_start, fill_data)
                 self.hex_display.update()
-                self.status_label.setText(
-                    f"Filled {fill_len} bytes with 0x{fill_byte:02X}"
-                )
+                self.status_label.setText(f"Filled {fill_len} bytes with 0x{fill_byte:02X}")
             except ValueError:
                 self.status_label.setText("Invalid byte value")
 
@@ -630,10 +623,8 @@ class HexViewerWidget(QWidget):
         if file_path:
             try:
                 with open(file_path, "wb") as f:
-                    f.write(self.data[self.selection_start:self.selection_end])
-                self.status_label.setText(
-                    f"Exported {self.selection_end - self.selection_start} bytes to {file_path}"
-                )
+                    f.write(self.data[self.selection_start : self.selection_end])
+                self.status_label.setText(f"Exported {self.selection_end - self.selection_start} bytes to {file_path}")
             except OSError as e:
                 self.status_label.setText(f"Export failed: {e}")
 

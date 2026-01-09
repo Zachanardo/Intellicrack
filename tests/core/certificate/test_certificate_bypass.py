@@ -32,7 +32,6 @@ CertificatePatcher: type[Any] | None
 ValidationLayerDetector: type[Any] | None
 CertificateValidationDetector: type[Any] | None
 HookObfuscator: type[Any] | None
-APKAnalyzer: type[Any] | None
 ValidationLayer: type[Any] | None
 BypassMethod: type[Any] | None
 StageResult: type[Any] | None
@@ -86,9 +85,6 @@ try:
     from intellicrack.core.certificate.hook_obfuscation import (
         HookObfuscator,
     )
-    from intellicrack.core.certificate.apk_analyzer import (
-        APKAnalyzer,
-    )
     from intellicrack.core.certificate.api_signatures import (
         APISignature,
     )
@@ -112,7 +108,6 @@ except ImportError:
     ValidationLayerDetector = None
     CertificateValidationDetector = None
     HookObfuscator = None
-    APKAnalyzer = None
     ValidationLayer = None
     BypassMethod = None
     StageResult = None
@@ -736,26 +731,6 @@ class TestHookObfuscation:
         assert name is not None
         assert isinstance(name, str)
         assert len(name) > 0
-
-
-class TestAPKAnalyzer:
-    """Test APK certificate analysis."""
-
-    def test_analyzer_initialization(self) -> None:
-        """Test APK analyzer initializes."""
-        assert APKAnalyzer is not None
-        analyzer = APKAnalyzer()
-
-        assert analyzer is not None
-        assert hasattr(analyzer, "analyze_apk")
-
-    def test_analyze_apk_structure(self) -> None:
-        """Test APK analysis capabilities."""
-        assert APKAnalyzer is not None
-        analyzer = APKAnalyzer()
-
-        assert analyzer is not None
-        assert hasattr(analyzer, "parse_network_security_config")
 
 
 class TestAPISignatureDetector:

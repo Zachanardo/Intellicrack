@@ -223,10 +223,10 @@ const ObfuscationDetector = {
 
                 instructions.forEach(inst => {
                     if (
-                        inst.mnemonic.includes('push')
-                        || inst.mnemonic.includes('pop')
-                        || inst.operands?.includes('esp')
-                        || inst.operands?.includes('rsp')
+                        inst.mnemonic.includes('push') ||
+                        inst.mnemonic.includes('pop') ||
+                        inst.operands?.includes('esp') ||
+                        inst.operands?.includes('rsp')
                     ) {
                         stackOps++;
                     }
@@ -240,9 +240,9 @@ const ObfuscationDetector = {
 
                 instructions.forEach(inst => {
                     if (
-                        (inst.mnemonic === 'jmp' || inst.mnemonic === 'call')
-                        && inst.operands
-                        && inst.operands.includes('[')
+                        (inst.mnemonic === 'jmp' || inst.mnemonic === 'call') &&
+                        inst.operands &&
+                        inst.operands.includes('[')
                     ) {
                         indirect++;
                     }
@@ -443,14 +443,14 @@ const ObfuscationDetector = {
             const code = address.readByteArray(512);
 
             // Pattern 1: Switch-based dispatcher
-            const switchPattern = [0xFF, 0x24, 0x85]; // jmp [eax*4 + dispatcher_table]
+            const switchPattern = [0xff, 0x24, 0x85]; // jmp [eax*4 + dispatcher_table]
             if (this.findPattern(code, switchPattern)) {
                 result.patterns.push('switch_dispatcher');
                 result.confidence += 0.4;
             }
 
             // Pattern 2: State machine pattern
-            const statePattern = [0x83, 0xF8]; // cmp eax, state
+            const statePattern = [0x83, 0xf8]; // cmp eax, state
             const stateCount = this.countPattern(code, statePattern);
             if (stateCount > 5) {
                 result.patterns.push('state_machine');
@@ -461,9 +461,9 @@ const ObfuscationDetector = {
             let jumpCount = 0;
             for (let i = 0; i < code.length - 1; i++) {
                 if (
-                    code[i] === 0xE9
-                    || code[i] === 0xEB // jmp
-                    || (code[i] === 0x0F && code[i + 1] >= 0x80 && code[i + 1] <= 0x8F)
+                    code[i] === 0xe9 ||
+                    code[i] === 0xeb || // jmp
+                    (code[i] === 0x0f && code[i + 1] >= 0x80 && code[i + 1] <= 0x8f)
                 ) {
                     // jcc
                     jumpCount++;
@@ -499,17 +499,17 @@ const ObfuscationDetector = {
             const patterns = [
                 // (x^2) >= 0 always true
                 {
-                    bytes: [0x0F, 0xAF, 0xC0, 0x79], // imul eax, eax; jns
+                    bytes: [0x0f, 0xaf, 0xc0, 0x79], // imul eax, eax; jns
                     name: 'square_non_negative',
                 },
                 // (x & -x) == x for x = 2^n
                 {
-                    bytes: [0x89, 0xC2, 0xF7, 0xD2, 0x21, 0xD0, 0x39, 0xC2],
+                    bytes: [0x89, 0xc2, 0xf7, 0xd2, 0x21, 0xd0, 0x39, 0xc2],
                     name: 'power_of_two',
                 },
                 // ((x * 7) & 1) == (x & 1)
                 {
-                    bytes: [0x6B, 0xC0, 0x07, 0x83, 0xE0, 0x01],
+                    bytes: [0x6b, 0xc0, 0x07, 0x83, 0xe0, 0x01],
                     name: 'modular_arithmetic',
                 },
             ];
@@ -557,11 +557,11 @@ const ObfuscationDetector = {
             // Check for VM dispatcher patterns
             const patterns = {
                 // VMProtect pattern
-                vmprotect: [0x8B, 0x04, 0x24, 0x83, 0xC4, 0x04, 0xFF, 0x20],
+                vmprotect: [0x8b, 0x04, 0x24, 0x83, 0xc4, 0x04, 0xff, 0x20],
                 // Themida pattern
-                themida: [0x60, 0x9C, 0xE8, 0x00, 0x00, 0x00, 0x00, 0x5D],
+                themida: [0x60, 0x9c, 0xe8, 0x00, 0x00, 0x00, 0x00, 0x5d],
                 // Code Virtualizer pattern
-                cv: [0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x20, 0x53, 0x56, 0x57, 0xE8],
+                cv: [0x55, 0x8b, 0xec, 0x83, 0xec, 0x20, 0x53, 0x56, 0x57, 0xe8],
             };
 
             const code = address.readByteArray(512);
@@ -614,12 +614,12 @@ const ObfuscationDetector = {
                 },
                 // RC4 initialization
                 {
-                    bytes: [0x88, 0x04, 0x08, 0x40, 0x3D, 0x00, 0x01],
+                    bytes: [0x88, 0x04, 0x08, 0x40, 0x3d, 0x00, 0x01],
                     name: 'rc4_init',
                 },
                 // Base64 decode
                 {
-                    bytes: [0x0F, 0xB6, 0x00, 0x83, 0xE8, 0x41],
+                    bytes: [0x0f, 0xb6, 0x00, 0x83, 0xe8, 0x41],
                     name: 'base64_decode',
                 },
             ];
@@ -712,8 +712,8 @@ const ObfuscationDetector = {
 
         try {
             // Use obfuscation information to optimize dispatcher search
-            const searchPattern
-                = obfuscationInfo.dispatcher_pattern === 'jump_table'
+            const searchPattern =
+                obfuscationInfo.dispatcher_pattern === 'jump_table'
                     ? this.findJumpTableDispatcher
                     : this.findSwitchDispatcher;
 
@@ -1144,57 +1144,57 @@ const ObfuscationDetector = {
                     [0x55, 0x50, 0x58, 0x31], // UPX1
                     [0x55, 0x50, 0x58, 0x21], // UPX!
                 ],
-                entryPoint: [0x60, 0xBE], // pushad; mov esi
+                entryPoint: [0x60, 0xbe], // pushad; mov esi
                 detected: false,
             },
             aspack: {
                 signatures: [
-                    [0x60, 0xE8, 0x03, 0x00, 0x00, 0x00, 0xE9, 0xEB],
-                    [0x2E, 0x61, 0x73, 0x70, 0x61, 0x63, 0x6B], // .aspack
+                    [0x60, 0xe8, 0x03, 0x00, 0x00, 0x00, 0xe9, 0xeb],
+                    [0x2e, 0x61, 0x73, 0x70, 0x61, 0x63, 0x6b], // .aspack
                 ],
                 detected: false,
             },
             pecompact: {
                 signatures: [
-                    [0xB8, null, null, null, null, 0x50, 0x64, 0xFF, 0x35],
-                    [0x50, 0x45, 0x43, 0x6F, 0x6D, 0x70, 0x61, 0x63, 0x74], // PECompact
+                    [0xb8, null, null, null, null, 0x50, 0x64, 0xff, 0x35],
+                    [0x50, 0x45, 0x43, 0x6f, 0x6d, 0x70, 0x61, 0x63, 0x74], // PECompact
                 ],
                 detected: false,
             },
             enigma: {
                 signatures: [
-                    [0x45, 0x6E, 0x69, 0x67, 0x6D, 0x61], // Enigma
+                    [0x45, 0x6e, 0x69, 0x67, 0x6d, 0x61], // Enigma
                     [
                         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                        0x5E, 0x6E, 0x69, 0x67, 0x6D, 0x61,
+                        0x5e, 0x6e, 0x69, 0x67, 0x6d, 0x61,
                     ],
                 ],
                 detected: false,
             },
             mpress: {
                 signatures: [
-                    [0x2D, 0x2D, 0x2D, 0x4D, 0x50, 0x52, 0x45, 0x53, 0x53], // ---MPRESS
-                    [0x4D, 0x5A, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04],
+                    [0x2d, 0x2d, 0x2d, 0x4d, 0x50, 0x52, 0x45, 0x53, 0x53], // ---MPRESS
+                    [0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04],
                 ],
                 detected: false,
             },
             themida: {
                 signatures: [
-                    [0xB8, null, null, null, null, 0x60, 0x0B, 0xC0],
-                    [0x54, 0x68, 0x65, 0x6D, 0x69, 0x64, 0x61], // Themida
+                    [0xb8, null, null, null, null, 0x60, 0x0b, 0xc0],
+                    [0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61], // Themida
                 ],
                 detected: false,
             },
             vmprotect: {
                 signatures: [
-                    [0x56, 0x4D, 0x50, 0x72, 0x6F, 0x74, 0x65, 0x63, 0x74], // VMProtect
+                    [0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74], // VMProtect
                     [
                         0x68,
                         null,
                         null,
                         null,
                         null,
-                        0xE8,
+                        0xe8,
                         null,
                         null,
                         null,
@@ -1254,8 +1254,8 @@ const ObfuscationDetector = {
     // .NET Obfuscator Detection
     detectDotNetObfuscators(module) {
         if (
-            !module.name.toLowerCase().includes('.dll')
-            && !module.name.toLowerCase().includes('.exe')
+            !module.name.toLowerCase().includes('.dll') &&
+            !module.name.toLowerCase().includes('.exe')
         ) {
             return null;
         }
@@ -1292,8 +1292,8 @@ const ObfuscationDetector = {
         };
 
         // Check for .NET metadata
-        const clrModule
-            = Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
+        const clrModule =
+            Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
         if (!clrModule) {
             return null;
         }
@@ -1481,8 +1481,8 @@ const ObfuscationDetector = {
             if (details.type === 'access-violation' && details.memory.operation === 'write') {
                 const writeAddress = details.memory.address;
                 if (
-                    writeAddress.compare(address) >= 0
-                    && writeAddress.compare(address.add(size)) < 0
+                    writeAddress.compare(address) >= 0 &&
+                    writeAddress.compare(address.add(size)) < 0
                 ) {
                     indicators.selfModifying = true;
                     indicators.mutations.push({
@@ -1556,8 +1556,8 @@ const ObfuscationDetector = {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && (this.newProtect & 0x10 || this.newProtect & 0x20 || this.newProtect & 0x40)
+                        retval.toInt32() !== 0 &&
+                        (this.newProtect & 0x10 || this.newProtect & 0x20 || this.newProtect & 0x40)
                     ) {
                         unpackingIndicators.push({
                             type: 'protection_change',
@@ -1616,11 +1616,11 @@ const ObfuscationDetector = {
 
         // Parse PE header for IAT
         const dosHeader = baseAddress.readU16();
-        if (dosHeader !== 0x5A_4D) {
+        if (dosHeader !== 0x5a_4d) {
             return iat; // Not MZ
         }
 
-        const peOffset = baseAddress.add(0x3C).readU32();
+        const peOffset = baseAddress.add(0x3c).readU32();
         const peSignature = baseAddress.add(peOffset).readU32();
         if (peSignature !== 0x00_00_45_50) {
             return iat; // Not PE
@@ -1708,8 +1708,8 @@ const ObfuscationDetector = {
                             obfuscation: errorAnalysis.potential_obfuscation,
                             strategy: errorAnalysis.bypass_strategy,
                         });
-                        importValidation.actual_imports_found
-                            += errorAnalysis.recovery_method === 'continue_scan' ? 0 : -1;
+                        importValidation.actual_imports_found +=
+                            errorAnalysis.recovery_method === 'continue_scan' ? 0 : -1;
                     }
                 }
             });
@@ -1773,9 +1773,9 @@ const ObfuscationDetector = {
                     const inst = Instruction.parse(current.add(offset));
 
                     if (
-                        inst.mnemonic.startsWith('j')
-                        || inst.mnemonic === 'call'
-                        || inst.mnemonic === 'ret'
+                        inst.mnemonic.startsWith('j') ||
+                        inst.mnemonic === 'call' ||
+                        inst.mnemonic === 'ret'
                     ) {
                         node.type = inst.mnemonic;
 
@@ -1851,18 +1851,18 @@ const ObfuscationDetector = {
 
         // Common ROP gadget patterns
         const gadgetPatterns = [
-            [0xC3], // ret
-            [0xC2, null, null], // ret imm16
-            [0x5D, 0xC3], // pop ebp; ret
-            [0x58, 0xC3], // pop eax; ret
-            [0x59, 0xC3], // pop ecx; ret
-            [0x5A, 0xC3], // pop edx; ret
-            [0x5B, 0xC3], // pop ebx; ret
-            [0x5E, 0xC3], // pop esi; ret
-            [0x5F, 0xC3], // pop edi; ret
-            [0xFF, 0xE0], // jmp eax
-            [0xFF, 0xD0], // call eax
-            [0x94, 0xC3], // xchg eax, esp; ret
+            [0xc3], // ret
+            [0xc2, null, null], // ret imm16
+            [0x5d, 0xc3], // pop ebp; ret
+            [0x58, 0xc3], // pop eax; ret
+            [0x59, 0xc3], // pop ecx; ret
+            [0x5a, 0xc3], // pop edx; ret
+            [0x5b, 0xc3], // pop ebx; ret
+            [0x5e, 0xc3], // pop esi; ret
+            [0x5f, 0xc3], // pop edi; ret
+            [0xff, 0xe0], // jmp eax
+            [0xff, 0xd0], // call eax
+            [0x94, 0xc3], // xchg eax, esp; ret
         ];
 
         const code = address.readByteArray(size);
@@ -1923,7 +1923,7 @@ const ObfuscationDetector = {
                 const minCaveSize = 32;
 
                 for (let i = 0; i < data.length; i++) {
-                    if (data[i] === 0x00 || data[i] === 0x90 || data[i] === 0xCC) {
+                    if (data[i] === 0x00 || data[i] === 0x90 || data[i] === 0xcc) {
                         if (caveStart === -1) {
                             caveStart = i;
                         }
@@ -1993,11 +1993,11 @@ const ObfuscationDetector = {
         try {
             const { base, name: moduleName } = module;
             const dosHeader = base.readU16();
-            if (dosHeader !== 0x5A_4D) {
+            if (dosHeader !== 0x5a_4d) {
                 return indicators;
             }
 
-            const peOffset = base.add(0x3C).readU32();
+            const peOffset = base.add(0x3c).readU32();
             const peSignature = base.add(peOffset).readU32();
             if (peSignature !== 0x00_00_45_50) {
                 return indicators;
@@ -2068,11 +2068,11 @@ const ObfuscationDetector = {
 
             // Common decoy entry patterns used by packers and protectors
             const decoyPatterns = [
-                [0xE9], // Single jmp
-                [0xFF, 0x25], // jmp [addr]
-                [0x68, null, null, null, null, 0xC3], // push addr; ret
-                [0xEB, 0xFE], // Infinite loop
-                [0xF4], // hlt
+                [0xe9], // Single jmp
+                [0xff, 0x25], // jmp [addr]
+                [0x68, null, null, null, null, 0xc3], // push addr; ret
+                [0xeb, 0xfe], // Infinite loop
+                [0xf4], // hlt
             ];
 
             decoyPatterns.forEach(pattern => {
@@ -2137,11 +2137,11 @@ const ObfuscationDetector = {
         try {
             const { base } = module;
             const dosHeader = base.readU16();
-            if (dosHeader !== 0x5A_4D) {
+            if (dosHeader !== 0x5a_4d) {
                 return analysis;
             }
 
-            const peOffset = base.add(0x3C).readU32();
+            const peOffset = base.add(0x3c).readU32();
             const sections = this.parseSections(base, peOffset);
 
             sections.forEach(section => {
@@ -2227,11 +2227,11 @@ const ObfuscationDetector = {
         try {
             const { base } = module;
             const dosHeader = base.readU16();
-            if (dosHeader !== 0x5A_4D) {
+            if (dosHeader !== 0x5a_4d) {
                 return cert;
             }
 
-            const peOffset = base.add(0x3C).readU32();
+            const peOffset = base.add(0x3c).readU32();
             const optHeader = peOffset + 24;
             const certTableRVA = base.add(optHeader + 144).readU32();
             const certTableSize = base.add(optHeader + 148).readU32();
@@ -2321,7 +2321,7 @@ const ObfuscationDetector = {
                 overlay.entropy = this.calculateEntropy(overlayData);
 
                 // Check for hidden executables
-                if (overlayData[0] === 0x4D && overlayData[1] === 0x5A) {
+                if (overlayData[0] === 0x4d && overlayData[1] === 0x5a) {
                     overlay.hiddenPayload = true;
                     send({
                         type: 'warning',
@@ -2381,7 +2381,7 @@ const ObfuscationDetector = {
 
         try {
             const { base } = module;
-            const peOffset = base.add(0x3C).readU32();
+            const peOffset = base.add(0x3c).readU32();
             const sections = this.parseSections(base, peOffset);
 
             sections.forEach((section, index) => {
@@ -2482,21 +2482,25 @@ const ObfuscationDetector = {
 
                         for (const [i, arg] of args.entries()) {
                             const argValue = arg.toInt32();
-                            const isSuspicious = argValue > 0xFF_FF_00_00;
+                            const isSuspicious = argValue > 0xff_ff_00_00;
                             timeAPIAnalysis.arguments_analysis.push({
                                 index: i,
                                 value: argValue,
                                 pointer_valid: !arg.isNull(),
-                                manipulation_indicator: isSuspicious ? 'suspicious_high_value' : 'normal',
+                                manipulation_indicator: isSuspicious
+                                    ? 'suspicious_high_value'
+                                    : 'normal',
                             });
                             if (isSuspicious) {
-                                timeAPIAnalysis.timing_manipulation_indicators[`arg${i}`] = argValue;
+                                timeAPIAnalysis.timing_manipulation_indicators[`arg${i}`] =
+                                    argValue;
                             }
                         }
 
                         const caller = this.returnAddress;
-                        const inTargetRange = caller.compare(address) >= 0
-                            && caller.compare(address.add(0x1_00_00)) < 0;
+                        const inTargetRange =
+                            caller.compare(address) >= 0 &&
+                            caller.compare(address.add(0x1_00_00)) < 0;
                         if (inTargetRange) {
                             timeBased.detected = true;
                             timeAPIAnalysis.sandbox_evasion_attempt = true;
@@ -2567,9 +2571,9 @@ const ObfuscationDetector = {
         ];
 
         envAPIs.forEach(api => {
-            const addr
-                = Module.findExportByName('kernel32.dll', api.name)
-                || Module.findExportByName('advapi32.dll', api.name);
+            const addr =
+                Module.findExportByName('kernel32.dll', api.name) ||
+                Module.findExportByName('advapi32.dll', api.name);
 
             if (addr) {
                 Interceptor.attach(addr, {
@@ -2667,8 +2671,8 @@ const ObfuscationDetector = {
                 onEnter(args) {
                     const caller = this.returnAddress;
                     if (
-                        caller.compare(address) >= 0
-                        && caller.compare(address.add(0x1_00_00)) < 0
+                        caller.compare(address) >= 0 &&
+                        caller.compare(address.add(0x1_00_00)) < 0
                     ) {
                         apiObf.dynamicResolution = true;
 
@@ -2697,10 +2701,10 @@ const ObfuscationDetector = {
         // Scan for hash-based lookups
         const code = address.readByteArray(4096);
         const hashPatterns = [
-            [0x81, 0xF9], // cmp ecx, hash
-            [0x81, 0xFA], // cmp edx, hash
-            [0x3D], // cmp eax, hash
-            [0x81, 0x3D], // cmp [addr], hash
+            [0x81, 0xf9], // cmp ecx, hash
+            [0x81, 0xfa], // cmp edx, hash
+            [0x3d], // cmp eax, hash
+            [0x81, 0x3d], // cmp [addr], hash
         ];
 
         hashPatterns.forEach(pattern => {
@@ -2712,7 +2716,7 @@ const ObfuscationDetector = {
 
         // Count indirect calls
         for (let i = 0; i < code.length - 2; i++) {
-            if (code[i] === 0xFF && (code[i + 1] === 0x15 || code[i + 1] === 0x25)) {
+            if (code[i] === 0xff && (code[i + 1] === 0x15 || code[i + 1] === 0x25)) {
                 apiObf.indirectCalls++;
             }
         }
@@ -2733,15 +2737,15 @@ const ObfuscationDetector = {
         // Patterns for stack string construction
         const patterns = [
             // mov byte [esp+X], char
-            { bytes: [0xC6, 0x44, 0x24], name: 'stack_byte_mov' },
+            { bytes: [0xc6, 0x44, 0x24], name: 'stack_byte_mov' },
             // mov word [esp+X], chars
-            { bytes: [0x66, 0xC7, 0x44, 0x24], name: 'stack_word_mov' },
+            { bytes: [0x66, 0xc7, 0x44, 0x24], name: 'stack_word_mov' },
             // mov dword [esp+X], chars
-            { bytes: [0xC7, 0x44, 0x24], name: 'stack_dword_mov' },
+            { bytes: [0xc7, 0x44, 0x24], name: 'stack_dword_mov' },
             // push char sequences
-            { bytes: [0x6A], name: 'push_char' },
+            { bytes: [0x6a], name: 'push_char' },
             // mov [ebp-X], char
-            { bytes: [0xC6, 0x45], name: 'local_byte_mov' },
+            { bytes: [0xc6, 0x45], name: 'local_byte_mov' },
         ];
 
         patterns.forEach(pattern => {
@@ -2803,10 +2807,10 @@ const ObfuscationDetector = {
         // Monitor SEH/VEH registration using configuration
         const sehAPIs = exceptionAnalysisConfig.seh_monitoring
             ? [
-                'SetUnhandledExceptionFilter',
-                'AddVectoredExceptionHandler',
-                'RemoveVectoredExceptionHandler',
-            ]
+                  'SetUnhandledExceptionFilter',
+                  'AddVectoredExceptionHandler',
+                  'RemoveVectoredExceptionHandler',
+              ]
             : ['SetUnhandledExceptionFilter'];
 
         sehAPIs.forEach(api => {
@@ -2816,12 +2820,12 @@ const ObfuscationDetector = {
                     onEnter(args) {
                         const caller = this.returnAddress;
                         if (
-                            caller.compare(address) >= 0
-                            && caller.compare(address.add(0x1_00_00)) < 0
+                            caller.compare(address) >= 0 &&
+                            caller.compare(address.add(0x1_00_00)) < 0
                         ) {
                             ehObf.detected = true;
-                            ehObf.configuredAnalysis
-                                = exceptionAnalysisConfig.anti_debugging_detection;
+                            ehObf.configuredAnalysis =
+                                exceptionAnalysisConfig.anti_debugging_detection;
                             if (api.includes('SEH')) {
                                 ehObf.sehHandlers.push({ handler: args[0], caller });
                             } else {
@@ -2836,11 +2840,11 @@ const ObfuscationDetector = {
         // Monitor intentional exceptions
         const code = address.readByteArray(1024);
         const exceptionInstructions = [
-            [0xCC], // int3
-            [0xCD], // int XX
-            [0xF1], // int1
-            [0xCE], // into
-            [0x0F, 0x0B], // ud2
+            [0xcc], // int3
+            [0xcd], // int XX
+            [0xf1], // int1
+            [0xce], // into
+            [0x0f, 0x0b], // ud2
         ];
 
         exceptionInstructions.forEach(pattern => {
@@ -2953,11 +2957,11 @@ const ObfuscationDetector = {
         try {
             const { base } = module;
             const dosHeader = base.readU16();
-            if (dosHeader !== 0x5A_4D) {
+            if (dosHeader !== 0x5a_4d) {
                 return tlsAbuse;
             }
 
-            const peOffset = base.add(0x3C).readU32();
+            const peOffset = base.add(0x3c).readU32();
             const optHeader = peOffset + 24;
             const tlsTableRVA = base.add(optHeader + 184).readU32();
 
@@ -3036,13 +3040,13 @@ const ObfuscationDetector = {
         // Monitor heap allocations based on configuration
         const heapAPIs = heapSprayAnalysisConfig.allocation_monitoring
             ? [
-                { name: 'HeapAlloc', module: 'kernel32.dll' },
-                { name: 'GlobalAlloc', module: 'kernel32.dll' },
-                { name: 'LocalAlloc', module: 'kernel32.dll' },
-                { name: 'VirtualAlloc', module: 'kernel32.dll' },
-                { name: 'malloc', module: null },
-                { name: 'calloc', module: null },
-            ]
+                  { name: 'HeapAlloc', module: 'kernel32.dll' },
+                  { name: 'GlobalAlloc', module: 'kernel32.dll' },
+                  { name: 'LocalAlloc', module: 'kernel32.dll' },
+                  { name: 'VirtualAlloc', module: 'kernel32.dll' },
+                  { name: 'malloc', module: null },
+                  { name: 'calloc', module: null },
+              ]
             : [{ name: 'VirtualAlloc', module: 'kernel32.dll' }];
 
         heapAPIs.forEach(api => {
@@ -3056,8 +3060,8 @@ const ObfuscationDetector = {
                     },
                     onLeave(retval) {
                         if (
-                            !retval.isNull()
-                            && this.size >= heapSpray.thresholds.allocation_size_threshold
+                            !retval.isNull() &&
+                            this.size >= heapSpray.thresholds.allocation_size_threshold
                         ) {
                             heapSpray.allocations.push({
                                 address: retval,
@@ -3126,13 +3130,13 @@ const ObfuscationDetector = {
     containsExecutableCode(data) {
         // Common executable signatures
         const execSignatures = [
-            [0x55, 0x8B, 0xEC], // push ebp; mov ebp, esp
+            [0x55, 0x8b, 0xec], // push ebp; mov ebp, esp
             [0x50, 0x53, 0x51], // push eax; push ebx; push ecx
-            [0x48, 0x83, 0xEC], // sub rsp, XX (x64)
-            [0x48, 0x89, 0x5C], // mov [rsp+XX], rbx (x64)
-            [0xE8], // call
-            [0xE9], // jmp
-            [0xFF, 0x15], // call [addr]
+            [0x48, 0x83, 0xec], // sub rsp, XX (x64)
+            [0x48, 0x89, 0x5c], // mov [rsp+XX], rbx (x64)
+            [0xe8], // call
+            [0xe9], // jmp
+            [0xff, 0x15], // call [addr]
         ];
 
         return execSignatures.some(sig => this.findPattern(data, sig) !== -1);
@@ -3142,11 +3146,11 @@ const ObfuscationDetector = {
     containsSuspiciousPatterns(data) {
         const suspiciousPatterns = [
             // Anti-debug
-            [0x64, 0x8B, 0x1D, 0x30, 0x00, 0x00, 0x00], // mov ebx, fs:[30h] (PEB)
-            [0x0F, 0x31], // rdtsc
-            [0xCD, 0x2D], // int 2Dh
+            [0x64, 0x8b, 0x1d, 0x30, 0x00, 0x00, 0x00], // mov ebx, fs:[30h] (PEB)
+            [0x0f, 0x31], // rdtsc
+            [0xcd, 0x2d], // int 2Dh
             // Obfuscation
-            [0x81, 0xC4], // add esp, large_value
+            [0x81, 0xc4], // add esp, large_value
             [0x60], // pushad
             [0x61], // popad
             // Encryption loops

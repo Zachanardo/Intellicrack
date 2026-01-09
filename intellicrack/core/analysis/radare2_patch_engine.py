@@ -26,10 +26,24 @@ Classes:
     Radare2PatchEngine: Main patching engine implementation.
 
 Example:
-    >>> engine = Radare2PatchEngine(Path("binary"), write_mode=True)
-    >>> nop_patch = engine.create_nop_sled(0x1000, 10)
-    >>> patch_set = engine.create_patch_set("disable_checks", [nop_patch])
-    >>> engine.apply_patch_set("disable_checks")
+    >>> engine = Radare2PatchEngine(
+    ...     Path("binary"),
+    ...     write_mode=True,
+    ... )
+    >>> nop_patch = (
+    ...     engine.create_nop_sled(
+    ...         0x1000, 10
+    ...     )
+    ... )
+    >>> patch_set = (
+    ...     engine.create_patch_set(
+    ...         "disable_checks",
+    ...         [nop_patch],
+    ...     )
+    ... )
+    >>> engine.apply_patch_set(
+    ...     "disable_checks"
+    ... )
     >>> engine.close()
 """
 

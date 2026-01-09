@@ -25,17 +25,6 @@ import tempfile
 from pathlib import Path
 from typing import Any, Protocol, cast
 
-
-class SavableEditorProtocol(Protocol):
-    """Protocol for editors with save capability."""
-
-    is_modified: bool
-
-    def save_file(self) -> bool:
-        """Save the file and return success status."""
-        ...
-
-
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
     QCheckBox,
@@ -58,6 +47,7 @@ from intellicrack.handlers.pyqt6_handler import (
     Qt,
     QTabWidget,
     QTextEdit,
+    QThread,
     QToolBar,
     QTreeWidget,
     QTreeWidgetItem,
@@ -71,8 +61,57 @@ from ...ai.code_analysis_tools import AIAssistant
 from ...utils.logger import get_logger
 from ..widgets.syntax_highlighters import JavaScriptHighlighter, PythonHighlighter
 
-
 logger = get_logger(__name__)
+
+
+class SavableEditorProtocol(Protocol):
+    """Protocol for editors with save capability."""
+
+    is_modified: bool
+
+    def save_file(self) -> bool:
+        """Save the file and return success status."""
+        return False
+
+
+class DialogModelDiscoveryWorker(QThread):
+    """Worker thread for model discovery to avoid blocking the UI."""
+
+    discovery_complete = pyqtSignal(list, dict)
+    error_occurred = pyqtSignal(str)
+
+    def __init__(self, force_refresh: bool = False) -> None:
+        """Initialize the model discovery worker.
+
+        Args:
+            force_refresh: Whether to force refresh of discovered models.
+        """
+        super().__init__()
+        self.force_refresh = force_refresh
+        self._running = True
+
+    def run(self) -> None:
+        """Run model discovery in background thread."""
+        try:
+            from ...ai.llm_config_manager import get_llm_config_manager
+            from ...ai.model_discovery_service import get_model_discovery_service
+
+            config_manager = get_llm_config_manager()
+            discovery_service = get_model_discovery_service()
+
+            configured_models = config_manager.list_model_configs()
+            discovered_models = discovery_service.discover_all_models(force_refresh=self.force_refresh)
+
+            if self._running:
+                self.discovery_complete.emit(configured_models, discovered_models)
+        except Exception as e:
+            logger.exception("Failed to discover models: %s", e)
+            if self._running:
+                self.error_occurred.emit(str(e))
+
+    def stop(self) -> None:
+        """Stop the discovery process."""
+        self._running = False
 
 
 class FileTreeWidget(QTreeWidget):
@@ -544,81 +583,91 @@ class ChatWidget(QWidget):
         """Load available AI models using dynamic API-based discovery.
 
         Queries both configured models and dynamically discovered models from
-        various API providers. Updates the model combo box with available options
-        and displays appropriate status messages to the user.
+        various API providers in a background thread to avoid blocking the UI.
 
         Args:
             force_refresh: Force refresh from provider APIs even if cache is valid.
         """
-        try:
-            from ...ai.llm_config_manager import get_llm_config_manager
-            from ...ai.model_discovery_service import get_model_discovery_service
+        self.model_combo.clear()
+        self.model_combo.addItem("Loading models...")
+        self.model_combo.setEnabled(False)
 
-            config_manager = get_llm_config_manager()
-            discovery_service = get_model_discovery_service()
+        self._model_discovery_worker = DialogModelDiscoveryWorker(force_refresh=force_refresh)
+        self._model_discovery_worker.discovery_complete.connect(self._on_dialog_model_discovery_complete)
+        self._model_discovery_worker.error_occurred.connect(self._on_dialog_model_discovery_error)
+        self._model_discovery_worker.finished.connect(self._on_dialog_model_discovery_finished)
+        self._model_discovery_worker.start()
 
-            configured_models = config_manager.list_model_configs()
-            discovered_models = discovery_service.discover_all_models(force_refresh=force_refresh)
+    def _on_dialog_model_discovery_complete(self, configured_models: list[str], discovered_models: dict[str, list[Any]]) -> None:
+        """Handle model discovery completion.
 
-            self.available_models = []
-            self.model_combo.clear()
+        Args:
+            configured_models: List of configured model IDs.
+            discovered_models: Dictionary mapping provider names to model lists.
+        """
+        self.available_models = []
+        self.model_combo.clear()
 
-            if configured_models:
-                for model_id in configured_models:
-                    self.available_models.append(model_id)
-                    self.model_combo.addItem(f" {model_id}")
+        if configured_models:
+            for model_id in configured_models:
+                self.available_models.append(model_id)
+                self.model_combo.addItem(f" {model_id}")
 
-            if discovered_models:
-                total_discovered = sum(len(models) for models in discovered_models.values())
-                logger.info("ChatWidget API discovery: Found %s models from %s providers", total_discovered, len(discovered_models))
+        if discovered_models:
+            total_discovered = sum(len(models) for models in discovered_models.values())
+            logger.info("ChatWidget API discovery: Found %s models from %s providers", total_discovered, len(discovered_models))
 
-                for provider_name, models in sorted(discovered_models.items()):
-                    if models:
-                        self.model_combo.insertSeparator(self.model_combo.count())
-                        self.model_combo.addItem(f"── {provider_name} API Models ──")
-                        combo_model = self.model_combo.model()
-                        if combo_model and hasattr(combo_model, "item"):
-                            if item := combo_model.item(self.model_combo.count() - 1):
-                                item.setEnabled(False)
+            for provider_name, models in sorted(discovered_models.items()):
+                if models:
+                    self.model_combo.insertSeparator(self.model_combo.count())
+                    self.model_combo.addItem(f"-- {provider_name} API Models --")
+                    combo_model = self.model_combo.model()
+                    if combo_model and hasattr(combo_model, "item"):
+                        if item := combo_model.item(self.model_combo.count() - 1):
+                            item.setEnabled(False)
 
-                        for model_info in models:
-                            display_name = f"🌐 {provider_name}: {model_info.name}"
-                            self.available_models.append(model_info.id)
-                            self.model_combo.addItem(display_name)
+                    for model_info in models:
+                        display_name = f"[API] {provider_name}: {model_info.name}"
+                        self.available_models.append(model_info.id)
+                        self.model_combo.addItem(display_name)
 
-            if not self.available_models:
-                self.model_combo.addItem("No models available")
-                self.model_combo.setEnabled(False)
-                self._show_no_models_message()
-                logger.warning("No AI models available in ChatWidget (neither configured nor discovered)")
-                return
-
-            self.model_combo.setEnabled(True)
-
-            default_model = self.available_models[0] if self.available_models else "Unknown"
-            total_models = len(self.available_models)
-            self._show_ready_message(default_model, total_models)
-
-            configured_count = len(configured_models) if configured_models else 0
-            discovered_count = len(self.available_models) - configured_count
-            logger.info(
-                "ChatWidget loaded %s configured + %s discovered = %s total models", configured_count, discovered_count, total_models
-            )
-
-        except ImportError as e:
-            logger.exception("ChatWidget failed to import model discovery modules: %s", e)
-            self.available_models = []
-            self.model_combo.clear()
-            self.model_combo.addItem("Discovery module unavailable")
+        if not self.available_models:
+            self.model_combo.addItem("No models available")
             self.model_combo.setEnabled(False)
-            self._show_error_message("Model discovery module not available")
-        except Exception as e:
-            logger.exception("ChatWidget failed to discover AI models: %s", e)
-            self.available_models = []
-            self.model_combo.clear()
-            self.model_combo.addItem("Error discovering models")
-            self.model_combo.setEnabled(False)
-            self._show_error_message(f"Discovery error: {e!s}")
+            self._show_no_models_message()
+            logger.warning("No AI models available in ChatWidget (neither configured nor discovered)")
+            return
+
+        self.model_combo.setEnabled(True)
+
+        default_model = self.available_models[0] if self.available_models else "Unknown"
+        total_models = len(self.available_models)
+        self._show_ready_message(default_model, total_models)
+
+        configured_count = len(configured_models) if configured_models else 0
+        discovered_count = len(self.available_models) - configured_count
+        logger.info(
+            "ChatWidget loaded %s configured + %s discovered = %s total models", configured_count, discovered_count, total_models
+        )
+
+    def _on_dialog_model_discovery_error(self, error_msg: str) -> None:
+        """Handle model discovery error.
+
+        Args:
+            error_msg: The error message.
+        """
+        logger.error("ChatWidget failed to discover AI models: %s", error_msg)
+        self.available_models = []
+        self.model_combo.clear()
+        self.model_combo.addItem("Error discovering models")
+        self.model_combo.setEnabled(False)
+        self._show_error_message(f"Discovery error: {error_msg}")
+
+    def _on_dialog_model_discovery_finished(self) -> None:
+        """Handle model discovery worker finished signal."""
+        if hasattr(self, "_model_discovery_worker") and self._model_discovery_worker is not None:
+            self._model_discovery_worker.deleteLater()
+            self._model_discovery_worker = None
 
     def refresh_models(self) -> None:
         """Refresh available models from API providers.
@@ -1943,31 +1992,49 @@ def validate_license_key(key: str) -> bool:
 
             process_name = Path(target_binary).stem
 
+            session: frida.core.Session | None = None
+            script: frida.core.Script | None = None
             # Try to attach to running process or spawn
             try:
-                session = frida.attach(process_name)
-                self.chat_widget.add_message("System", f"📎 Attached to running process: {process_name}")
-            except frida.ProcessNotFoundError:
                 try:
-                    pid = frida.spawn([target_binary])
-                    session = frida.attach(pid)
-                    frida.resume(pid)
-                    self.chat_widget.add_message("System", f" Spawned and attached to: {process_name}")
-                except Exception as e:
-                    self.chat_widget.add_message("System", f"ERROR Failed to spawn process: {e}")
-                    return
+                    session = frida.attach(process_name)
+                    self.chat_widget.add_message("System", f"📎 Attached to running process: {process_name}")
+                except frida.ProcessNotFoundError:
+                    try:
+                        pid = frida.spawn([target_binary])
+                        session = frida.attach(pid)
+                        frida.resume(pid)
+                        self.chat_widget.add_message("System", f" Spawned and attached to: {process_name}")
+                    except Exception as e:
+                        self.chat_widget.add_message("System", f"ERROR Failed to spawn process: {e}")
+                        return
 
-            # Create and load script
-            script = session.create_script(script_content)
-            script.on("message", self._on_frida_message)
-            script.load()
+                # Create and load script
+                script = session.create_script(script_content)
+                script.on("message", self._on_frida_message)
+                script.load()
 
-            self.chat_widget.add_message("System", "OK Frida bypass script loaded successfully")
-            self.chat_widget.add_message("System", "Script is running... Check target application")
+                self.chat_widget.add_message("System", "OK Frida bypass script loaded successfully")
+                self.chat_widget.add_message("System", "Script is running... Check target application")
 
-            # Store script reference for cleanup
-            self._active_frida_script = script
-            self._active_frida_session = session
+                # Store script reference for cleanup
+                self._active_frida_script = script
+                self._active_frida_session = session
+                # Clear local refs since they're now managed by instance
+                script = None
+                session = None
+            finally:
+                # Clean up if not stored in instance vars
+                if script is not None:
+                    try:
+                        script.unload()
+                    except Exception:
+                        pass
+                if session is not None:
+                    try:
+                        session.detach()
+                    except Exception:
+                        pass
 
         except ImportError:
             self.chat_widget.add_message("System", "ERROR Frida not available. Install with: pip install frida-tools")
@@ -4769,7 +4836,11 @@ class AICodingAssistantDialog(QDialog):
             )
 
             if reply == QMessageBox.StandardButton.Save:
-                if hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None)) and not cast("SavableEditorProtocol", editor).save_file():
+                if (
+                    hasattr(editor, "save_file")
+                    and callable(getattr(editor, "save_file", None))
+                    and not cast("SavableEditorProtocol", editor).save_file()
+                ):
                     return
             elif reply == QMessageBox.StandardButton.Cancel:
                 return

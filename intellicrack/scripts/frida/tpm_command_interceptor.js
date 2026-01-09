@@ -292,9 +292,9 @@ function hookDeviceIoControl() {
             try {
                 const deviceName = hDevice.toString();
                 if (
-                    deviceName.includes('TPM')
-                    || dwIoControlCode === 0x22_C0_00
-                    || dwIoControlCode === 0x22_C0_04
+                    deviceName.includes('TPM') ||
+                    dwIoControlCode === 0x22_c0_00 ||
+                    dwIoControlCode === 0x22_c0_04
                 ) {
                     console.log('[+] DeviceIoControl TPM Access Detected');
                     console.log(
@@ -305,10 +305,10 @@ function hookDeviceIoControl() {
                     const inputSize = args[3].toInt32();
 
                     if (
-                        inputSize > 0
-                        && inputSize < 65_536
-                        && inputBuffer
-                        && !inputBuffer.isNull()
+                        inputSize > 0 &&
+                        inputSize < 65_536 &&
+                        inputBuffer &&
+                        !inputBuffer.isNull()
                     ) {
                         const inputData = inputBuffer.readByteArray(inputSize);
                         const buffer = Buffer.from(inputData);

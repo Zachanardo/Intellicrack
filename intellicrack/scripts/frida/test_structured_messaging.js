@@ -103,9 +103,9 @@ function recordTestResult(testName, passed, latency, details) {
     if (latency !== undefined) {
         TEST_RESULTS.minLatency = Math.min(TEST_RESULTS.minLatency, latency);
         TEST_RESULTS.maxLatency = Math.max(TEST_RESULTS.maxLatency, latency);
-        TEST_RESULTS.averageLatency
-            = (TEST_RESULTS.averageLatency * (TEST_RESULTS.totalTests - 1) + latency)
-            / TEST_RESULTS.totalTests;
+        TEST_RESULTS.averageLatency =
+            (TEST_RESULTS.averageLatency * (TEST_RESULTS.totalTests - 1) + latency) /
+            TEST_RESULTS.totalTests;
     }
 
     TEST_RESULTS.testDetails.push({
@@ -117,11 +117,13 @@ function recordTestResult(testName, passed, latency, details) {
     });
 }
 
-function encryptMessage(message, key = 0xDE_AD_BE_EF) {
+function encryptMessage(message, key = 0xde_ad_be_ef) {
     const messageStr = JSON.stringify(message);
     let encrypted = '';
     for (let i = 0; i < messageStr.length; i++) {
-        encrypted += String.fromCodePoint((messageStr.codePointAt(i) || 0) ^ (key >> (8 * (i % 4))));
+        encrypted += String.fromCodePoint(
+            (messageStr.codePointAt(i) || 0) ^ (key >> (8 * (i % 4)))
+        );
     }
     return btoa(encrypted);
 }
@@ -468,9 +470,9 @@ function runTimingAnalysisTests() {
             send(testMessage);
         });
 
-        const withinExpectedRange
-            = latency >= MESSAGE_VALIDATION_RULES.min_response_time_ms
-            && latency <= MESSAGE_VALIDATION_RULES.max_response_time_ms;
+        const withinExpectedRange =
+            latency >= MESSAGE_VALIDATION_RULES.min_response_time_ms &&
+            latency <= MESSAGE_VALIDATION_RULES.max_response_time_ms;
 
         recordTestResult(
             `timing_${test.name}`,

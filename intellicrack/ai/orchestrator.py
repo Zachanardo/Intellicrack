@@ -36,6 +36,7 @@ from intellicrack.utils.type_safety import validate_type
 
 from ..utils.logger import get_logger
 
+
 ModelManager: type[Any] | None
 IntellicrackAIAssistant: type[Any] | None
 LLMManager: type[Any] | None

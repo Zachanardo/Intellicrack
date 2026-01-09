@@ -28,17 +28,13 @@ import secrets
 import threading
 import time
 from collections import defaultdict, deque
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from collections.abc import Iterable
 from typing import Any, cast
 
-from intellicrack.utils.core.secure_serialization import (
-    RestrictedUnpickler,
-    secure_pickle_dumps,
-    secure_pickle_loads,
-)
+from intellicrack.utils.core.secure_serialization import RestrictedUnpickler, secure_pickle_dumps, secure_pickle_loads
 
 
 try:

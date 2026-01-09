@@ -550,8 +550,18 @@ def _apply_tooltips_to_other_widgets(parent_widget: object, all_tooltips: dict[s
     except ImportError:
         return
 
-    if any(c is None for c in [slider_class, progress_bar_class, text_edit_class, plain_text_edit_class,
-                                list_widget_class, tree_widget_class, table_widget_class]):
+    if any(
+        c is None
+        for c in [
+            slider_class,
+            progress_bar_class,
+            text_edit_class,
+            plain_text_edit_class,
+            list_widget_class,
+            tree_widget_class,
+            table_widget_class,
+        ]
+    ):
         return
 
     find_children_method: Callable[[Any], list[Any]] = getattr(parent_widget, "findChildren", lambda _: [])

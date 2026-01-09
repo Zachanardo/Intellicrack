@@ -1,20 +1,20 @@
 {
   "tool": "mypy",
-  "generated": "2025-12-26T20:57:30.802284",
+  "generated": "2026-01-06T20:21:08.919008",
   "total_findings": 1,
   "total_files": 1,
   "files": [
     {
-      "path": "tests\\unit\\core\\network\\test_license_emulator_simple.py",
+      "path": "intellicrack\\core\\config\\external_tools_config.py",
       "count": 1,
       "findings": [
         {
-          "line": 69,
+          "line": 103,
           "column": null,
           "severity": "error",
           "code": "syntax",
-          "message": "Invalid syntax",
-          "raw": "tests\\unit\\core\\network\\test_license_emulator_simple.py:69: error: Invalid syntax  [syntax]"
+          "message": "Unterminated string literal (detected at line 103)",
+          "raw": "intellicrack\\core\\config\\external_tools_config.py:103: error: Unterminated string literal (detected at line 103)  [syntax]"
         }
       ]
     }

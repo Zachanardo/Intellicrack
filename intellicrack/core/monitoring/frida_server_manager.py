@@ -20,6 +20,8 @@ from types import TracebackType
 import frida
 import requests
 
+from ..process_registry import process_registry
+
 
 logger = logging.getLogger(__name__)
 
@@ -259,6 +261,8 @@ class FridaServerManager:
             else:
                 self.server_process = subprocess.Popen([str(server_path)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+            process_registry.register(self.server_process, "frida-server")
+
             for _attempt in range(10):
                 time.sleep(0.5)
                 if self._is_server_running():
@@ -275,6 +279,7 @@ class FridaServerManager:
     def stop(self) -> None:
         """Stop frida-server if managed by this instance."""
         if self.server_process:
+            pid = self.server_process.pid
             try:
                 self.server_process.terminate()
                 try:
@@ -284,10 +289,16 @@ class FridaServerManager:
                     self.server_process.wait()
 
                 logger.info("frida-server stopped")
-            except Exception as e:
-                logger.exception("Error stopping frida-server: %s", e)
+            except Exception:
+                logger.exception("Error stopping frida-server")
             finally:
+                process_registry.unregister(pid)
                 self.server_process = None
+
+    def __del__(self) -> None:
+        """Destructor to ensure process cleanup."""
+        if self.server_process is not None and self.server_process.poll() is None:
+            self.stop()
 
     def get_status(self) -> dict[str, bool | str]:
         """Get current frida-server status.

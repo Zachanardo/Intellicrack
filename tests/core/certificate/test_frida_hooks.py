@@ -358,28 +358,6 @@ def temp_script_dir() -> Generator[Path, None, None]:
             encoding="utf-8",
         )
 
-        android_script = script_dir / "android_pinning.js"
-        android_script.write_text(
-            """
-            Java.perform(function() {
-                var TrustManager = Java.use("javax.net.ssl.X509TrustManager");
-                TrustManager.checkServerTrusted.implementation = function() {};
-            });
-            """,
-            encoding="utf-8",
-        )
-
-        ios_script = script_dir / "ios_pinning.js"
-        ios_script.write_text(
-            """
-            var SecTrustEvaluate = Module.findExportByName("Security", "SecTrustEvaluate");
-            Interceptor.replace(SecTrustEvaluate, new NativeCallback(function() {
-                return 0;
-            }, 'int', []));
-            """,
-            encoding="utf-8",
-        )
-
         yield script_dir
 
 
@@ -436,8 +414,6 @@ class TestHooksInitialization:
             "schannel",
             "openssl",
             "cryptoapi",
-            "android",
-            "ios",
             "universal",
         ]
 

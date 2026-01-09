@@ -643,8 +643,8 @@ class ResourceManager:
     def _get_system_limits(self) -> dict[ResourceType, int]:
         """Get system resource limits and capabilities.
 
-        Detects available CPU cores, total memory, and other system resource
-        constraints for resource allocation and monitoring purposes.
+        Detects available CPU cores, total memory, GPU memory, and other system
+        resource constraints for resource allocation and monitoring purposes.
 
         Returns:
             Dictionary mapping ResourceType to available system limits.
@@ -652,32 +652,110 @@ class ResourceManager:
         """
         try:
             cpu_count = psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4
-            # Ensure cpu_count is an integer
             if not isinstance(cpu_count, int):
                 cpu_count = 4
         except (AttributeError, TypeError):
             cpu_count = 4
 
+        memory_mb = 8192
+        if PSUTIL_AVAILABLE:
+            try:
+                memory_mb = psutil.virtual_memory().total // (1024 * 1024)
+            except (AttributeError, OSError):
+                memory_mb = 8192
+
+        gpu_memory_mb = self._detect_gpu_memory()
+
         return {
             ResourceType.CPU: cpu_count,
-            # MB
-            ResourceType.MEMORY: psutil.virtual_memory().total // (1024 * 1024)
-            if PSUTIL_AVAILABLE
-            else type(
-                "",
-                (),
-                {
-                    "percent": 0,
-                    "total": 8 * 1024 * 1024 * 1024,
-                    "available": 4 * 1024 * 1024 * 1024,
-                },
-            )().total
-            // (1024 * 1024),
-            ResourceType.THREADS: 500,  # Reasonable default
+            ResourceType.MEMORY: memory_mb,
+            ResourceType.THREADS: 500,
             ResourceType.PROCESSES: 100,
-            ResourceType.DISK_IO: 1000,  # MB/s estimate
-            ResourceType.NETWORK_IO: 100,  # MB/s estimate
+            ResourceType.DISK_IO: 1000,
+            ResourceType.NETWORK_IO: 100,
+            ResourceType.GPU: gpu_memory_mb,
         }
+
+    def _detect_gpu_memory(self) -> int:
+        """Detect GPU memory using available backends.
+
+        Attempts detection in order: GPUAccelerator (XPU/CUDA), OpenVINO, DirectML.
+
+        Returns:
+            GPU memory in MB, or 0 if no GPU detected.
+
+        """
+        gpu_memory = 0
+        self.gpu_vendor = "cpu"
+        self.gpu_backend = "cpu"
+
+        try:
+            from intellicrack.core.gpu_acceleration import (
+                CUPY_AVAILABLE,
+                NUMBA_CUDA_AVAILABLE,
+                PYCUDA_AVAILABLE,
+                XPU_AVAILABLE,
+                GPUAccelerator,
+            )
+
+            if XPU_AVAILABLE or CUPY_AVAILABLE or PYCUDA_AVAILABLE or NUMBA_CUDA_AVAILABLE:
+                accelerator = GPUAccelerator()
+                device_info = accelerator.device_info
+
+                if accelerator.framework == "xpu":
+                    self.gpu_vendor = "intel"
+                    self.gpu_backend = "xpu"
+                    gpu_memory = device_info.get("memory_reserved", 12288 * 1024 * 1024) // (1024 * 1024)
+                elif accelerator.framework in ("cupy", "numba", "pycuda"):
+                    self.gpu_vendor = "nvidia"
+                    self.gpu_backend = accelerator.framework
+                    gpu_memory = device_info.get("total_memory", 0) // (1024 * 1024)
+
+                if gpu_memory > 0:
+                    logger.info("GPU detected via %s: %s MB", self.gpu_backend, gpu_memory)
+                    return gpu_memory
+        except ImportError:
+            logger.debug("GPUAccelerator not available")
+        except Exception as e:
+            logger.debug("GPUAccelerator detection failed: %s", e)
+
+        if gpu_memory == 0:
+            try:
+                try:
+                    from openvino import Core
+                except ImportError:
+                    from openvino.runtime import Core
+                core = Core()
+                if any("GPU" in d for d in core.available_devices):
+                    self.gpu_vendor = "intel"
+                    self.gpu_backend = "openvino"
+                    gpu_memory = 12288
+                    logger.info("Intel GPU detected via OpenVINO: %s MB (default)", gpu_memory)
+                    return gpu_memory
+            except ImportError:
+                logger.debug("OpenVINO not available for GPU detection")
+            except Exception as e:
+                logger.debug("OpenVINO GPU detection failed: %s", e)
+
+        if gpu_memory == 0 and sys.platform == "win32":
+            try:
+                import torch_directml
+
+                if torch_directml.device_count() > 0:
+                    self.gpu_vendor = "directml"
+                    self.gpu_backend = "directml"
+                    gpu_memory = 8192
+                    logger.info("GPU detected via DirectML: %s MB (estimated)", gpu_memory)
+                    return gpu_memory
+            except ImportError:
+                logger.debug("DirectML not available for GPU detection")
+            except Exception as e:
+                logger.debug("DirectML GPU detection failed: %s", e)
+
+        if gpu_memory == 0:
+            logger.debug("No GPU detected, using CPU only")
+
+        return gpu_memory
 
     def _initialize_resource_pools(self) -> None:
         """Initialize thread and process executor pools.
@@ -698,6 +776,29 @@ class ResourceManager:
         )
 
         logger.info("Initialized resource pools: %d threads, %d processes", max_threads, max_processes)
+
+    def shutdown(self, wait: bool = True) -> None:
+        """Shutdown all resource pools and release resources.
+
+        Args:
+            wait: If True, wait for all pending work items to complete.
+
+        """
+        for resource_type, pool in self.resource_pools.items():
+            if pool is not None and hasattr(pool, "shutdown"):
+                try:
+                    pool.shutdown(wait=wait)
+                    logger.debug("Shutdown pool for %s", resource_type)
+                except Exception as e:
+                    logger.debug("Error shutting down pool for %s: %s", resource_type, e)
+        self.resource_pools.clear()
+
+    def __del__(self) -> None:
+        """Destructor to ensure resource pools are shut down."""
+        try:
+            self.shutdown(wait=False)
+        except Exception:
+            pass
 
     @profile_ai_operation("resource_allocation")
     def allocate_resources(self, operation_id: str, requirements: ResourceAllocation) -> bool:

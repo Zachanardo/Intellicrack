@@ -87,16 +87,15 @@ class TestBinaryAnalyzerInitialization:
 
         assert hasattr(analyzer, "multi_format_analyzer")
         assert hasattr(analyzer, "pe_analyzer")
-        assert hasattr(analyzer, "elf_analyzer")
 
-    def test_supported_formats_includes_pe_elf_formats(self) -> None:
-        """supported_formats includes PE, ELF, and other executable formats."""
+    def test_supported_formats_includes_pe_formats(self) -> None:
+        """supported_formats includes Windows PE executable formats."""
         analyzer = BinaryAnalyzer()
 
         assert "exe" in analyzer.supported_formats
         assert "dll" in analyzer.supported_formats
-        assert "elf" in analyzer.supported_formats
-        assert "so" in analyzer.supported_formats
+        assert "sys" in analyzer.supported_formats
+        assert "scr" in analyzer.supported_formats
 
     def test_get_supported_formats_returns_copy(self) -> None:
         """get_supported_formats returns copy of format list."""
@@ -143,61 +142,6 @@ class TestBinaryAnalyzerFileDetection:
 
         finally:
             tmp_path.unlink(missing_ok=True)
-
-    def test_analyze_detects_elf_format(self) -> None:
-        """analyze correctly detects ELF format from magic bytes."""
-        with tempfile.NamedTemporaryFile(suffix=".elf", delete=False) as tmp:
-            tmp.write(b"\x7fELF\x02\x01\x01\x00")
-            tmp.write(b"\x00" * 200)
-            tmp_path = Path(tmp.name)
-
-        try:
-            analyzer = BinaryAnalyzer()
-            result = analyzer.analyze(tmp_path)
-
-            assert "error" not in result
-            assert result["file_type"]["format"] == "ELF"
-            assert result["file_type"]["description"] == "Linux Executable and Linkable Format"
-
-        finally:
-            tmp_path.unlink(missing_ok=True)
-
-    def test_analyze_detects_dex_format(self) -> None:
-        """analyze correctly detects Android DEX format."""
-        with tempfile.NamedTemporaryFile(suffix=".dex", delete=False) as tmp:
-            tmp.write(b"dex\n035\x00")
-            tmp.write(b"\x00" * 200)
-            tmp_path = Path(tmp.name)
-
-        try:
-            analyzer = BinaryAnalyzer()
-            result = analyzer.analyze(tmp_path)
-
-            assert "error" not in result
-            assert result["file_type"]["format"] == "DEX"
-            assert result["file_type"]["description"] == "Android Dalvik Executable"
-
-        finally:
-            tmp_path.unlink(missing_ok=True)
-
-    def test_analyze_detects_zip_based_formats(self) -> None:
-        """analyze correctly detects ZIP-based formats (APK, JAR)."""
-        with tempfile.NamedTemporaryFile(suffix=".apk", delete=False) as tmp:
-            tmp.write(b"PK\x03\x04")
-            tmp.write(b"\x00" * 200)
-            tmp_path = Path(tmp.name)
-
-        try:
-            analyzer = BinaryAnalyzer()
-            result = analyzer.analyze(tmp_path)
-
-            assert "error" not in result
-            assert result["file_type"]["format"] == "APK"
-            assert result["file_type"]["description"] == "Android Package"
-
-        finally:
-            tmp_path.unlink(missing_ok=True)
-
 
 class TestBinaryAnalyzerHashCalculation:
     """Test cryptographic hash calculation for file identification."""

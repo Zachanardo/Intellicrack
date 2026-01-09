@@ -89,9 +89,9 @@ const BinaryPatcherTests = {
 
             // Verify subsystems initialized
             if (
-                !BinaryPatcher.patchingEngine
-                || !BinaryPatcher.architectures
-                || !BinaryPatcher.formatHandlers
+                !BinaryPatcher.patchingEngine ||
+                !BinaryPatcher.architectures ||
+                !BinaryPatcher.formatHandlers
             ) {
                 throw new Error('Subsystems not initialized');
             }
@@ -194,12 +194,12 @@ const BinaryPatcherTests = {
                 const view = new DataView(peBuffer);
 
                 // DOS header
-                view.setUint16(0, 0x5A_4D, true); // MZ
-                view.setUint32(0x3C, 0x80, true); // PE offset
+                view.setUint16(0, 0x5a_4d, true); // MZ
+                view.setUint32(0x3c, 0x80, true); // PE offset
 
                 // PE header
                 view.setUint32(0x80, 0x00_00_45_50, true); // PE\0\0
-                view.setUint16(0x84, 0x01_4C, true); // Machine (i386)
+                view.setUint16(0x84, 0x01_4c, true); // Machine (i386)
                 view.setUint16(0x86, 1, true); // Number of sections
 
                 const headers = handlers.pe.parseHeaders(new Uint8Array(peBuffer));
@@ -215,7 +215,7 @@ const BinaryPatcherTests = {
                 const view = new DataView(elfBuffer);
 
                 // ELF magic
-                view.setUint32(0, 0x46_4C_45_7F, false); // \x7FELF
+                view.setUint32(0, 0x46_4c_45_7f, false); // \x7FELF
                 elfBuffer[4] = 1; // 32-bit
                 elfBuffer[5] = 1; // Little endian
                 elfBuffer[6] = 1; // Version
@@ -233,7 +233,7 @@ const BinaryPatcherTests = {
                 const view = new DataView(machoBuffer);
 
                 // Mach-O magic
-                view.setUint32(0, 0xFE_ED_FA_CE, false); // 32-bit
+                view.setUint32(0, 0xfe_ed_fa_ce, false); // 32-bit
                 view.setInt32(4, 7, true); // CPU type x86
 
                 const headers = handlers.macho.parseHeaders(new Uint8Array(machoBuffer));
@@ -308,7 +308,7 @@ const BinaryPatcherTests = {
 
             // Test polymorphic generation
             const originalPatch = {
-                data: [0x89, 0xC0], // MOV EAX, EAX
+                data: [0x89, 0xc0], // MOV EAX, EAX
             };
 
             const variants = antiDetect.polymorphic.generateVariants(originalPatch);
@@ -323,7 +323,7 @@ const BinaryPatcherTests = {
             }
 
             // Test register substitution
-            const substituted = antiDetect.polymorphic.substituteRegisters([0x89, 0xC0]);
+            const substituted = antiDetect.polymorphic.substituteRegisters([0x89, 0xc0]);
             if (!substituted || substituted.length !== 2) {
                 throw new Error('Register substitution failed');
             }
@@ -597,8 +597,8 @@ const BinaryPatcherTests = {
             }
 
             // Scenario 4: Test patch verification
-            const testSuite
-                = BinaryPatcherAdvanced.advancedVerification.testFramework.createTestSuite(patchId, [
+            const testSuite =
+                BinaryPatcherAdvanced.advancedVerification.testFramework.createTestSuite(patchId, [
                     {
                         name: 'Test Functionality',
                         type: 'functionality',

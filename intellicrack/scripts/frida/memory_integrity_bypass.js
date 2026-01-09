@@ -174,12 +174,12 @@ const MemoryIntegrityBypass = {
                     });
 
                     // Check if this is trying to remove execute permissions
-                    if ((this.flNewProtect & 0xF0) === 0) {
+                    if ((this.flNewProtect & 0xf0) === 0) {
                         // No execute permissions
                         const { config } = this.parent.parent;
                         if (
-                            config.memoryProtection.enabled
-                            && config.memoryProtection.allowExecutableWrites
+                            config.memoryProtection.enabled &&
+                            config.memoryProtection.allowExecutableWrites
                         ) {
                             // Force PAGE_EXECUTE_READWRITE instead
                             args[2] = ptr(0x40);
@@ -195,9 +195,9 @@ const MemoryIntegrityBypass = {
 
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.lpflOldProtect
-                        && !this.lpflOldProtect.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.lpflOldProtect &&
+                        !this.lpflOldProtect.isNull()
                     ) {
                         // Record the memory region change
                         const { config } = this.parent.parent;
@@ -234,7 +234,7 @@ const MemoryIntegrityBypass = {
 
                     // Allow execute permissions for external processes too
                     const { config } = this.parent.parent;
-                    if (config.memoryProtection.enabled && (this.flNewProtect & 0xF0) === 0) {
+                    if (config.memoryProtection.enabled && (this.flNewProtect & 0xf0) === 0) {
                         args[3] = ptr(0x40); // PAGE_EXECUTE_READWRITE
                         send({
                             type: 'bypass',
@@ -271,8 +271,8 @@ const MemoryIntegrityBypass = {
                     // Ensure executable allocations are allowed
                     const { config } = this.parent.parent;
                     if (
-                        config.memoryProtection.enabled
-                        && config.memoryProtection.allowExecutableWrites
+                        config.memoryProtection.enabled &&
+                        config.memoryProtection.allowExecutableWrites
                     ) {
                         if (this.flProtect && 0x40) {
                             // PAGE_EXECUTE_READWRITE requested
@@ -342,10 +342,10 @@ const MemoryIntegrityBypass = {
                     // Allow executable allocations in external processes
                     const { config } = this.parent.parent;
                     if (
-                        config.memoryProtection.enabled
-                        && config.memoryProtection.allowExecutableWrites
-                        && this.flProtect
-                        && 0x20
+                        config.memoryProtection.enabled &&
+                        config.memoryProtection.allowExecutableWrites &&
+                        this.flProtect &&
+                        0x20
                     ) {
                         args[4] = ptr(0x40);
                         send({
@@ -386,9 +386,9 @@ const MemoryIntegrityBypass = {
                     // Force executable permissions
                     const { config } = this.parent.parent;
                     if (
-                        config.memoryProtection.enabled
-                        && config.memoryProtection.allowExecutableWrites
-                        && (this.newProtect & 0xF0) === 0
+                        config.memoryProtection.enabled &&
+                        config.memoryProtection.allowExecutableWrites &&
+                        (this.newProtect & 0xf0) === 0
                     ) {
                         args[3] = ptr(0x40); // PAGE_EXECUTE_READWRITE
                         send({
@@ -482,8 +482,8 @@ const MemoryIntegrityBypass = {
                             if (this.spoofChecksum) {
                                 const { config } = this.parent.parent.parent;
                                 if (
-                                    config.codeIntegrity.enabled
-                                    && config.codeIntegrity.spoofChecksums
+                                    config.codeIntegrity.enabled &&
+                                    config.codeIntegrity.spoofChecksums
                                 ) {
                                     // Return a predictable checksum
                                     retval.replace(0x12_34_56_78);
@@ -839,8 +839,8 @@ const MemoryIntegrityBypass = {
                     if (this.bypassCanary) {
                         const { config } = this.parent.parent;
                         if (
-                            config.runtimeVerification.enabled
-                            && config.runtimeVerification.spoofStackCanaries
+                            config.runtimeVerification.enabled &&
+                            config.runtimeVerification.spoofStackCanaries
                         ) {
                             // Normal return - canary check passed
                             send({
@@ -906,8 +906,8 @@ const MemoryIntegrityBypass = {
                     if (this.bypassCFG) {
                         const { config } = this.parent.parent;
                         if (
-                            config.runtimeVerification.enabled
-                            && config.runtimeVerification.bypassCFG
+                            config.runtimeVerification.enabled &&
+                            config.runtimeVerification.bypassCFG
                         ) {
                             // Allow the call to proceed
                             send({
@@ -939,8 +939,8 @@ const MemoryIntegrityBypass = {
                 onLeave(retval) {
                     const { config } = this.parent.parent;
                     if (
-                        config.runtimeVerification.enabled
-                        && config.runtimeVerification.bypassCFG
+                        config.runtimeVerification.enabled &&
+                        config.runtimeVerification.bypassCFG
                     ) {
                         // Return success (STATUS_SUCCESS)
                         retval.replace(0);
@@ -1096,10 +1096,10 @@ const MemoryIntegrityBypass = {
 
                 onLeave(retval) {
                     if (
-                        this.isScanning
-                        && retval.toInt32() !== 0
-                        && this.lpBuffer
-                        && !this.lpBuffer.isNull()
+                        this.isScanning &&
+                        retval.toInt32() !== 0 &&
+                        this.lpBuffer &&
+                        !this.lpBuffer.isNull()
                     ) {
                         const { config } = this.parent.parent;
                         if (config.memoryScanning.enabled && config.memoryScanning.spoofPatterns) {
@@ -1122,15 +1122,15 @@ const MemoryIntegrityBypass = {
                             // Replace NOP sleds with original instructions
                             for (let i = 0; i <= bytes.length - 4; i++) {
                                 if (
-                                    bytes[i] === 0x90
-                                    && bytes[i + 1] === 0x90
-                                    && bytes[i + 2] === 0x90
-                                    && bytes[i + 3] === 0x90
+                                    bytes[i] === 0x90 &&
+                                    bytes[i + 1] === 0x90 &&
+                                    bytes[i + 2] === 0x90 &&
+                                    bytes[i + 3] === 0x90
                                 ) {
                                     // Replace NOP sled with standard function prologue
                                     bytes[i] = 0x55; // push ebp
-                                    bytes[i + 1] = 0x8B; // mov ebp,esp
-                                    bytes[i + 2] = 0xEC;
+                                    bytes[i + 1] = 0x8b; // mov ebp,esp
+                                    bytes[i + 2] = 0xec;
                                     bytes[i + 3] = 0x83; // sub esp,10h
                                     modified = true;
                                 }
@@ -1327,7 +1327,7 @@ const MemoryIntegrityBypass = {
                 onEnter(args) {
                     this.hModule = args[0];
 
-                    if (args[1].and(0xFF_FF_00_00).equals(ptr(0))) {
+                    if (args[1].and(0xff_ff_00_00).equals(ptr(0))) {
                         // Ordinal import
                         this.ordinal = args[1].toInt32();
                         send({
@@ -1390,9 +1390,9 @@ const MemoryIntegrityBypass = {
                 onLeave(_retval) {
                     const { config } = this.parent.parent;
                     if (
-                        config.antiDump.enabled
-                        && config.antiDump.protectHeaders
-                        && (this.directoryEntry === 1 || this.directoryEntry === 2)
+                        config.antiDump.enabled &&
+                        config.antiDump.protectHeaders &&
+                        (this.directoryEntry === 1 || this.directoryEntry === 2)
                     ) {
                         send({
                             type: 'info',
@@ -1558,36 +1558,36 @@ const MemoryIntegrityBypass = {
 
             for (const hook in this.hooksInstalled) {
                 if (
-                    hook.includes('Virtual')
-                    || hook.includes('Protect')
-                    || hook.includes('Alloc')
+                    hook.includes('Virtual') ||
+                    hook.includes('Protect') ||
+                    hook.includes('Alloc')
                 ) {
                     categories['Memory Protection']++;
                 } else if (
-                    hook.includes('Checksum')
-                    || hook.includes('Integrity')
-                    || hook.includes('Self')
+                    hook.includes('Checksum') ||
+                    hook.includes('Integrity') ||
+                    hook.includes('Self')
                 ) {
                     categories['Code Integrity']++;
                 } else if (
-                    hook.includes('Stack')
-                    || hook.includes('CFG')
-                    || hook.includes('CFI')
-                    || hook.includes('ROP')
+                    hook.includes('Stack') ||
+                    hook.includes('CFG') ||
+                    hook.includes('CFI') ||
+                    hook.includes('ROP')
                 ) {
                     categories['Runtime Verification']++;
                 } else if (
-                    hook.includes('Read')
-                    || hook.includes('Write')
-                    || hook.includes('Query')
-                    || hook.includes('Scan')
+                    hook.includes('Read') ||
+                    hook.includes('Write') ||
+                    hook.includes('Query') ||
+                    hook.includes('Scan')
                 ) {
                     categories['Memory Scanning']++;
                 } else if (
-                    hook.includes('Header')
-                    || hook.includes('Import')
-                    || hook.includes('Section')
-                    || hook.includes('Dump')
+                    hook.includes('Header') ||
+                    hook.includes('Import') ||
+                    hook.includes('Section') ||
+                    hook.includes('Dump')
                 ) {
                     categories['Anti-Dump Protection']++;
                 } else if (hook.includes('Debug') || hook.includes('Process')) {
@@ -2025,7 +2025,7 @@ const MemoryIntegrityBypass = {
                 const bytes = new Uint8Array(data);
                 let checksum = 0;
                 for (const byte of bytes) {
-                    checksum = ((checksum << 5) - checksum + byte) & 0xFF_FF_FF_FF;
+                    checksum = ((checksum << 5) - checksum + byte) & 0xff_ff_ff_ff;
                 }
                 return checksum;
             }
@@ -2185,7 +2185,7 @@ const MemoryIntegrityBypass = {
                 const minCaveSize = 16;
 
                 for (let i = 0; i < bytes.length; i++) {
-                    if (bytes[i] === 0x00 || bytes[i] === 0x90 || bytes[i] === 0xCC) {
+                    if (bytes[i] === 0x00 || bytes[i] === 0x90 || bytes[i] === 0xcc) {
                         if (caveStart === -1) {
                             caveStart = i;
                         }
@@ -2208,11 +2208,11 @@ const MemoryIntegrityBypass = {
     generateDecoyCode() {
         // Generate various decoy instruction sequences
         this.codeCaveManager.decoyCode = [
-            [0x55, 0x8B, 0xEC, 0x83, 0xEC, 0x10], // push ebp; mov ebp,esp; sub esp,10h
-            [0x50, 0x51, 0x52, 0x53, 0x5B, 0x5A, 0x59, 0x58], // push/pop registers
-            [0x31, 0xC0, 0x31, 0xDB, 0x31, 0xC9], // xor eax,eax; xor ebx,ebx; xor ecx,ecx
+            [0x55, 0x8b, 0xec, 0x83, 0xec, 0x10], // push ebp; mov ebp,esp; sub esp,10h
+            [0x50, 0x51, 0x52, 0x53, 0x5b, 0x5a, 0x59, 0x58], // push/pop registers
+            [0x31, 0xc0, 0x31, 0xdb, 0x31, 0xc9], // xor eax,eax; xor ebx,ebx; xor ecx,ecx
             [0x90, 0x90, 0x90, 0x90], // NOP sled
-            [0xEB, 0x00, 0xEB, 0x00], // jmp $+2 (harmless jumps)
+            [0xeb, 0x00, 0xeb, 0x00], // jmp $+2 (harmless jumps)
         ];
     },
 
@@ -2312,7 +2312,7 @@ const MemoryIntegrityBypass = {
         const threadHandle = GetCurrentThread();
         if (GetThreadContext(threadHandle, contextBuffer)) {
             // DR7 offset: x64=0x168, x86=0xBC
-            const dr7Offset = Process.arch === 'x64' ? 0x1_68 : 0xBC;
+            const dr7Offset = Process.arch === 'x64' ? 0x1_68 : 0xbc;
             const dr7Value = contextBuffer.add(dr7Offset).readU32();
 
             send({
@@ -2405,16 +2405,16 @@ const MemoryIntegrityBypass = {
     loadInstructionEquivalents() {
         // Load equivalent instruction sequences for polymorphism
         this.polymorphicEngine.mutationEngine.equivalents.set('mov eax, ebx', [
-            [0x89, 0xD8], // mov eax, ebx
-            [0x50, 0x53, 0x58, 0x5B, 0x89, 0xD8], // push eax; push ebx; pop eax; pop ebx; mov eax, ebx
-            [0x31, 0xC0, 0x01, 0xD8], // xor eax, eax; add eax, ebx
+            [0x89, 0xd8], // mov eax, ebx
+            [0x50, 0x53, 0x58, 0x5b, 0x89, 0xd8], // push eax; push ebx; pop eax; pop ebx; mov eax, ebx
+            [0x31, 0xc0, 0x01, 0xd8], // xor eax, eax; add eax, ebx
         ]);
 
         this.polymorphicEngine.mutationEngine.equivalents.set('xor eax, eax', [
-            [0x31, 0xC0], // xor eax, eax
-            [0x33, 0xC0], // xor eax, eax (alternate encoding)
-            [0x29, 0xC0], // sub eax, eax
-            [0xB8, 0x00, 0x00, 0x00, 0x00], // mov eax, 0
+            [0x31, 0xc0], // xor eax, eax
+            [0x33, 0xc0], // xor eax, eax (alternate encoding)
+            [0x29, 0xc0], // sub eax, eax
+            [0xb8, 0x00, 0x00, 0x00, 0x00], // mov eax, 0
         ]);
     },
 
@@ -2422,11 +2422,11 @@ const MemoryIntegrityBypass = {
         this.polymorphicEngine.mutationEngine.junkOpcodes = [
             [0x90], // NOP
             [0x50, 0x58], // push eax; pop eax
-            [0x53, 0x5B], // push ebx; pop ebx
-            [0xEB, 0x00], // jmp $+2
-            [0x87, 0xDB], // xchg ebx, ebx
-            [0x8D, 0x40, 0x00], // lea eax, [eax+0]
-            [0x8D, 0x49, 0x00], // lea ecx, [ecx+0]
+            [0x53, 0x5b], // push ebx; pop ebx
+            [0xeb, 0x00], // jmp $+2
+            [0x87, 0xdb], // xchg ebx, ebx
+            [0x8d, 0x40, 0x00], // lea eax, [eax+0]
+            [0x8d, 0x49, 0x00], // lea ecx, [ecx+0]
         ];
     },
 
@@ -2440,11 +2440,11 @@ const MemoryIntegrityBypass = {
                 for (const byte of bytes) {
                     // Add random junk opcodes
                     if (Math.random() < 0.3 && this.polymorphicEngine.currentLevel !== 'low') {
-                        const junk
-                            = this.polymorphicEngine.mutationEngine.junkOpcodes[
+                        const junk =
+                            this.polymorphicEngine.mutationEngine.junkOpcodes[
                                 Math.floor(
-                                    Math.random()
-                                        * this.polymorphicEngine.mutationEngine.junkOpcodes.length
+                                    Math.random() *
+                                        this.polymorphicEngine.mutationEngine.junkOpcodes.length
                                 )
                             ];
                         mutated = [...mutated, ...junk];
@@ -2489,8 +2489,8 @@ const MemoryIntegrityBypass = {
         for (const [key, region] of this.memoryIntegrityState.regions) {
             const regionAddr = ptr(key);
             if (
-                address.compare(regionAddr) >= 0
-                && address.compare(regionAddr.add(region.size)) < 0
+                address.compare(regionAddr) >= 0 &&
+                address.compare(regionAddr.add(region.size)) < 0
             ) {
                 return key;
             }
@@ -2547,7 +2547,7 @@ const MemoryIntegrityBypass = {
                         const canary = parent.generateHeapCanary();
                         parent.heapProtection.heapCanaries.set(retval.toString(), {
                             preCanary: canary,
-                            postCanary: canary.xor(0xDE_AD_BE_EF),
+                            postCanary: canary.xor(0xde_ad_be_ef),
                             size: this.size,
                         });
 
@@ -2772,7 +2772,7 @@ const MemoryIntegrityBypass = {
                         // Check if this is a legitimate access
                         if (parent.isLegitimateAccess(faultAddress)) {
                             // Temporarily remove guard page protection
-                            Memory.protect(faultAddress.and(~0xF_FF), 0x10_00, 'rwx');
+                            Memory.protect(faultAddress.and(~0xf_ff), 0x10_00, 'rwx');
 
                             send({
                                 type: 'info',
@@ -2783,18 +2783,18 @@ const MemoryIntegrityBypass = {
 
                             // Re-enable guard page after a delay
                             setTimeout(() => {
-                                Memory.protect(faultAddress.and(~0xF_FF), 0x10_00, 'rwx');
+                                Memory.protect(faultAddress.and(~0xf_ff), 0x10_00, 'rwx');
                                 const oldProtect = Memory.queryProtection(
-                                    faultAddress.and(~0xF_FF)
+                                    faultAddress.and(~0xf_ff)
                                 );
                                 Memory.protect(
-                                    faultAddress.and(~0xF_FF),
+                                    faultAddress.and(~0xf_ff),
                                     0x10_00,
                                     `${oldProtect.protection}---g`
                                 ); // Add guard flag
                             }, 100);
 
-                            return 0xFF_FF_FF_FF; // EXCEPTION_CONTINUE_EXECUTION
+                            return 0xff_ff_ff_ff; // EXCEPTION_CONTINUE_EXECUTION
                         }
                         send({
                             type: 'warning',
@@ -2886,7 +2886,7 @@ const MemoryIntegrityBypass = {
     },
 
     // === ADDITIONAL HELPER METHODS ===
-    generateHeapCanary: () => Math.floor(Math.random() * 0xFF_FF_FF_FF),
+    generateHeapCanary: () => Math.floor(Math.random() * 0xff_ff_ff_ff),
 
     createIsolatedHeap() {
         // Create a custom heap for sensitive allocations
@@ -2921,10 +2921,10 @@ const MemoryIntegrityBypass = {
                             let repeats = 0;
                             for (let i = 4; i < bytes.length - 3; i += 4) {
                                 if (
-                                    bytes[i] === pattern[0]
-                                    && bytes[i + 1] === pattern[1]
-                                    && bytes[i + 2] === pattern[2]
-                                    && bytes[i + 3] === pattern[3]
+                                    bytes[i] === pattern[0] &&
+                                    bytes[i + 1] === pattern[1] &&
+                                    bytes[i + 2] === pattern[2] &&
+                                    bytes[i + 3] === pattern[3]
                                 ) {
                                     repeats++;
                                 }
@@ -3009,8 +3009,8 @@ const MemoryIntegrityBypass = {
             const expectedRange = Process.getCurrentThreadStackRange();
 
             if (
-                currentStack.compare(expectedRange.base) < 0
-                || currentStack.compare(expectedRange.base.add(expectedRange.size)) >= 0
+                currentStack.compare(expectedRange.base) < 0 ||
+                currentStack.compare(expectedRange.base.add(expectedRange.size)) >= 0
             ) {
                 send({
                     type: 'warning',
@@ -3081,8 +3081,8 @@ const MemoryIntegrityBypass = {
                     // Check if destination is in a replicated region
                     parent.memoryReplication.replicas.forEach((replica, _key) => {
                         if (
-                            this.dest.compare(replica.original) >= 0
-                            && this.dest.compare(replica.original.add(replica.size)) < 0
+                            this.dest.compare(replica.original) >= 0 &&
+                            this.dest.compare(replica.original.add(replica.size)) < 0
                         ) {
                             // Update replica
                             const offset = this.dest.sub(replica.original).toInt32();
@@ -3148,11 +3148,11 @@ const MemoryIntegrityBypass = {
             const canaryPage = Memory.alloc(0x10_00);
             // Fill with canary pattern
             for (let j = 0; j < 0x10_00; j += 4) {
-                canaryPage.add(j).writeU32(0xDE_AD_C0_DE);
+                canaryPage.add(j).writeU32(0xde_ad_c0_de);
             }
             this.guardPageSystem.guardPages.set(canaryPage.toString(), {
                 type: 'canary',
-                expectedValue: 0xDE_AD_C0_DE,
+                expectedValue: 0xde_ad_c0_de,
             });
         }
     },
@@ -3166,7 +3166,7 @@ const MemoryIntegrityBypass = {
                 for (let i = 0; i < size; i += 4) {
                     ptr(address)
                         .add(i)
-                        .writeU32(Math.floor(Math.random() * 0xFF_FF_FF_FF));
+                        .writeU32(Math.floor(Math.random() * 0xff_ff_ff_ff));
                 }
                 send({
                     type: 'info',
@@ -3183,11 +3183,11 @@ const MemoryIntegrityBypass = {
     obfuscateForensicArtifacts() {
         // Obfuscate common forensic artifacts
         const patterns = [
-            { pattern: 'MZ', replacement: [0x4D ^ 0xFF, 0x5A ^ 0xFF] },
-            { pattern: 'PE', replacement: [0x50 ^ 0xFF, 0x45 ^ 0xFF] },
+            { pattern: 'MZ', replacement: [0x4d ^ 0xff, 0x5a ^ 0xff] },
+            { pattern: 'PE', replacement: [0x50 ^ 0xff, 0x45 ^ 0xff] },
             {
                 pattern: '.text',
-                replacement: [0x2E ^ 0xFF, 0x74 ^ 0xFF, 0x65 ^ 0xFF, 0x78 ^ 0xFF, 0x74 ^ 0xFF],
+                replacement: [0x2e ^ 0xff, 0x74 ^ 0xff, 0x65 ^ 0xff, 0x78 ^ 0xff, 0x74 ^ 0xff],
             },
         ];
 
@@ -3204,7 +3204,7 @@ const MemoryIntegrityBypass = {
                 if (data) {
                     const bytes = new Uint8Array(data);
                     for (let i = 0; i < bytes.length; i++) {
-                        bytes[i] ^= 0xAA;
+                        bytes[i] ^= 0xaa;
                     }
                     Memory.protect(replica.original, bytes.length, 'rw-');
                     replica.original.writeByteArray(bytes);
@@ -3224,7 +3224,7 @@ const MemoryIntegrityBypass = {
                 if (data) {
                     const bytes = new Uint8Array(data);
                     for (let i = 0; i < bytes.length; i++) {
-                        bytes[i] ^= 0xAA;
+                        bytes[i] ^= 0xaa;
                     }
                     Memory.protect(replica.original, bytes.length, 'rw-');
                     replica.original.writeByteArray(bytes);
@@ -3282,9 +3282,9 @@ const MemoryIntegrityBypass = {
         const module = Process.findModuleByAddress(address);
         if (module) {
             return (
-                module.name.includes('.exe')
-                || module.name.includes('kernel32')
-                || module.name.includes('ntdll')
+                module.name.includes('.exe') ||
+                module.name.includes('kernel32') ||
+                module.name.includes('ntdll')
             );
         }
         return false;

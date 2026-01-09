@@ -69,13 +69,12 @@ from ..utils.resource_helper import get_resource_path
 from .radare2_integration_ui import R2ConfigurationDialog, R2IntegrationWidget
 
 
-if TYPE_CHECKING:
-    pass
-
 try:
     import matplotlib as mpl
+
     mpl.use("Agg")
     import matplotlib.pyplot as plt
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
@@ -690,9 +689,7 @@ class EnhancedAnalysisDashboard(QWidget):
         self._draw_graph_edges(edges, positions, y_offset=20)
         self.viz_info.setText(f"Call Graph: {len(nodes)} functions, {len(edges)} calls")
 
-    def _draw_call_graph_nodes(
-        self, nodes: list[Any], node_positions: list[tuple[int, int]]
-    ) -> list[tuple[int, int]]:
+    def _draw_call_graph_nodes(self, nodes: list[Any], node_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
         node_color = QColor(70, 130, 180)
         text_color = QColor(255, 255, 255)
         positions: list[tuple[int, int]] = []
@@ -713,9 +710,7 @@ class EnhancedAnalysisDashboard(QWidget):
             positions.append((x, y))
         return positions
 
-    def _draw_graph_edges(
-        self, edges: list[Any], positions: list[tuple[int, int]], y_offset: int = 20
-    ) -> None:
+    def _draw_graph_edges(self, edges: list[Any], positions: list[tuple[int, int]], y_offset: int = 20) -> None:
         for edge in edges:
             if isinstance(edge, (list, tuple)) and len(edge) >= _MIN_EDGE_LENGTH:
                 start_idx, end_idx = edge[0], edge[1]
@@ -759,9 +754,7 @@ class EnhancedAnalysisDashboard(QWidget):
         self._draw_graph_edges(edges, block_positions, y_offset=15)
         self.viz_info.setText(f"Control Flow Graph: {len(blocks)} blocks, {len(edges)} edges")
 
-    def _draw_cfg_blocks(
-        self, blocks: list[Any], positions: list[tuple[int, int]]
-    ) -> list[tuple[int, int]]:
+    def _draw_cfg_blocks(self, blocks: list[Any], positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
         block_color = QColor(100, 149, 237)
         block_positions: list[tuple[int, int]] = []
 
@@ -830,10 +823,7 @@ class EnhancedAnalysisDashboard(QWidget):
 
         avg_complexity = sum(values) / len(values) if values else 0
         max_complexity = max(values) if values else 0
-        info_text = (
-            f"Function Complexity: {len(functions)} functions analyzed\n"
-            f"Average: {avg_complexity:.1f}, Max: {max_complexity:.1f}"
-        )
+        info_text = f"Function Complexity: {len(functions)} functions analyzed\nAverage: {avg_complexity:.1f}, Max: {max_complexity:.1f}"
         self.viz_info.setText(info_text)
 
     def _draw_function_complexity_fallback(self, functions: list[str], values: list[float]) -> None:

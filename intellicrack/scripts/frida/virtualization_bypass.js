@@ -412,9 +412,9 @@ const virtualizationBypass = {
                 onLeave(retval) {
                     const bytesReturned = retval.toInt32();
                     if (
-                        bytesReturned > 0
-                        && this.firmwareTableBuffer
-                        && !this.firmwareTableBuffer.isNull()
+                        bytesReturned > 0 &&
+                        this.firmwareTableBuffer &&
+                        !this.firmwareTableBuffer.isNull()
                     ) {
                         this.spoofBiosInfo();
                     }
@@ -433,9 +433,9 @@ const virtualizationBypass = {
 
                             // Check for VirtualBox BIOS signatures
                             if (
-                                biosString.includes('VBOX')
-                                || biosString.includes('VirtualBox')
-                                || biosString.includes('Oracle')
+                                biosString.includes('VBOX') ||
+                                biosString.includes('VirtualBox') ||
+                                biosString.includes('Oracle')
                             ) {
                                 // Replace with legitimate BIOS vendor
                                 const spoofedBios = biosString
@@ -525,9 +525,9 @@ const virtualizationBypass = {
                         const keyName = args[1].readUtf16String().toLowerCase();
 
                         if (
-                            keyName.includes('vbox')
-                            || keyName.includes('virtualbox')
-                            || keyName.includes('oracle')
+                            keyName.includes('vbox') ||
+                            keyName.includes('virtualbox') ||
+                            keyName.includes('oracle')
                         ) {
                             send({
                                 type: 'bypass',
@@ -745,22 +745,22 @@ const virtualizationBypass = {
 
                                     // Check for VMware MAC prefixes
                                     const vmwarePrefixes = [
-                                        [0x00, 0x0C, 0x29], // VMware
+                                        [0x00, 0x0c, 0x29], // VMware
                                         [0x00, 0x50, 0x56], // VMware
-                                        [0x00, 0x1C, 0x14], // VMware
+                                        [0x00, 0x1c, 0x14], // VMware
                                     ];
 
                                     const isVmwareMac = vmwarePrefixes.some(
                                         prefix =>
-                                            mac[0] === prefix[0]
-                                            && mac[1] === prefix[1]
-                                            && mac[2] === prefix[2]
+                                            mac[0] === prefix[0] &&
+                                            mac[1] === prefix[1] &&
+                                            mac[2] === prefix[2]
                                     );
 
                                     if (isVmwareMac) {
                                         // Replace with Intel MAC prefix
                                         address.writeU8(0x00); // Intel OUI
-                                        address.add(1).writeU8(0x1B);
+                                        address.add(1).writeU8(0x1b);
                                         address.add(2).writeU8(0x21);
 
                                         send({
@@ -855,8 +855,8 @@ const virtualizationBypass = {
                 onLeave(retval) {
                     const { config } = this.parent.parent;
                     if (
-                        config.vmDetection.hyperV.hideHyperVFeatures
-                        && (this.feature === 20 || this.feature === 21)
+                        config.vmDetection.hyperV.hideHyperVFeatures &&
+                        (this.feature === 20 || this.feature === 21)
                     ) {
                         retval.replace(0); // FALSE - feature not present
                         send({
@@ -1000,7 +1000,7 @@ const virtualizationBypass = {
 
                 onLeave(retval) {
                     if (this.blockQemuSearch) {
-                        retval.replace(ptr(0xFF_FF_FF_FF)); // INVALID_HANDLE_VALUE
+                        retval.replace(ptr(0xff_ff_ff_ff)); // INVALID_HANDLE_VALUE
                     }
                 },
             });
@@ -1030,8 +1030,8 @@ const virtualizationBypass = {
                     try {
                         const hardwareId = buffer.readUtf16String();
                         if (
-                            hardwareId
-                            && (hardwareId.includes('QEMU') || hardwareId.includes('VEN_1AF4'))
+                            hardwareId &&
+                            (hardwareId.includes('QEMU') || hardwareId.includes('VEN_1AF4'))
                         ) {
                             // Replace with generic hardware ID
                             buffer.writeUtf16String('PCI\\VEN_8086&DEV_1234'); // Intel device
@@ -1060,7 +1060,7 @@ const virtualizationBypass = {
                     const ioControlCode = args[1].toInt32();
 
                     // Check for virtio-related IOCTL codes
-                    if ((ioControlCode & 0xFF_FF_00_00) === 0x00_22_00_00) {
+                    if ((ioControlCode & 0xff_ff_00_00) === 0x00_22_00_00) {
                         // Virtio device type
                         send({
                             type: 'bypass',
@@ -1152,7 +1152,7 @@ const virtualizationBypass = {
 
                 onLeave(retval) {
                     if (this.blockSandboxFile) {
-                        retval.replace(0xFF_FF_FF_FF); // INVALID_FILE_ATTRIBUTES
+                        retval.replace(0xff_ff_ff_ff); // INVALID_FILE_ATTRIBUTES
                     }
                 },
             });
@@ -1351,9 +1351,9 @@ const virtualizationBypass = {
                         const varName = args[0].readUtf16String().toLowerCase();
 
                         if (
-                            varName.includes('sandbox')
-                            || varName.includes('cuckoo')
-                            || varName.includes('crack')
+                            varName.includes('sandbox') ||
+                            varName.includes('cuckoo') ||
+                            varName.includes('crack')
                         ) {
                             send({
                                 type: 'bypass',
@@ -1425,10 +1425,10 @@ const virtualizationBypass = {
 
                         // Check for VM hardware keys
                         if (
-                            keyName.includes('vbox')
-                            || keyName.includes('vmware')
-                            || keyName.includes('qemu')
-                            || keyName.includes('virtual')
+                            keyName.includes('vbox') ||
+                            keyName.includes('vmware') ||
+                            keyName.includes('qemu') ||
+                            keyName.includes('virtual')
                         ) {
                             // Replace with legitimate hardware vendor
                             keyBuffer.writeUtf16String('Intel Corporation');
@@ -1992,10 +1992,10 @@ const virtualizationBypass = {
                         try {
                             const data = this.lpBuffer.readAnsiString();
                             if (
-                                data
-                                && (data.includes('lxc')
-                                    || data.includes('/lxc/')
-                                    || data.includes('container'))
+                                data &&
+                                (data.includes('lxc') ||
+                                    data.includes('/lxc/') ||
+                                    data.includes('container'))
                             ) {
                                 send({
                                     type: 'bypass',
@@ -2092,7 +2092,7 @@ const virtualizationBypass = {
                     const ioControlCode = args[1].toInt32();
 
                     // MSR access IOCTL codes that might indicate VM detection
-                    if ((ioControlCode & 0xFF_FF_00_00) === 0x9C_40_00_00) {
+                    if ((ioControlCode & 0xff_ff_00_00) === 0x9c_40_00_00) {
                         // MSR access codes
                         send({
                             type: 'bypass',
@@ -2143,10 +2143,10 @@ const virtualizationBypass = {
 
                     // Common VM detection IOCTL codes
                     const vmIoctls = [
-                        0x00_56_4D_58, // 'VMX' - VMware
-                        0x56_4D_58_68, // VMware backdoor
-                        0xAA_00_00_00, // VirtualBox
-                        0xBB_00_00_00, // Generic VM
+                        0x00_56_4d_58, // 'VMX' - VMware
+                        0x56_4d_58_68, // VMware backdoor
+                        0xaa_00_00_00, // VirtualBox
+                        0xbb_00_00_00, // Generic VM
                     ];
 
                     if (vmIoctls.includes(ioControlCode)) {
@@ -2265,7 +2265,7 @@ const virtualizationBypass = {
 
                 onLeave(retval) {
                     if (this.blockVmFileSearch) {
-                        retval.replace(ptr(0xFF_FF_FF_FF)); // INVALID_HANDLE_VALUE
+                        retval.replace(ptr(0xff_ff_ff_ff)); // INVALID_HANDLE_VALUE
                     }
                 },
             });
@@ -2416,10 +2416,10 @@ const virtualizationBypass = {
                         const hostname = nameBuffer.readUtf16String().toLowerCase();
 
                         if (
-                            hostname.includes('sandbox')
-                            || hostname.includes('crack')
-                            || hostname.includes('analysis')
-                            || hostname.includes('vm')
+                            hostname.includes('sandbox') ||
+                            hostname.includes('crack') ||
+                            hostname.includes('analysis') ||
+                            hostname.includes('vm')
                         ) {
                             nameBuffer.writeUtf16String('DESKTOP-PC01');
                             send({
@@ -2451,8 +2451,8 @@ const virtualizationBypass = {
         const modules = Process.enumerateModules();
         modules.forEach(module => {
             if (
-                module.name.toLowerCase().includes('.exe')
-                || module.name.toLowerCase().includes('.dll')
+                module.name.toLowerCase().includes('.exe') ||
+                module.name.toLowerCase().includes('.dll')
             ) {
                 Memory.scan(module.base, module.size, '0F A2', {
                     onMatch: (address, _size) => {
@@ -2761,9 +2761,9 @@ const virtualizationBypass = {
                     if (args[1] && !args[1].isNull()) {
                         const serviceName = args[1].readUtf16String();
                         if (
-                            serviceName
-                            && (serviceName.includes('WindowsAzureGuestAgent')
-                                || serviceName.includes('WindowsAzureTelemetryService'))
+                            serviceName &&
+                            (serviceName.includes('WindowsAzureGuestAgent') ||
+                                serviceName.includes('WindowsAzureTelemetryService'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -2940,8 +2940,8 @@ const virtualizationBypass = {
                                     const elapsed = Date.now() * 1_000_000 - rdtscBase;
                                     const normalizedTsc = rdtscBase + elapsed * 2.4; // Scale to 2.4GHz CPU frequency
 
-                                    this.context.eax = normalizedTsc & 0xFF_FF_FF_FF;
-                                    this.context.edx = Math.trunc(normalizedTsc) & 0xFF_FF_FF_FF;
+                                    this.context.eax = normalizedTsc & 0xff_ff_ff_ff;
+                                    this.context.edx = Math.trunc(normalizedTsc) & 0xff_ff_ff_ff;
                                 },
                             });
                         } catch (error) {
@@ -2972,8 +2972,8 @@ const virtualizationBypass = {
                                     const elapsed = Date.now() * 1_000_000 - rdtscBase;
                                     const normalizedTsc = rdtscBase + elapsed * 2.4;
 
-                                    this.context.eax = normalizedTsc & 0xFF_FF_FF_FF;
-                                    this.context.edx = Math.trunc(normalizedTsc) & 0xFF_FF_FF_FF;
+                                    this.context.eax = normalizedTsc & 0xff_ff_ff_ff;
+                                    this.context.edx = Math.trunc(normalizedTsc) & 0xff_ff_ff_ff;
                                     this.context.ecx = 0; // Clear processor ID
                                 },
                             });
@@ -3062,7 +3062,7 @@ const virtualizationBypass = {
                     const msrIndex = args[0].toInt32();
 
                     // EPT capabilities MSR (0x48C) and NPT MSR
-                    if (msrIndex === 0x4_8C || msrIndex === 0xC0_01_01_14) {
+                    if (msrIndex === 0x4_8c || msrIndex === 0xc0_01_01_14) {
                         send({
                             type: 'bypass',
                             target: 'vm_bypass',
@@ -3074,7 +3074,7 @@ const virtualizationBypass = {
                 },
                 onLeave(retval) {
                     if (this.blockEptMsr) {
-                        retval.replace(0xC0_00_00_01); // STATUS_UNSUCCESSFUL
+                        retval.replace(0xc0_00_00_01); // STATUS_UNSUCCESSFUL
                     }
                 },
             });
@@ -3109,10 +3109,10 @@ const virtualizationBypass = {
                     if (args[0] && !args[0].isNull()) {
                         const filename = args[0].readUtf16String();
                         if (
-                            filename
-                            && (filename.includes('podman')
-                                || filename.includes('/run/podman')
-                                || filename.includes('/var/lib/containers'))
+                            filename &&
+                            (filename.includes('podman') ||
+                                filename.includes('/run/podman') ||
+                                filename.includes('/var/lib/containers'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -3146,10 +3146,10 @@ const virtualizationBypass = {
                     if (args[0] && !args[0].isNull()) {
                         const varName = args[0].readUtf16String();
                         if (
-                            varName
-                            && (varName.includes('CONTAINERD')
-                                || varName === 'container'
-                                || varName === 'CONTAINER_HOST')
+                            varName &&
+                            (varName.includes('CONTAINERD') ||
+                                varName === 'container' ||
+                                varName === 'CONTAINER_HOST')
                         ) {
                             send({
                                 type: 'bypass',
@@ -3231,8 +3231,8 @@ const virtualizationBypass = {
                     if (clsid && !clsid.isNull()) {
                         const clsidBytes = clsid.readByteArray(16);
                         const wbemLocatorClsid = [
-                            0x11, 0xF8, 0x90, 0x45, 0x3A, 0x1D, 0xD0, 0x11, 0x89, 0x1F, 0x00, 0xAA,
-                            0x00, 0x4B, 0x2E, 0x24,
+                            0x11, 0xf8, 0x90, 0x45, 0x3a, 0x1d, 0xd0, 0x11, 0x89, 0x1f, 0x00, 0xaa,
+                            0x00, 0x4b, 0x2e, 0x24,
                         ];
 
                         let isWbemLocator = true;
@@ -3371,12 +3371,12 @@ const virtualizationBypass = {
 
                         // GL_VENDOR = 0x1F00
                         if (
-                            this.stringType === 0x1F_00
-                            && str
-                            && (str.includes('VMware')
-                                || str.includes('VirtualBox')
-                                || str.includes('Microsoft')
-                                || str.includes('llvmpipe'))
+                            this.stringType === 0x1f_00 &&
+                            str &&
+                            (str.includes('VMware') ||
+                                str.includes('VirtualBox') ||
+                                str.includes('Microsoft') ||
+                                str.includes('llvmpipe'))
                         ) {
                             const spoofedVendor = Memory.allocAnsiString('NVIDIA Corporation');
                             retval.replace(spoofedVendor);
@@ -3415,10 +3415,10 @@ const virtualizationBypass = {
                     if (args[0] && !args[0].isNull()) {
                         const varName = args[0].readUtf16String();
                         if (
-                            varName
-                            && (varName.includes('VBox')
-                                || varName.includes('VMware')
-                                || varName.includes('QEMU'))
+                            varName &&
+                            (varName.includes('VBox') ||
+                                varName.includes('VMware') ||
+                                varName.includes('QEMU'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -3481,7 +3481,7 @@ const virtualizationBypass = {
                     const ioControlCode = args[1].toInt32();
 
                     // I/O port access control codes
-                    if ((ioControlCode & 0xFF_FF_00_00) === 0x22_E0_00) {
+                    if ((ioControlCode & 0xff_ff_00_00) === 0x22_e0_00) {
                         send({
                             type: 'bypass',
                             target: 'vm_bypass',
@@ -3568,7 +3568,7 @@ const virtualizationBypass = {
                                 },
                                 onLeave(_retval) {
                                     // Force transaction abort to hide TSX support
-                                    this.context.eax = 0xFF_FF_FF_FF; // Transaction abort
+                                    this.context.eax = 0xff_ff_ff_ff; // Transaction abort
                                 },
                             });
                         } catch (error) {
@@ -3822,7 +3822,7 @@ const virtualizationBypass = {
             writer.putPushfx();
             writer.putPushax();
             // RDTSC
-            writer.putBytes([0x0F, 0x31]);
+            writer.putBytes([0x0f, 0x31]);
             // Add random jitter to EDX:EAX
             writer.putMovRegU32('ecx', Math.floor(Math.random() * 100));
             writer.putAddRegReg('eax', 'ecx');
@@ -3982,7 +3982,7 @@ const virtualizationBypass = {
                             // Cache MSR values to emulate real hardware
                             this.instructionEmulator.msrCache.set(msrNumber, msrValue);
                             // Block VM-specific MSRs
-                            if (msrNumber >= 0x40_00_00_00 && msrNumber <= 0x40_00_00_FF) {
+                            if (msrNumber >= 0x40_00_00_00 && msrNumber <= 0x40_00_00_ff) {
                                 args[0] = ptr(0); // Change info class to invalid
                             }
                         }
@@ -4003,7 +4003,7 @@ const virtualizationBypass = {
                 case 'sgdt': {
                     if (!this.instructionEmulator.sgdt) {
                         this.instructionEmulator.sgdt = Memory.alloc(10);
-                        this.instructionEmulator.sgdt.writeU16(0x3_FF); // Limit
+                        this.instructionEmulator.sgdt.writeU16(0x3_ff); // Limit
                         this.instructionEmulator.sgdt.add(2).writeU64(ptr('0xFFFFF80000000000')); // Base
                     }
                     return this.instructionEmulator.sgdt;
@@ -4011,7 +4011,7 @@ const virtualizationBypass = {
                 case 'sidt': {
                     if (!this.instructionEmulator.sidt) {
                         this.instructionEmulator.sidt = Memory.alloc(10);
-                        this.instructionEmulator.sidt.writeU16(0xF_FF); // Limit
+                        this.instructionEmulator.sidt.writeU16(0xf_ff); // Limit
                         this.instructionEmulator.sidt.add(2).writeU64(ptr('0xFFFFF80000001000')); // Base
                     }
                     return this.instructionEmulator.sidt;
@@ -4048,8 +4048,8 @@ const virtualizationBypass = {
                 // Check VMX capabilities
                 const vmxBasic = this.readMsr(0x4_80); // IA32_VMX_BASIC
                 if (vmxBasic) {
-                    const vmcsRevision = vmxBasic.and(0x7F_FF_FF_FF).toNumber();
-                    const vmxAbort = vmxBasic.shiftRight(32).and(0xFF).toNumber();
+                    const vmcsRevision = vmxBasic.and(0x7f_ff_ff_ff).toNumber();
+                    const vmxAbort = vmxBasic.shiftRight(32).and(0xff).toNumber();
 
                     if (vmcsRevision !== 0 && vmxAbort === 0) {
                         this.nestedVirtualization.levels++;
@@ -4058,7 +4058,7 @@ const virtualizationBypass = {
                 }
 
                 // Check SVM capabilities
-                const svmFeatures = this.readMsr(0xC0_01_01_14); // VM_CR MSR
+                const svmFeatures = this.readMsr(0xc0_01_01_14); // VM_CR MSR
                 if (svmFeatures) {
                     const svmDisable = svmFeatures.and(0x10).toNumber();
                     if (svmDisable === 0) {
@@ -4141,17 +4141,17 @@ const virtualizationBypass = {
                             });
                             Interceptor.attach(address, {
                                 onEnter: function (_args) {
-                                    const exitReason = this.context.rax & 0xFF_FF;
-                                    const count
-                                        = this.nestedVirtualization.vmexitReasons.get(exitReason)
-                                        || 0;
+                                    const exitReason = this.context.rax & 0xff_ff;
+                                    const count =
+                                        this.nestedVirtualization.vmexitReasons.get(exitReason) ||
+                                        0;
                                     this.nestedVirtualization.vmexitReasons.set(
                                         exitReason,
                                         count + 1
                                     );
 
                                     // Hide nested VM exits
-                                    if (exitReason === 0x1C) {
+                                    if (exitReason === 0x1c) {
                                         // VMX preemption timer
                                         this.context.rax = 0; // Change to external interrupt
                                     }
@@ -4218,10 +4218,10 @@ const virtualizationBypass = {
                         if (driverInfo) {
                             const driverName = driverInfo.readPointer().readUtf16String();
                             if (
-                                driverName
-                                && (driverName.includes('vbox')
-                                    || driverName.includes('vmware')
-                                    || driverName.includes('hyperv'))
+                                driverName &&
+                                (driverName.includes('vbox') ||
+                                    driverName.includes('vmware') ||
+                                    driverName.includes('hyperv'))
                             ) {
                                 args[0] = ptr(-1); // Invalid info class
                                 send({
@@ -4376,7 +4376,7 @@ const virtualizationBypass = {
                                 const ip = sockaddr.add(4).readU32();
 
                                 // AWS metadata service: 169.254.169.254
-                                if (ip === 0xFE_A9_FE_A9 && port === 0x50_00) {
+                                if (ip === 0xfe_a9_fe_a9 && port === 0x50_00) {
                                     // Port 80 in network byte order
                                     this.context.r0 = -1;
                                     this.cloudFingerprints.aws.detected = true;
@@ -4617,8 +4617,8 @@ const virtualizationBypass = {
                     Memory.scan(module.base, module.size, inst.pattern, {
                         onMatch: function (address, _size) {
                             // Track timing of these instructions
-                            const timing
-                                = this.timingCalibration.instructionTimings.get(inst.name) || [];
+                            const timing =
+                                this.timingCalibration.instructionTimings.get(inst.name) || [];
                             timing.push(Date.now());
                             this.timingCalibration.instructionTimings.set(inst.name, timing);
 
@@ -4628,11 +4628,11 @@ const virtualizationBypass = {
                                     // Normalize timing to hide VM characteristics
                                     if (inst.name === 'RDTSC' || inst.name === 'RDTSCP') {
                                         const adjustment = this.timingCalibration.cpuFrequency * 10;
-                                        this.context.rax
-                                            = (this.context.rax + adjustment) & 0xFF_FF_FF_FF;
-                                        this.context.rdx
-                                            = (this.context.rdx + Math.trunc(adjustment))
-                                            & 0xFF_FF_FF_FF;
+                                        this.context.rax =
+                                            (this.context.rax + adjustment) & 0xff_ff_ff_ff;
+                                        this.context.rdx =
+                                            (this.context.rdx + Math.trunc(adjustment)) &
+                                            0xff_ff_ff_ff;
                                     }
                                 }.bind(this),
                             });
@@ -4728,21 +4728,21 @@ const virtualizationBypass = {
                                 const msrNumber = msrData.readU32();
 
                                 // VMX MSRs (0x480 - 0x48F)
-                                if (msrNumber >= 0x4_80 && msrNumber <= 0x4_8F) {
+                                if (msrNumber >= 0x4_80 && msrNumber <= 0x4_8f) {
                                     // Return disabled VMX
                                     args[0] = ptr(-1);
                                     this.hardwareMasking.vmxEnabled = false;
                                 }
 
                                 // SVM MSRs (0xC0010114 - 0xC0010118)
-                                if (msrNumber >= 0xC0_01_01_14 && msrNumber <= 0xC0_01_01_18) {
+                                if (msrNumber >= 0xc0_01_01_14 && msrNumber <= 0xc0_01_01_18) {
                                     // Return disabled SVM
                                     args[0] = ptr(-1);
                                     this.hardwareMasking.svmEnabled = false;
                                 }
 
                                 // Hyper-V MSRs (0x40000000 - 0x400000FF)
-                                if (msrNumber >= 0x40_00_00_00 && msrNumber <= 0x40_00_00_FF) {
+                                if (msrNumber >= 0x40_00_00_00 && msrNumber <= 0x40_00_00_ff) {
                                     // Return disabled Hyper-V
                                     args[0] = ptr(-1);
                                     this.hardwareMasking.hyperVEnabled = false;
@@ -5012,25 +5012,25 @@ const virtualizationBypass = {
 
             Process.enumerateModules().forEach(module => {
                 if (
-                    module.name.toLowerCase().includes('hv')
-                    || module.name.toLowerCase().includes('vmm')
+                    module.name.toLowerCase().includes('hv') ||
+                    module.name.toLowerCase().includes('vmm')
                 ) {
                     Memory.scan(module.base, module.size, vmExitPattern, {
                         onMatch: function (address, _size) {
                             Interceptor.attach(address, {
                                 onEnter: function (_args) {
                                     // Read VM exit reason
-                                    const exitReason = this.context.rax & 0xFF_FF;
+                                    const exitReason = this.context.rax & 0xff_ff;
                                     const exitQualification = this.context.rbx;
 
                                     // Track exit reasons
-                                    const count
-                                        = this.vmExitHandlers.exitReasons.get(exitReason) || 0;
+                                    const count =
+                                        this.vmExitHandlers.exitReasons.get(exitReason) || 0;
                                     this.vmExitHandlers.exitReasons.set(exitReason, count + 1);
 
                                     // Manipulate specific exits
                                     switch (exitReason) {
-                                        case 0x0A: {
+                                        case 0x0a: {
                                             // CPUID
                                             // Modify CPUID results to hide VM
                                             this.modifyCpuidExit();
@@ -5115,21 +5115,21 @@ const virtualizationBypass = {
 
         // Modify MSR VM exit handling
         this.modifyMsrExit = function (_isWrite) {
-            const vmcsGuestRcx
-                = this.vmExitHandlers.vmcsFields.get('GUEST_RCX') || this.context.r10;
+            const vmcsGuestRcx =
+                this.vmExitHandlers.vmcsFields.get('GUEST_RCX') || this.context.r10;
 
             if (vmcsGuestRcx) {
                 const msrNumber = vmcsGuestRcx.readU32();
 
                 // Block virtualization-related MSRs
                 if (
-                    (msrNumber >= 0x4_80 && msrNumber <= 0x4_8F) // VMX MSRs
-                    || (msrNumber >= 0x40_00_00_00 && msrNumber <= 0x40_00_00_FF)
+                    (msrNumber >= 0x4_80 && msrNumber <= 0x4_8f) || // VMX MSRs
+                    (msrNumber >= 0x40_00_00_00 && msrNumber <= 0x40_00_00_ff)
                 ) {
                     // Hyper-V MSRs
 
                     // Inject #GP fault
-                    this.injectGuestException(0x0D); // General Protection Fault
+                    this.injectGuestException(0x0d); // General Protection Fault
                 }
             }
         };
@@ -5157,7 +5157,7 @@ const virtualizationBypass = {
         this.injectGuestException = function (vector) {
             const vmEntryInterruptInfo = this.vmExitHandlers.vmcsFields.get('VM_ENTRY_INTR_INFO');
             if (vmEntryInterruptInfo) {
-                const info = (vector & 0xFF) | (3 << 8) | (1 << 31); // Valid exception
+                const info = (vector & 0xff) | (3 << 8) | (1 << 31); // Valid exception
                 vmEntryInterruptInfo.writeU32(info);
             }
         };
@@ -5232,8 +5232,8 @@ const virtualizationBypass = {
                         // Check if reading from protected region
                         this.memoryProtection.protectedRegions.forEach((protection, region) => {
                             if (
-                                baseAddress >= region
-                                && baseAddress < region.add(protection.size)
+                                baseAddress >= region &&
+                                baseAddress < region.add(protection.size)
                             ) {
                                 // Redirect to shadow memory
                                 const offset = baseAddress.sub(region).toInt32();
@@ -5288,7 +5288,7 @@ const virtualizationBypass = {
         // Convert virtual to physical address using simplified bit masking
         this.virtualToPhysical = virtualAddress =>
             // Strip high bits to convert to physical address space
-            virtualAddress.and(0x7F_FF_FF_FF_FF_FF);
+            virtualAddress.and(0x7f_ff_ff_ff_ff_ff);
 
         // Spoof memory content for hypervisor
         this.spoofMemoryContent = args => {
@@ -5313,7 +5313,7 @@ const virtualizationBypass = {
                         // Scramble sensitive memory regions before dump
                         this.memoryProtection.protectedRegions.forEach((protection, region) => {
                             // XOR scramble the memory
-                            const key = Math.floor(Math.random() * 0xFF_FF_FF_FF);
+                            const key = Math.floor(Math.random() * 0xff_ff_ff_ff);
                             for (let i = 0; i < protection.size; i += 4) {
                                 const value = region.add(i).readU32();
                                 region.add(i).writeU32(value ^ key);

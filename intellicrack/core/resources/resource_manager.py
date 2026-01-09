@@ -1285,84 +1285,25 @@ class FallbackHandler:
 
                 return "\n".join(result)
 
-            # Try ELF analysis
-            with contextlib.suppress(ImportError):
-                from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
-
-                if not HAS_PYELFTOOLS:
-                    raise ImportError("pyelftools not available")
-
-                with open(binary_path, "rb") as f:
-                    elf_file: Any = validate_type(ELFFile, Any)(f)
-
-                    if "-h" in (options or []):
-                        result.extend((
-                            f"File: {binary_path}",
-                            f"Class: {elf_file.get_machine_arch()}",
-                            f"Type: {elf_file.header['e_type']}",
-                        ))
-                    if "-S" in (options or []):
-                        result.append("\nSections:")
-                        elf_section: Any
-                        result.extend(
-                            f"  {elf_section.name}: Offset={hex(elf_section['sh_offset'])}, Size={hex(elf_section['sh_size'])}"
-                            for elf_section in elf_file.iter_sections()
-                        )
-                return "\n".join(result)
-
-            return "objdump fallback: Install pefile or pyelftools for detailed analysis"
+            return "objdump fallback: Install pefile for detailed PE analysis"
 
         except Exception as e:
             logger.exception("objdump fallback failed: %s", e)
             return f"objdump fallback error: {e}"
 
     def _readelf_fallback(self, binary_path: str, options: list[str] | None = None) -> str:
-        """Python-based readelf fallback using pyelftools.
+        """Readelf fallback (ELF format not supported).
 
         Args:
-            binary_path: Path to ELF binary file to analyze
-            options: Optional list of readelf-style options
+            binary_path: Path to binary file
+            options: Unused options parameter
 
         Returns:
-            ELF analysis output string
+            Message indicating ELF format is not supported
 
         """
-        try:
-            from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
-
-            if not HAS_PYELFTOOLS:
-                raise ImportError("pyelftools not available")
-
-            result: list[str] = []
-            with open(binary_path, "rb") as f:
-                elf_file: Any = validate_type(ELFFile, Any)(f)
-
-                if "-h" in (options or []):
-                    # ELF header
-                    header = elf_file.header
-                    result.extend((
-                        "ELF Header:",
-                        f"  Class: {header['e_ident']['EI_CLASS']}",
-                        f"  Data: {header['e_ident']['EI_DATA']}",
-                        f"  Type: {header['e_type']}",
-                        f"  Machine: {header['e_machine']}",
-                        f"  Entry point: {hex(header['e_entry'])}",
-                    ))
-                if "-S" in (options or []):
-                    # Section headers
-                    result.append("\nSection Headers:")
-                    section: Any
-                    result.extend(
-                        f"  [{section.name}] Type={section['sh_type']} Addr={hex(section['sh_addr'])} Size={hex(section['sh_size'])}"
-                        for section in elf_file.iter_sections()
-                    )
-            return "\n".join(result)
-
-        except ImportError:
-            return "readelf fallback: Install pyelftools for ELF analysis"
-        except Exception as e:
-            logger.exception("readelf fallback failed: %s", e)
-            return f"readelf fallback error: {e}"
+        _ = binary_path, options
+        return "readelf: ELF format not supported (Windows-only tool)"
 
     def _nmap_fallback(self, target: str, ports: str | None = None) -> dict[str, Any]:
         """Python-based network scanning fallback.
@@ -1634,8 +1575,10 @@ def validate_external_dependencies() -> dict[str, Any]:
             )
 
         # Add installation recommendations
+        from ..config.external_tools_config import ToolStatus
+
         for tool_name, status in tool_status.items():
-            if status != external_tools_manager.tools[tool_name].status.AVAILABLE:
+            if status != ToolStatus.AVAILABLE:
                 if install_script := external_tools_manager.get_installation_script(tool_name):
                     validation_result["recommendations"].append(f"Install {tool_name}: {install_script.strip()}")
 

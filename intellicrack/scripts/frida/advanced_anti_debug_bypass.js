@@ -197,7 +197,7 @@ const advancedAntiDebugBypass = {
                                 break;
                             }
 
-                            case 0x1F: {
+                            case 0x1f: {
                                 this.processInfo.writeU32(0);
                                 send({
                                     type: 'bypass',
@@ -312,7 +312,7 @@ const advancedAntiDebugBypass = {
             Interceptor.attach(ntClose, {
                 onEnter(args) {
                     const handle = args[0];
-                    if (handle.isNull() || handle.toInt32() === 0xFF_FF_FF_FF) {
+                    if (handle.isNull() || handle.toInt32() === 0xff_ff_ff_ff) {
                         send({
                             type: 'bypass',
                             target: 'NtClose',
@@ -820,9 +820,9 @@ const advancedAntiDebugBypass = {
 
         setTimeout(() => {
             try {
-                const teb
-                    = Process.getCurrentThread().context.gs_base
-                    || Process.getCurrentThread().context.fs_base;
+                const teb =
+                    Process.getCurrentThread().context.gs_base ||
+                    Process.getCurrentThread().context.fs_base;
 
                 if (teb && !teb.isNull()) {
                     const peb = teb.add(0x60).readPointer();
@@ -830,7 +830,7 @@ const advancedAntiDebugBypass = {
                     if (peb && !peb.isNull()) {
                         peb.add(0x02).writeU8(0);
                         peb.add(0x68).writeU32(0);
-                        peb.add(0xBC).writeU32(0);
+                        peb.add(0xbc).writeU32(0);
 
                         const processHeap = peb.add(0x18).readPointer();
                         if (processHeap && !processHeap.isNull()) {
@@ -942,10 +942,10 @@ const advancedAntiDebugBypass = {
                 kernel: Object.keys(this.hooksInstalled).filter(k => k.startsWith('Nt')).length,
                 timing: Object.keys(this.hooksInstalled).filter(
                     k =>
-                        k.includes('RDTSC')
-                        || k.includes('Qpc')
-                        || k.includes('Tick')
-                        || k.includes('Sleep')
+                        k.includes('RDTSC') ||
+                        k.includes('Qpc') ||
+                        k.includes('Tick') ||
+                        k.includes('Sleep')
                 ).length,
                 hypervisor: Object.keys(this.hooksInstalled).filter(
                     k => k.includes('CPUID') || k.includes('VMX')

@@ -148,36 +148,86 @@ class CPUMonitorWorker(QObject):
         return cpu_info
 
     def _get_cpu_model(self) -> str:
-        """Get CPU model name.
+        """Get CPU model name on Windows.
 
-        Retrieves the CPU model name from platform-specific sources.
-        Supports Windows (WMI), Linux (/proc/cpuinfo), and macOS (sysctl).
+        Uses Windows registry as primary method (fast, no COM required),
+        with WMI as fallback for edge cases.
+
+        Returns:
+            The CPU model name string, or "Unknown CPU" if retrieval fails.
+        """
+        if platform.system() != "Windows":
+            return "Unknown CPU"
+
+        cpu_name = self._get_cpu_model_registry()
+        if cpu_name != "Unknown CPU":
+            return cpu_name
+
+        return self._get_cpu_model_wmi()
+
+    def _get_cpu_model_registry(self) -> str:
+        """Get CPU model from Windows registry.
+
+        Primary method for CPU detection. Registry access is fast
+        and doesn't require COM initialization.
 
         Returns:
             The CPU model name string, or "Unknown CPU" if retrieval fails.
         """
         try:
-            if platform.system() == "Windows":
-                import wmi
+            import winreg
 
-                c = wmi.WMI()
-                for processor in c.Win32_Processor():
-                    name: str = str(processor.Name)
-                    return name
-            elif platform.system() == "Linux":
-                with open("/proc/cpuinfo") as f:
-                    for line in f:
-                        if line.startswith("model name"):
-                            return line.split(":")[1].strip()
-            elif platform.system() == "Darwin":
-                import subprocess
-
-                result = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"]).decode().strip()
-                return result
-        except (subprocess.SubprocessError, OSError) as e:
-            logger.debug("Failed to get CPU name: %s", e)
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as key:
+                processor_name, _ = winreg.QueryValueEx(key, "ProcessorNameString")
+                return str(processor_name).strip()
+        except (OSError, FileNotFoundError, PermissionError) as e:
+            logger.debug("Registry CPU query failed: %s", e)
 
         return "Unknown CPU"
+
+    def _get_cpu_model_wmi(self) -> str:
+        """Get CPU model using WMI with proper COM initialization.
+
+        Fallback method when registry access fails. Properly initializes
+        and uninitializes COM for background thread safety.
+
+        Returns:
+            The CPU model name string, or "Unknown CPU" if retrieval fails.
+        """
+        cpu_name: str = "Unknown CPU"
+        com_initialized = False
+
+        try:
+            import pythoncom
+
+            pythoncom.CoInitialize()
+            com_initialized = True
+
+            import wmi
+
+            wmi_conn = wmi.WMI()
+            processors = list(wmi_conn.Win32_Processor())
+            if processors:
+                cpu_name = str(processors[0].Name)
+            del processors
+            del wmi_conn
+        except ImportError as e:
+            logger.debug("WMI or pythoncom not available: %s", e)
+        except Exception as e:
+            logger.debug("WMI CPU query failed: %s", e)
+        finally:
+            if com_initialized:
+                try:
+                    import gc
+
+                    gc.collect()
+                    import pythoncom
+
+                    pythoncom.CoUninitialize()
+                except Exception as uninit_err:
+                    logger.debug("COM CoUninitialize failed: %s", uninit_err)
+
+        return cpu_name
 
 
 class CPUStatusWidget(QWidget):

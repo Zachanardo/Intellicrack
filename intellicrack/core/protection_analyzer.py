@@ -41,15 +41,9 @@ except ImportError:
     HAS_PEFILE = False
     pefile = None
 
-try:
-    from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
-
-    HAS_ELFTOOLS = HAS_PYELFTOOLS
-except ImportError:
-    get_logger(__name__).warning("pyelftools not found, ELF analysis will be disabled.")
-    HAS_ELFTOOLS = False
-    HAS_PYELFTOOLS = False
-    ELFFile = None
+HAS_ELFTOOLS: bool = False
+HAS_PYELFTOOLS: bool = False
+ELFFile: type | None = None
 
 try:
     from intellicrack.handlers.lief_handler import HAS_LIEF, lief

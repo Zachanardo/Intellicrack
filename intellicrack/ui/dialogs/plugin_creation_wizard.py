@@ -896,10 +896,7 @@ class CodeGenerationPage(QWizardPage):
                 else:
                     opening, _ = stack.pop()
                     if brackets[opening] != char:
-                        errors.append(
-                            f"Line {line_num}: Mismatched bracket - expected "
-                            f"'{brackets[opening]}' but found '{char}'"
-                        )
+                        errors.append(f"Line {line_num}: Mismatched bracket - expected '{brackets[opening]}' but found '{char}'")
             i += 1
 
         for opening, line in stack:

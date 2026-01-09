@@ -27,6 +27,10 @@ import intellicrack.utils.logger
 # Suppress pkg_resources deprecation warning from capstone
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning)
 
+# Suppress Keras FutureWarning about np.object deprecation
+warnings.filterwarnings("ignore", category=FutureWarning, module="keras")
+warnings.filterwarnings("ignore", category=FutureWarning, module="tensorflow")
+
 # Initialize logger before it's used
 logger = logging.getLogger(__name__)
 

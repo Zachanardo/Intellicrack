@@ -72,9 +72,9 @@ const getDetectionMethods = platform => {
         return [
             () => (Process.findModuleByName('ntdll.dll') ? 'pe_header_analysis' : null),
             () =>
-                (Module.findExportByName('kernel32.dll', 'GetModuleHandleA')
+                Module.findExportByName('kernel32.dll', 'GetModuleHandleA')
                     ? 'import_table_scan'
-                    : null),
+                    : null,
             () => (Process.arch === 'x64' || Process.arch === 'ia32' ? 'architecture_check' : null),
         ];
     }
@@ -82,7 +82,7 @@ const getDetectionMethods = platform => {
         return [
             () => (Process.findModuleByName('libc.so') ? 'elf_header_validation' : null),
             () =>
-                (Module.findExportByName(null, '__libc_start_main') ? 'dynamic_linker_check' : null),
+                Module.findExportByName(null, '__libc_start_main') ? 'dynamic_linker_check' : null,
             () => (Process.platform === 'linux' ? 'section_analysis' : null),
         ];
     }
@@ -117,7 +117,7 @@ const getEnumerationType = maxNum => {
 };
 
 const getEscapeHint = paramValue => {
-    if (paramValue === 0xDE_AD_BE_EF) {
+    if (paramValue === 0xde_ad_be_ef) {
         return 'debug_escape';
     }
     if (paramValue > 0x80_00_00_00) {
@@ -590,7 +590,7 @@ const CentralOrchestrator = {
                 const beingDebugged = peb.add(0x02).readU8();
 
                 // Read NtGlobalFlag at PEB+0x68 (32-bit) or PEB+0xBC (64-bit)
-                const ntGlobalFlagOffset = Process.pointerSize === 4 ? 0x68 : 0xBC;
+                const ntGlobalFlagOffset = Process.pointerSize === 4 ? 0x68 : 0xbc;
                 const ntGlobalFlag = peb.add(ntGlobalFlagOffset).readU32();
 
                 // Check ProcessHeap flags for heap-based detection
@@ -606,11 +606,11 @@ const CentralOrchestrator = {
                     .readU32();
 
                 // Multiple anti-debug checks
-                const debuggerDetected
-                    = beingDebugged !== 0
-                    || (ntGlobalFlag & 0x70) !== 0
-                    || (heapFlags & 0x02) !== 0
-                    || heapForceFlags !== 0;
+                const debuggerDetected =
+                    beingDebugged !== 0 ||
+                    (ntGlobalFlag & 0x70) !== 0 ||
+                    (heapFlags & 0x02) !== 0 ||
+                    heapForceFlags !== 0;
 
                 if (debuggerDetected) {
                     send({
@@ -832,8 +832,8 @@ const CentralOrchestrator = {
 
                 // Check alert threshold
                 if (
-                    this.scriptInstances[scriptName].stats.failures
-                    >= this.config.monitoring.alerts.failedBypass
+                    this.scriptInstances[scriptName].stats.failures >=
+                    this.config.monitoring.alerts.failedBypass
                 ) {
                     this.alert(`${scriptName} has exceeded failure threshold`);
                 }
@@ -974,10 +974,10 @@ const CentralOrchestrator = {
 
         // Registry to time bomb
         if (
-            behavioral.registryToTime
-            && this.scriptInstances.registry
-            && this.scriptInstances.registry.stats.bypasses > 0
-            && !this.scriptInstances.timeBomb
+            behavioral.registryToTime &&
+            this.scriptInstances.registry &&
+            this.scriptInstances.registry.stats.bypasses > 0 &&
+            !this.scriptInstances.timeBomb
         ) {
             send({
                 type: 'info',
@@ -998,8 +998,8 @@ const CentralOrchestrator = {
 
             ['websocket', 'http3Quic'].forEach(script => {
                 if (
-                    this.scriptInstances[script]
-                    && this.scriptInstances[script].stats.interceptedCalls > 0
+                    this.scriptInstances[script] &&
+                    this.scriptInstances[script].stats.interceptedCalls > 0
                 ) {
                     networkActivity = true;
                 }
@@ -1022,9 +1022,9 @@ const CentralOrchestrator = {
 
         // TPM to hardware
         if (
-            behavioral.tpmToHardware
-            && this.detectedProtections.includes('hardware')
-            && !this.scriptInstances.tpmEmulator
+            behavioral.tpmToHardware &&
+            this.detectedProtections.includes('hardware') &&
+            !this.scriptInstances.tpmEmulator
         ) {
             send({
                 type: 'info',
@@ -1044,10 +1044,10 @@ const CentralOrchestrator = {
     checkAutomationRules(scriptName, event, details) {
         // Script-specific rules
         if (
-            scriptName === 'registry'
-            && event === 'success'
-            && details
-            && details.includes('license')
+            scriptName === 'registry' &&
+            event === 'success' &&
+            details &&
+            details.includes('license')
         ) {
             this.automationQueue.push({
                 type: 'coordinate',
@@ -1516,11 +1516,11 @@ const CentralOrchestrator = {
 
             // Neural network-style decision making
             const weights = [0.3, 0.4, 0.2, 0.1];
-            const score
-                = features.appComplexity * weights[0]
-                + features.protectionCount * weights[1]
-                + features.platformType * weights[2]
-                + features.runtime * weights[3];
+            const score =
+                features.appComplexity * weights[0] +
+                features.protectionCount * weights[1] +
+                features.platformType * weights[2] +
+                features.runtime * weights[3];
 
             // Adaptive script loading based on ML score
             if (score > 10) {
@@ -1535,8 +1535,8 @@ const CentralOrchestrator = {
         this.reinforcementLearner = setInterval(() => {
             Object.keys(this.scriptInstances).forEach(scriptName => {
                 const script = this.scriptInstances[scriptName];
-                const successRate
-                    = script.stats.bypasses / (script.stats.bypasses + script.stats.failures + 1);
+                const successRate =
+                    script.stats.bypasses / (script.stats.bypasses + script.stats.failures + 1);
 
                 // Adjust script priorities based on success rates
                 if (successRate > 0.8) {
@@ -1558,8 +1558,8 @@ const CentralOrchestrator = {
         // Anomaly detection using statistical analysis
         this.anomalyDetector = metrics => {
             const mean = metrics.reduce((a, b) => a + b, 0) / metrics.length;
-            const variance
-                = metrics.reduce((acc, val) => acc + (val - mean) ** 2, 0) / metrics.length;
+            const variance =
+                metrics.reduce((acc, val) => acc + (val - mean) ** 2, 0) / metrics.length;
             const stdDev = Math.sqrt(variance);
 
             // Detect outliers beyond 2 standard deviations
@@ -1761,8 +1761,8 @@ const CentralOrchestrator = {
 
                                             // Analyze and modify HTTP headers for license bypass
                                             if (lpszHeaders && !lpszHeaders.isNull()) {
-                                                let headers
-                                                    = lpszHeaders.readUtf16String(dwHeadersLength);
+                                                let headers =
+                                                    lpszHeaders.readUtf16String(dwHeadersLength);
 
                                                 // Inject license bypass headers
                                                 const bypassHeaders = [
@@ -1780,31 +1780,31 @@ const CentralOrchestrator = {
                                                 headers += `\r\n${bypassHeaders}`;
 
                                                 // Write modified headers back
-                                                const newHeadersPtr
-                                                    = Memory.allocUtf16String(headers);
+                                                const newHeadersPtr =
+                                                    Memory.allocUtf16String(headers);
                                                 lpszHeaders.writePointer(newHeadersPtr);
                                             }
 
                                             // Analyze optional data for license payloads
                                             if (
-                                                lpOptional
-                                                && !lpOptional.isNull()
-                                                && dwOptionalLength > 0
+                                                lpOptional &&
+                                                !lpOptional.isNull() &&
+                                                dwOptionalLength > 0
                                             ) {
-                                                const optionalData
-                                                    = lpOptional.readByteArray(dwOptionalLength);
+                                                const optionalData =
+                                                    lpOptional.readByteArray(dwOptionalLength);
 
                                                 // Detect and modify license validation requests
                                                 const dataStr = String.fromCodePoint(
                                                     ...new Uint8Array(optionalData)
                                                 );
                                                 if (
-                                                    dataStr.includes('license')
-                                                    || dataStr.includes('activation')
+                                                    dataStr.includes('license') ||
+                                                    dataStr.includes('activation')
                                                 ) {
                                                     // Replace with valid license response
-                                                    const validLicense
-                                                        = '{"status":"active","expiry":"2099-12-31","features":"all"}';
+                                                    const validLicense =
+                                                        '{"status":"active","expiry":"2099-12-31","features":"all"}';
                                                     const licenseBytes = [];
                                                     for (let i = 0; i < validLicense.length; i++) {
                                                         licenseBytes.push(
@@ -2001,13 +2001,13 @@ const CentralOrchestrator = {
                                     });
 
                                     const generateToken = length => {
-                                        const chars
-                                            = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                                        const chars =
+                                            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
                                         let result = '';
                                         const randomBytes = new Uint8Array(length);
                                         if (
-                                            typeof crypto !== 'undefined'
-                                            && crypto.getRandomValues
+                                            typeof crypto !== 'undefined' &&
+                                            crypto.getRandomValues
                                         ) {
                                             crypto.getRandomValues(randomBytes);
                                         } else {
@@ -2088,17 +2088,17 @@ const CentralOrchestrator = {
                                             const family = addrBuf.readU16();
                                             if (family === 2) {
                                                 // AF_INET
-                                                const port = addrBuf.add(2).readU16() & 0xFF_FF;
+                                                const port = addrBuf.add(2).readU16() & 0xff_ff;
                                                 const ip = addrBuf.add(4).readU32();
-                                                const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${
-                                                    (ip >> 16) & 0xFF
-                                                }.${(ip >> 24) & 0xFF}`;
+                                                const ipStr = `${ip & 0xff}.${(ip >> 8) & 0xff}.${
+                                                    (ip >> 16) & 0xff
+                                                }.${(ip >> 24) & 0xff}`;
 
                                                 // Check if this is a segmented network
                                                 if (
-                                                    ipStr.startsWith('10.')
-                                                    || ipStr.startsWith('172.')
-                                                    || ipStr.startsWith('192.168.')
+                                                    ipStr.startsWith('10.') ||
+                                                    ipStr.startsWith('172.') ||
+                                                    ipStr.startsWith('192.168.')
                                                 ) {
                                                     // Bypass network segmentation
                                                     send({
@@ -2113,13 +2113,13 @@ const CentralOrchestrator = {
 
                                                     // Spoof success for segmented networks
                                                     if (
-                                                        apiName.includes('Recv')
-                                                        && buffer
-                                                        && !buffer.isNull()
-                                                        && length > 0
+                                                        apiName.includes('Recv') &&
+                                                        buffer &&
+                                                        !buffer.isNull() &&
+                                                        length > 0
                                                     ) {
-                                                        const validResponse
-                                                            = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{"status":"authorized"}';
+                                                        const validResponse =
+                                                            'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{"status":"authorized"}';
                                                         buffer.writeUtf8String(validResponse);
                                                         this.context.rax = validResponse.length;
                                                     }
@@ -2243,11 +2243,11 @@ const CentralOrchestrator = {
         // YARA rule bypass
         this.yaraRuleBypass = () => {
             const yaraSignatures = [
-                { pattern: [0x4D, 0x5A], name: 'MZ_HEADER', offset: 0 },
+                { pattern: [0x4d, 0x5a], name: 'MZ_HEADER', offset: 0 },
                 { pattern: [0x50, 0x45, 0x00, 0x00], name: 'PE_HEADER', offset: null },
-                { pattern: [0x7F, 0x45, 0x4C, 0x46], name: 'ELF_HEADER', offset: 0 },
-                { pattern: [0xCA, 0xFE, 0xBA, 0xBE], name: 'MACHO_HEADER', offset: 0 },
-                { pattern: [0x64, 0x65, 0x78, 0x0A], name: 'DEX_HEADER', offset: 0 },
+                { pattern: [0x7f, 0x45, 0x4c, 0x46], name: 'ELF_HEADER', offset: 0 },
+                { pattern: [0xca, 0xfe, 0xba, 0xbe], name: 'MACHO_HEADER', offset: 0 },
+                { pattern: [0x64, 0x65, 0x78, 0x0a], name: 'DEX_HEADER', offset: 0 },
             ];
 
             // Hook memory scanning functions
@@ -2499,7 +2499,9 @@ const CentralOrchestrator = {
                             if (filePath) {
                                 for (const indicator of sandboxIndicators.files) {
                                     if (filePath.toLowerCase().includes(indicator.toLowerCase())) {
-                                        args[0] = Memory.allocUtf16String('C:\\Windows\\Temp\\nonexistent.tmp');
+                                        args[0] = Memory.allocUtf16String(
+                                            'C:\\Windows\\Temp\\nonexistent.tmp'
+                                        );
                                         send({
                                             type: 'bypass',
                                             target: 'central_orchestrator',
@@ -2573,7 +2575,10 @@ const CentralOrchestrator = {
 
             // Hook module enumeration to hide sandbox DLLs
             try {
-                const enumProcessModulesEx = Module.findExportByName('psapi.dll', 'EnumProcessModulesEx');
+                const enumProcessModulesEx = Module.findExportByName(
+                    'psapi.dll',
+                    'EnumProcessModulesEx'
+                );
                 if (enumProcessModulesEx) {
                     Interceptor.attach(enumProcessModulesEx, {
                         onLeave(retval) {
@@ -2713,7 +2718,7 @@ const CentralOrchestrator = {
                                         // Generate valid RSA-2048 public key structure
                                         if (pk) {
                                             const pubKey = [
-                                                0x30, 0x82, 0x01, 0x22, 0x30, 0x0D, 0x06, 0x09,
+                                                0x30, 0x82, 0x01, 0x22, 0x30, 0x0d, 0x06, 0x09,
                                             ];
                                             for (let idx = 8; idx < 800; idx++) {
                                                 pubKey[idx] = Math.floor(Math.random() * 256);
@@ -2723,7 +2728,7 @@ const CentralOrchestrator = {
                                         // Generate corresponding private key structure
                                         if (sk) {
                                             const privKey = [
-                                                0x30, 0x82, 0x04, 0xBD, 0x02, 0x01, 0x00, 0x30,
+                                                0x30, 0x82, 0x04, 0xbd, 0x02, 0x01, 0x00, 0x30,
                                             ];
                                             for (let idx = 8; idx < 1600; idx++) {
                                                 privKey[idx] = Math.floor(Math.random() * 256);
@@ -2757,8 +2762,8 @@ const CentralOrchestrator = {
                                             // Use secretKeyData to analyze key entropy and detect weak cryptographic keys
                                             const keyBytes = new Uint8Array(secretKeyData);
                                             const entropy = this.calculateEntropy(keyBytes);
-                                            const hasWeakPatterns
-                                                = this.detectWeakKeyPatterns(keyBytes);
+                                            const hasWeakPatterns =
+                                                this.detectWeakKeyPatterns(keyBytes);
 
                                             send({
                                                 type: 'crypto_analysis',
@@ -2929,11 +2934,11 @@ const CentralOrchestrator = {
                     Interceptor.attach(quantumChannel, {
                         onEnter(args) {
                             // Use args to analyze quantum channel parameters and select appropriate bypass
-                            const channelType
-                                = args.length > 0 ? args[0].readUtf8String() : 'unknown';
-                            const selectedProtocol
-                                = qkdProtocols.find(p => channelType.includes(p.toLowerCase()))
-                                || 'BB84';
+                            const channelType =
+                                args.length > 0 ? args[0].readUtf8String() : 'unknown';
+                            const selectedProtocol =
+                                qkdProtocols.find(p => channelType.includes(p.toLowerCase())) ||
+                                'BB84';
 
                             send({
                                 type: 'bypass',
@@ -3008,9 +3013,9 @@ const CentralOrchestrator = {
                             if (parameterCount >= 3) {
                                 try {
                                     const potentialScheme = args[2].readUtf8String();
-                                    schemeHint
-                                        = fheSchemes.find(s => potentialScheme.includes(s))
-                                        || 'unknown';
+                                    schemeHint =
+                                        fheSchemes.find(s => potentialScheme.includes(s)) ||
+                                        'unknown';
                                 } catch (error) {
                                     // Use e to analyze FHE parameter access errors for scheme detection
                                     if (error.toString().includes('access')) {
@@ -3134,7 +3139,7 @@ const CentralOrchestrator = {
                             const handleAnalysis = {
                                 handle_value: requestHandle.toString(),
                                 handle_type: requestHandle.isNull() ? 'null' : 'valid',
-                                request_id: requestHandle.toInt32() & 0xFF_FF, // Extract request ID
+                                request_id: requestHandle.toInt32() & 0xff_ff, // Extract request ID
                             };
 
                             securityGateAPIs.forEach(function (api) {
@@ -3270,9 +3275,9 @@ const CentralOrchestrator = {
                                             value: argValue ? argValue.slice(0, 50) : 'null',
                                             contains_path: argValue?.includes('/'),
                                             contains_config:
-                                                argValue
-                                                && (argValue.includes('.xml')
-                                                    || argValue.includes('.json')),
+                                                argValue &&
+                                                (argValue.includes('.xml') ||
+                                                    argValue.includes('.json')),
                                         });
                                     } catch (error) {
                                         scannerAnalysis.scanner_config.push({
@@ -3358,9 +3363,9 @@ const CentralOrchestrator = {
                                                 index: i,
                                                 file_hint: argStr.slice(0, 30),
                                                 is_config:
-                                                    argStr.includes('.tf')
-                                                    || argStr.includes('.yaml')
-                                                    || argStr.includes('.json'),
+                                                    argStr.includes('.tf') ||
+                                                    argStr.includes('.yaml') ||
+                                                    argStr.includes('.json'),
                                                 platform_match: detectedTool || 'none',
                                             });
                                         }
@@ -3380,8 +3385,8 @@ const CentralOrchestrator = {
                                     tool,
                                     analysis: scanAnalysis,
                                     bypass_strategy:
-                                        iacBypassStrategies[scanAnalysis.target_platform]
-                                        || iacBypassStrategies.terraform,
+                                        iacBypassStrategies[scanAnalysis.target_platform] ||
+                                        iacBypassStrategies.terraform,
                                 });
 
                                 // Always pass IaC security checks
@@ -3534,7 +3539,7 @@ const CentralOrchestrator = {
                             try {
                                 if (!imageBase.isNull()) {
                                     const dosHeader = imageBase.readU16(); // Read DOS signature
-                                    const peOffset = imageBase.add(0x3C).readU32(); // PE offset
+                                    const peOffset = imageBase.add(0x3c).readU32(); // PE offset
                                     headerAnalysis.dos_signature = `0x${dosHeader.toString(16)}`;
                                     headerAnalysis.pe_offset = peOffset;
                                     headerAnalysis.analysis_success = true;
@@ -3563,7 +3568,7 @@ const CentralOrchestrator = {
                                     peHeader.add(4).writeU16(0x86_64); // Machine (x64)
                                     peHeader.add(6).writeU16(4); // NumberOfSections
                                     peHeader.add(8).writeU32(Math.floor(Date.now() / 1000)); // TimeDateStamp
-                                    peHeader.add(20).writeU16(0x2_0B); // Magic (PE32+)
+                                    peHeader.add(20).writeU16(0x2_0b); // Magic (PE32+)
                                     peHeader.add(24).writeU32(base.toInt32()); // ImageBase
                                     return peHeader;
                                 }
@@ -3616,8 +3621,8 @@ const CentralOrchestrator = {
                                                 value: args[i].toString(),
                                                 is_null: args[i].isNull(),
                                                 potential_pointer:
-                                                    !args[i].isNull()
-                                                    && args[i].toInt32() > 0x10_00,
+                                                    !args[i].isNull() &&
+                                                    args[i].toInt32() > 0x10_00,
                                                 register_hint: getRegisterHint(currentArch, i),
                                             });
                                         } catch (error) {
@@ -3659,8 +3664,8 @@ const CentralOrchestrator = {
                 try {
                     Java.perform(() => {
                         const ActivityManager = Java.use('android.app.ActivityManager');
-                        ActivityManager.getRunningServices.overload('int').implementation
-                            = maxNum => {
+                        ActivityManager.getRunningServices.overload('int').implementation =
+                            maxNum => {
                                 // Use maxNum to analyze service enumeration behavior and apply targeted bypass
                                 const enumerationAnalysis = {
                                     requested_max: maxNum,
@@ -3787,14 +3792,14 @@ const CentralOrchestrator = {
                                         // Detect orchestrator from API patterns
                                         const detectedOrch = containerOrchestrators.find(
                                             o =>
-                                                argStr.toLowerCase().includes(o.replace('-', ''))
-                                                || argStr.includes('/api/v1')
-                                                || argStr.includes('/services')
+                                                argStr.toLowerCase().includes(o.replace('-', '')) ||
+                                                argStr.includes('/api/v1') ||
+                                                argStr.includes('/services')
                                         );
                                         if (detectedOrch) {
                                             apiAnalysis.detected_orchestrator = detectedOrch;
-                                            apiAnalysis.bypass_strategy
-                                                = orchestratorBypass[detectedOrch];
+                                            apiAnalysis.bypass_strategy =
+                                                orchestratorBypass[detectedOrch];
                                         }
 
                                         apiAnalysis.api_signature.push({
@@ -3866,7 +3871,7 @@ const CentralOrchestrator = {
                                             index: i,
                                             value: paramValue,
                                             is_pointer:
-                                                paramValue > 0x10_00 && paramValue < 0x7F_FF_FF_FF,
+                                                paramValue > 0x10_00 && paramValue < 0x7f_ff_ff_ff,
                                             escape_hint: getEscapeHint(paramValue),
                                         });
                                     } catch (error) {
@@ -3960,8 +3965,8 @@ const CentralOrchestrator = {
                                 shell_operation: operation,
                                 operation_type: getOperationType(operation),
                                 persistence_potential:
-                                    operation
-                                    && (operation.includes('admin') || operation.includes('elevate'))
+                                    operation &&
+                                    (operation.includes('admin') || operation.includes('elevate'))
                                         ? 'high'
                                         : 'medium',
                                 evasion_technique: operation
@@ -4284,7 +4289,7 @@ const CentralOrchestrator = {
                             const keyCode = args[0].toInt32();
 
                             // Intercept and modify behavioral analysis patterns
-                            if (keyCode >= 0x41 && keyCode <= 0x5A) {
+                            if (keyCode >= 0x41 && keyCode <= 0x5a) {
                                 // Inject legitimate user input patterns to bypass behavioral detection
                                 const legitPattern = {
                                     timestamp: Date.now(),
@@ -4677,7 +4682,7 @@ const CentralOrchestrator = {
                                         const opad = new Uint8Array(blockSize);
                                         const ipad = new Uint8Array(blockSize);
                                         for (let i = 0; i < blockSize; i++) {
-                                            opad[i] = keyBlock[i] ^ 0x5C;
+                                            opad[i] = keyBlock[i] ^ 0x5c;
                                             ipad[i] = keyBlock[i] ^ 0x36;
                                         }
 

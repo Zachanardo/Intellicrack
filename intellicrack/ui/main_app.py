@@ -70,9 +70,12 @@ from intellicrack.core.reporting.report_generator import generate_report, view_r
 from intellicrack.core.task_manager import get_task_manager
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
+    QEvent,
     QIcon,
+    QKeyEvent,
     QLabel,
     QMainWindow,
+    QMouseEvent,
     QPlainTextEdit,
     QProgressBar,
     QPushButton,
@@ -85,7 +88,6 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 from intellicrack.hexview.integration import TOOL_REGISTRY
-from intellicrack.plugins.custom_modules.license_server_emulator import run_network_license_emulator
 from intellicrack.plugins.plugin_system import run_frida_plugin_from_file, run_ghidra_plugin_from_file
 from intellicrack.ui.cfg_explorer_inner import CfgExplorerInner
 from intellicrack.ui.dashboard_manager import DashboardManager
@@ -115,7 +117,6 @@ if TYPE_CHECKING:
     from intellicrack.ai.coordination_layer import AICoordinationLayer
     from intellicrack.ai.orchestrator import AIOrchestrator
     from intellicrack.ai.script_generation_agent import AIAgent
-    from intellicrack.core.network.license_server_emulator import NetworkLicenseServerEmulator
     from intellicrack.core.network.protocol_fingerprinter import ProtocolFingerprinter
     from intellicrack.core.network.ssl_interceptor import SSLTLSInterceptor
     from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
@@ -172,7 +173,6 @@ class IntellicrackApp(QMainWindow):
             network_traffic_analyzer: Network traffic analysis
             ssl_interceptor: SSL/TLS traffic interception
             protocol_fingerprinter: Protocol fingerprinting engine
-            network_license_server: License server emulator
 
         UI State and Configuration:
             binary_path: Currently loaded binary file path
@@ -485,7 +485,6 @@ class IntellicrackApp(QMainWindow):
         self.run_taint_analysis_bound: Callable[..., Any] = partial(run_taint_analysis, self)
         self.run_qemu_analysis_bound: Callable[..., dict[str, object]] = partial(run_qemu_analysis, self)
         self.run_selected_analysis_partial: Callable[..., dict[str, object]] = partial(run_selected_analysis, self)
-        self.run_network_license_emulator_ref: Callable[..., Any] = run_network_license_emulator
         self.run_frida_analysis_bound: Callable[..., Any] = partial(run_frida_analysis, self)
         self.run_dynamic_instrumentation_bound: Callable[..., Any] = run_dynamic_instrumentation_wrapper
         self.run_frida_script_bound: Callable[..., dict[str, object]] = partial(run_frida_script, self)
@@ -579,14 +578,6 @@ class IntellicrackApp(QMainWindow):
             self.protocol_fingerprinter = ProtocolFingerprinter()
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Failed to initialize ProtocolFingerprinter: %s", e)
-
-        self.network_license_server: NetworkLicenseServerEmulator | None = None
-        try:
-            from ..core.network.license_server_emulator import NetworkLicenseServerEmulator
-
-            self.network_license_server = NetworkLicenseServerEmulator()
-        except (OSError, ValueError, RuntimeError, ImportError) as e:
-            logger.warning("Failed to initialize NetworkLicenseServerEmulator: %s", e)
 
     def _create_main_ui_layout(self) -> None:
         """Create the main UI layout with central widget, tabs, and output panel."""
@@ -786,27 +777,27 @@ class IntellicrackApp(QMainWindow):
     def eventFilter(self, obj: object, event: Any) -> bool:
         """Global event filter to log UI interactions for debugging."""
         try:
-            from intellicrack.handlers.pyqt6_handler import QEvent, QMouseEvent, QKeyEvent
-
             if event.type() == QEvent.Type.MouseButtonPress:
-                mouse_event = cast(QMouseEvent, event)
+                mouse_event = cast("QMouseEvent", event)
                 widget_name = obj.objectName() if hasattr(obj, "objectName") else str(type(obj).__name__)
                 pos = mouse_event.position()
                 self.logger.debug(
                     "GUI Interaction: Mouse Click at (%d, %d) on widget '%s' (Button: %d)",
-                    pos.x(), pos.y(), widget_name, mouse_event.button().value
+                    pos.x(),
+                    pos.y(),
+                    widget_name,
+                    mouse_event.button().value,
                 )
             elif event.type() == QEvent.Type.KeyPress:
-                key_event = cast(QKeyEvent, event)
+                key_event = cast("QKeyEvent", event)
                 widget_name = obj.objectName() if hasattr(obj, "objectName") else str(type(obj).__name__)
                 self.logger.debug(
-                    "GUI Interaction: Key Press '%s' (Key: %d) on widget '%s'",
-                    key_event.text(), key_event.key(), widget_name
+                    "GUI Interaction: Key Press '%s' (Key: %d) on widget '%s'", key_event.text(), key_event.key(), widget_name
                 )
         except Exception as e:
             # Log the exception to help debug crashes
             self.logger.exception("Error in event filter: %s", e)
-        
+
         return super().eventFilter(obj, event)
 
     def _setup_status_bar(self) -> None:

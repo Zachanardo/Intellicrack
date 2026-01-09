@@ -2268,7 +2268,7 @@ class MutationEngine:
             if i < len(mutated) - 1:
                 modrm = mutated[i + 1]
                 # Extract and swap register field (bits 3-5 or bits 0-2)
-                if (byte in [0x89, 0x8B, 0x8A, 0x88, 0x83, 0x81]):  # Common MOV/ALU instructions
+                if byte in [0x89, 0x8B, 0x8A, 0x88, 0x83, 0x81]:  # Common MOV/ALU instructions
                     reg_field = (modrm >> 3) & 0x07
                     if reg_field in register_swaps:
                         new_reg = register_swaps[reg_field]
@@ -2305,21 +2305,21 @@ class MutationEngine:
             if byte == 0x3D and i + 4 < len(mutated):
                 # Modify the 32-bit immediate value slightly
                 imm_offset = i + 1
-                imm_bytes = mutated[imm_offset:imm_offset + 4]
-                imm_value = int.from_bytes(imm_bytes, byteorder='little')
+                imm_bytes = mutated[imm_offset : imm_offset + 4]
+                imm_value = int.from_bytes(imm_bytes, byteorder="little")
                 # XOR with a small value to create variant
-                modified_value = (imm_value ^ 0x00000001).to_bytes(4, byteorder='little')
-                mutated[imm_offset:imm_offset + 4] = modified_value
+                modified_value = (imm_value ^ 0x00000001).to_bytes(4, byteorder="little")
+                mutated[imm_offset : imm_offset + 4] = modified_value
                 i += 5
 
             # MOV with 32-bit immediate (0xB8-0xBF or 0xC7)
             elif byte in range(0xB8, 0xC0) and i + 4 < len(mutated):
                 # Modify immediate for register MOV
                 imm_offset = i + 1
-                imm_bytes = mutated[imm_offset:imm_offset + 4]
-                imm_value = int.from_bytes(imm_bytes, byteorder='little')
-                modified_value = (imm_value ^ 0x00000001).to_bytes(4, byteorder='little')
-                mutated[imm_offset:imm_offset + 4] = modified_value
+                imm_bytes = mutated[imm_offset : imm_offset + 4]
+                imm_value = int.from_bytes(imm_bytes, byteorder="little")
+                modified_value = (imm_value ^ 0x00000001).to_bytes(4, byteorder="little")
+                mutated[imm_offset : imm_offset + 4] = modified_value
                 i += 5
 
             # ADD/SUB/XOR with 8-bit immediate

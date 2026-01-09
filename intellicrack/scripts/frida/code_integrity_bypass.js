@@ -219,10 +219,10 @@ const CodeIntegrityBypass = {
 
                 onLeave(retval) {
                     if (
-                        this.isGettingHashValue
-                        && retval.toInt32() !== 0
-                        && this.pbData
-                        && !this.pbData.isNull()
+                        this.isGettingHashValue &&
+                        retval.toInt32() !== 0 &&
+                        this.pbData &&
+                        !this.pbData.isNull()
                     ) {
                         this.spoofHashValue();
                     }
@@ -453,10 +453,10 @@ const CodeIntegrityBypass = {
                         onLeave(retval) {
                             // Force success return value for hash validation
                             if (
-                                retval
-                                && !retval.isNull()
-                                && retval.toInt32() !== 0
-                                && retval.toInt32() !== 1
+                                retval &&
+                                !retval.isNull() &&
+                                retval.toInt32() !== 0 &&
+                                retval.toInt32() !== 1
                             ) {
                                 retval.replace(ptr(0));
                             }
@@ -555,10 +555,10 @@ const CodeIntegrityBypass = {
                             onLeave(retval) {
                                 // Manipulate compute function return value
                                 if (
-                                    retval
-                                    && !retval.isNull()
-                                    && retval.toInt32() !== 0
-                                    && retval.toInt32() !== hashSize
+                                    retval &&
+                                    !retval.isNull() &&
+                                    retval.toInt32() !== 0 &&
+                                    retval.toInt32() !== hashSize
                                 ) {
                                     retval.replace(ptr(hashSize));
                                 }
@@ -648,10 +648,10 @@ const CodeIntegrityBypass = {
 
                     // Check if this looks like a hash comparison (common hash sizes)
                     if (
-                        this.size === 16
-                        || this.size === 20
-                        || this.size === 32
-                        || this.size === 64
+                        this.size === 16 ||
+                        this.size === 20 ||
+                        this.size === 32 ||
+                        this.size === 64
                     ) {
                         this.isHashComparison = true;
                         send({
@@ -690,14 +690,14 @@ const CodeIntegrityBypass = {
 
                         // Check if these look like hex-encoded hashes
                         if (
-                            str1
-                            && str2
-                            && (str1.length === 32
-                                || str1.length === 40
-                                || str1.length === 64
-                                || str1.length === 128)
-                            && /^[\dA-Fa-f]+$/.test(str1)
-                            && /^[\dA-Fa-f]+$/.test(str2)
+                            str1 &&
+                            str2 &&
+                            (str1.length === 32 ||
+                                str1.length === 40 ||
+                                str1.length === 64 ||
+                                str1.length === 128) &&
+                            /^[\dA-Fa-f]+$/.test(str1) &&
+                            /^[\dA-Fa-f]+$/.test(str2)
                         ) {
                             this.isHashStringComparison = true;
                             send({
@@ -1074,10 +1074,10 @@ const CodeIntegrityBypass = {
 
                         // Track files that might be integrity checked
                         if (
-                            fileName.includes('.exe')
-                            || fileName.includes('.dll')
-                            || fileName.includes('.sys')
-                            || fileName.includes('.cat')
+                            fileName.includes('.exe') ||
+                            fileName.includes('.dll') ||
+                            fileName.includes('.sys') ||
+                            fileName.includes('.cat')
                         ) {
                             config.fileIntegrity.monitoredFiles.add(fileName);
                             send({
@@ -1226,10 +1226,10 @@ const CodeIntegrityBypass = {
 
                 onLeave(retval) {
                     if (
-                        this.spoofBCryptHash
-                        && retval.toInt32() === 0 // STATUS_SUCCESS
-                        && this.pbOutput
-                        && !this.pbOutput.isNull()
+                        this.spoofBCryptHash &&
+                        retval.toInt32() === 0 && // STATUS_SUCCESS
+                        this.pbOutput &&
+                        !this.pbOutput.isNull()
                     ) {
                         this.spoofBCryptResult();
                     }
@@ -1468,9 +1468,9 @@ const CodeIntegrityBypass = {
 
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.pPolicyStatus
-                        && !this.pPolicyStatus.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.pPolicyStatus &&
+                        !this.pPolicyStatus.isNull()
                     ) {
                         // Set policy status to success
                         this.pPolicyStatus.writeU32(0); // ERROR_SUCCESS
@@ -1549,17 +1549,17 @@ const CodeIntegrityBypass = {
 
             for (const hook in this.hooksInstalled) {
                 if (
-                    hook.includes('Hash')
-                    || hook.includes('MD5')
-                    || hook.includes('SHA')
-                    || hook.includes('CRC')
-                    || hook.includes('cmp')
+                    hook.includes('Hash') ||
+                    hook.includes('MD5') ||
+                    hook.includes('SHA') ||
+                    hook.includes('CRC') ||
+                    hook.includes('cmp')
                 ) {
                     categories['Hash Functions']++;
                 } else if (
-                    hook.includes('Signature')
-                    || hook.includes('WinVerifyTrust')
-                    || hook.includes('Authenticode')
+                    hook.includes('Signature') ||
+                    hook.includes('WinVerifyTrust') ||
+                    hook.includes('Authenticode')
                 ) {
                     categories['Signature Verification']++;
                 } else if (hook.includes('CheckSum') || hook.includes('Checksum')) {
@@ -1571,9 +1571,9 @@ const CodeIntegrityBypass = {
                 } else if (hook.includes('Cert') || hook.includes('Certificate')) {
                     categories['Certificate Validation']++;
                 } else if (
-                    hook.includes('TPM')
-                    || hook.includes('Tbs')
-                    || hook.includes('NCrypt')
+                    hook.includes('TPM') ||
+                    hook.includes('Tbs') ||
+                    hook.includes('NCrypt')
                 ) {
                     categories['TPM/Hardware Security']++;
                 }
@@ -1583,8 +1583,8 @@ const CodeIntegrityBypass = {
             const { config, hooksInstalled } = this;
             for (const hashType in config.hashAlgorithms) {
                 if (config.hashAlgorithms[hashType].enabled) {
-                    activeHashAlgorithms[hashType]
-                        = `${config.hashAlgorithms[hashType].spoofedHash.slice(0, 16)}...`;
+                    activeHashAlgorithms[hashType] =
+                        `${config.hashAlgorithms[hashType].spoofedHash.slice(0, 16)}...`;
                 }
             }
 
@@ -1644,9 +1644,9 @@ const CodeIntegrityBypass = {
                     this.advancedIntegrity.memoryProtectionBypass
                 ).filter(
                     k =>
-                        k !== 'enabled'
-                        && k !== 'cet'
-                        && this.advancedIntegrity.memoryProtectionBypass[k]
+                        k !== 'enabled' &&
+                        k !== 'cet' &&
+                        this.advancedIntegrity.memoryProtectionBypass[k]
                 ).length,
                 hypervisor_bypasses: Object.keys(
                     this.advancedIntegrity.hypervisorLevelBypass
@@ -1693,9 +1693,9 @@ const CodeIntegrityBypass = {
                 ].length,
                 qkd_protocols: Object.keys(this.quantumCrypto.quantumKeyExchange).filter(
                     k =>
-                        k !== 'enabled'
-                        && k !== 'entanglementDetection'
-                        && this.quantumCrypto.quantumKeyExchange[k]
+                        k !== 'enabled' &&
+                        k !== 'entanglementDetection' &&
+                        this.quantumCrypto.quantumKeyExchange[k]
                 ).length,
                 quantum_signature_bypasses: Object.keys(
                     this.quantumCrypto.quantumSignatures

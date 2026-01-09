@@ -31,9 +31,7 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def deprecated_config_method(
-    replacement: str, version: str = "4.0"
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Mark configuration methods as deprecated.
 
     Args:

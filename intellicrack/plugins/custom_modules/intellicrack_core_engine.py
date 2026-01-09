@@ -1450,6 +1450,7 @@ class GhidraPlugin(AbstractPlugin):
         if operation == "analyze_binary":
             cmd.extend(["-analysisTimeoutPerFile", str(parameters.get("timeout", 300))])
 
+        process: asyncio.subprocess.Process | None = None
         try:
             # Execute with timeout
             process = await asyncio.create_subprocess_exec(
@@ -1472,19 +1473,23 @@ class GhidraPlugin(AbstractPlugin):
             raise Exception(f"Ghidra execution failed: {error_msg}")
 
         except TimeoutError as timeout_error:
-            if process:
+            if process is not None:
                 try:
                     # Use signal to gracefully terminate process
                     process.send_signal(signal.SIGTERM)
                     await asyncio.sleep(2)
                     if process.returncode is None:
                         process.kill()
+                        await process.communicate()
                 except Exception as term_error:
-                    # Use traceback for detailed error logging
                     error_trace = traceback.format_exc()
                     if self.logger:
-                        self.logger.exception("Process termination failed: %s\n%s", term_error, error_trace)
-                    process.kill()
+                        self.logger.warning("Process termination failed: %s\n%s", term_error, error_trace)
+                    try:
+                        process.kill()
+                        await process.wait()
+                    except (OSError, ProcessLookupError):
+                        pass
             raise Exception("Ghidra execution timed out") from timeout_error
         except Exception as e:
             # Use traceback for comprehensive error reporting
@@ -1492,6 +1497,13 @@ class GhidraPlugin(AbstractPlugin):
             if self.logger:
                 self.logger.exception("Ghidra execution error: %s\n%s", e, error_trace)
             raise
+        finally:
+            if process is not None and process.returncode is None:
+                try:
+                    process.kill()
+                    await process.communicate()
+                except (OSError, ProcessLookupError):
+                    pass
 
     def _parse_ghidra_output(self, output: str, operation: str) -> dict[str, Any]:
         """Parse Ghidra script output.

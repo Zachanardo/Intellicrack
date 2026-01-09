@@ -36,9 +36,7 @@ from ...utils.logger import get_logger
 class ProtocolFingerprinterProtocol(Protocol):
     """Protocol for protocol fingerprinter with fingerprint_packet method."""
 
-    def fingerprint_packet(
-        self, packet: bytes, context: dict[str, Any] | None = None
-    ) -> dict[str, Any] | None:
+    def fingerprint_packet(self, packet: bytes, context: dict[str, Any] | None = None) -> dict[str, Any] | None:
         """Fingerprint a packet to identify its protocol.
 
         Args:

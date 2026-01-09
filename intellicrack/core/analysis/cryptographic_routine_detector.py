@@ -1086,7 +1086,12 @@ class CryptographicRoutineDetector:
                             },
                         )
                         patterns.append(pattern)
-                        logger.debug("Fixed-iteration loop detected at 0x%08x (rounds: %d, likely %s)", base_addr + i, constant, crypto_round_counts[constant].name)
+                        logger.debug(
+                            "Fixed-iteration loop detected at 0x%08x (rounds: %d, likely %s)",
+                            base_addr + i,
+                            constant,
+                            crypto_round_counts[constant].name,
+                        )
                         break
 
         except (TypeError, ValueError, AttributeError) as e:
@@ -1149,7 +1154,9 @@ class CryptographicRoutineDetector:
                         },
                     )
                     patterns.append(pattern)
-                    logger.debug("Bitwise majority/choice detected at 0x%08x (AND:%d, XOR:%d, OR:%d)", base_addr + i, and_count, xor_count, or_count)
+                    logger.debug(
+                        "Bitwise majority/choice detected at 0x%08x (AND:%d, XOR:%d, OR:%d)", base_addr + i, and_count, xor_count, or_count
+                    )
 
         except (TypeError, ValueError, AttributeError) as e:
             logger.debug("Error in bitwise majority detection: %s", e, exc_info=True)
@@ -1283,7 +1290,13 @@ class CryptographicRoutineDetector:
                         },
                     )
                     patterns.append(pattern)
-                    logger.debug("Modular arithmetic detected at 0x%08x (MUL:%d, DIV:%d, ADC/SBB:%d)", base_addr + i, mul_count, div_count, adc_sbb_count)
+                    logger.debug(
+                        "Modular arithmetic detected at 0x%08x (MUL:%d, DIV:%d, ADC/SBB:%d)",
+                        base_addr + i,
+                        mul_count,
+                        div_count,
+                        adc_sbb_count,
+                    )
 
         except (TypeError, ValueError, AttributeError) as e:
             logger.debug("Error in modular arithmetic detection: %s", e, exc_info=True)

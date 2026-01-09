@@ -170,6 +170,7 @@ else:
             Returns:
                 A callable that logs the attempted access and stores results.
             """
+
             def method(*args: object, **kwargs: object) -> None:
                 if name.startswith("_"):
                     return None

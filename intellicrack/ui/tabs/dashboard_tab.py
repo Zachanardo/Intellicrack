@@ -702,17 +702,14 @@ class DashboardTab(BaseTab):
                 border: 2px solid {base.name()};
                 border-radius: {theme.border_radius}px;
                 padding: 12px;
-                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
             }}
             QPushButton:hover {{
                 background-color: {hover.name()};
                 border-color: {base.lighter(120).name()};
-                transform: translateY(-1px);
             }}
             QPushButton:pressed {{
                 background-color: {pressed.name()};
                 border-color: {base.darker(120).name()};
-                transform: translateY(1px);
             }}
             QPushButton:disabled {{
                 background-color: {theme.disabled_color};
@@ -854,8 +851,7 @@ class DashboardTab(BaseTab):
                 if stats.get("binary"):
                     binary_info = stats["binary"]
                     self.log_activity(
-                        f"Binary loaded: {binary_info.get('name', 'Unknown')} "
-                        f"({binary_info.get('size_formatted', 'Unknown size')})",
+                        f"Binary loaded: {binary_info.get('name', 'Unknown')} ({binary_info.get('size_formatted', 'Unknown size')})",
                     )
 
             if hasattr(dashboard_manager, "recent_activities"):

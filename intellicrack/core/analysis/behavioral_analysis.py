@@ -422,10 +422,19 @@ class QEMUController:
                     self.process.wait(timeout=5)
                 except subprocess.TimeoutExpired:
                     self.process.kill()
-                self.process = None
+                    self.process.wait(timeout=3)
+                except OSError:
+                    pass
+                finally:
+                    self.process = None
 
             self.is_running = False
             logger.info("QEMU stopped")
+
+    def __del__(self) -> None:
+        """Destructor to ensure process cleanup."""
+        if self.process is not None and self.process.poll() is None:
+            self.stop()
 
     def send_monitor_command(self, command: str) -> str:
         """Send command to QEMU monitor.
@@ -980,11 +989,7 @@ class FridaAPIHookingFramework:
         """
         result: dict[str, Any] = {
             "size": len(data),
-            "hex_preview": (
-                data[:HEX_PREVIEW_SIZE].hex()
-                if len(data) >= HEX_PREVIEW_SIZE
-                else data.hex()
-            ),
+            "hex_preview": (data[:HEX_PREVIEW_SIZE].hex() if len(data) >= HEX_PREVIEW_SIZE else data.hex()),
         }
 
         entropy = self._calculate_entropy(data)
@@ -2239,7 +2244,9 @@ class AntiAnalysisDetector:
                         if b"UPX" in header or b"ASPack" in header or b"Themida" in header:
                             obfuscation_indicators.append("Known packer signatures")
 
-                        pe_header_offset = struct.unpack("<I", header[0x3C:PE_HEADER_OFFSET_POS])[0] if len(header) > PE_HEADER_OFFSET_POS else 0
+                        pe_header_offset = (
+                            struct.unpack("<I", header[0x3C:PE_HEADER_OFFSET_POS])[0] if len(header) > PE_HEADER_OFFSET_POS else 0
+                        )
                         if pe_header_offset > UNUSUAL_PE_OFFSET_THRESHOLD:
                             obfuscation_indicators.append(f"Unusual PE header offset: {pe_header_offset:#x}")
             except Exception as e:
@@ -2498,6 +2505,7 @@ class BehavioralAnalyzer:
             "cpu_usage": cpu_usage_list,
         }
 
+        process: subprocess.Popen[bytes] | None = None
         try:
             binary_path_str = str(self.binary_path)
             if not Path(binary_path_str).is_absolute() or ".." in binary_path_str:
@@ -2523,13 +2531,20 @@ class BehavioralAnalyzer:
                 except psutil.NoSuchProcess:
                     break
 
-            if process.poll() is None:
-                process.terminate()
-                process.wait(timeout=5)
-
         except Exception as e:
             logger.exception("Native analysis failed")
             native_results["error"] = str(e)
+        finally:
+            if process is not None and process.poll() is None:
+                try:
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait()
+                except OSError:
+                    pass
 
         return native_results
 
@@ -2560,6 +2575,7 @@ class BehavioralAnalyzer:
             "frida_attached": False,
         }
 
+        process: subprocess.Popen[bytes] | None = None
         try:
             hooks_count = 0
             for key in self.api_hooks.hooks:
@@ -2581,10 +2597,6 @@ class BehavioralAnalyzer:
             while time.time() - start_time < duration and process.poll() is None:
                 time.sleep(0.1)
 
-            if process.poll() is None:
-                process.terminate()
-                process.wait(timeout=5)
-
             self.api_hooks.detach_from_process()
 
             with self.api_hooks._lock:
@@ -2597,6 +2609,17 @@ class BehavioralAnalyzer:
         except Exception as e:
             logger.exception("API monitoring failed")
             monitoring_results["error"] = str(e)
+        finally:
+            if process is not None and process.poll() is None:
+                try:
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait()
+                except OSError:
+                    pass
 
         return monitoring_results
 
@@ -2721,9 +2744,7 @@ class BehavioralAnalyzer:
 
             for detection in detections:
                 if detection.get("type") == "debugger_presence":
-                    bypass_recommendations.append(
-                        "Use Frida ScriptStalker to bypass debugger detection checks in licensing validation"
-                    )
+                    bypass_recommendations.append("Use Frida ScriptStalker to bypass debugger detection checks in licensing validation")
                 elif detection.get("type") == "vm_artifacts":
                     bypass_recommendations.append("Spoof VM indicators using QEMU snapshot masking and artifact removal")
                 elif detection.get("type") == "timing_attacks":
@@ -2735,17 +2756,13 @@ class BehavioralAnalyzer:
         if isinstance(behavioral_patterns, dict):
             if behavioral_patterns.get("license_checks"):
                 key_findings.append("License validation mechanisms identified")
-                bypass_recommendations.append(
-                    "Patch license validation logic or emulate valid license server responses"
-                )
+                bypass_recommendations.append("Patch license validation logic or emulate valid license server responses")
 
             if behavioral_patterns.get("network_communications"):
                 network_comms = behavioral_patterns["network_communications"]
                 if network_comms:
                     key_findings.append(f"Network-based license validation detected ({len(network_comms)} connections)")
-                    bypass_recommendations.append(
-                        "Intercept and replay license server responses or implement offline activation emulator"
-                    )
+                    bypass_recommendations.append("Intercept and replay license server responses or implement offline activation emulator")
 
             if behavioral_patterns.get("persistence_mechanisms"):
                 persistence = behavioral_patterns["persistence_mechanisms"]

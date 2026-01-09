@@ -930,9 +930,7 @@ class ReportManagerDialog(BaseDialog):
         editor.setPlainText(content)
         layout.addWidget(editor)
 
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(dialog.accept)
         button_box.rejected.connect(dialog.reject)
         layout.addWidget(button_box)
@@ -1147,9 +1145,11 @@ class ReportManagerDialog(BaseDialog):
         report_config: dict[str, Any] = {
             "type": (getattr(self, "report_type_combo", None) and self.report_type_combo.currentText()) or "Analysis",
             "binary_path": (getattr(self, "binary_path_edit", None) and self.binary_path_edit.text()) or "N/A",
-            "include_executive_summary": (getattr(self, "include_executive_summary", None) and self.include_executive_summary.isChecked()) or False,
+            "include_executive_summary": (getattr(self, "include_executive_summary", None) and self.include_executive_summary.isChecked())
+            or False,
             "include_detailed_logs": (getattr(self, "include_detailed_logs", None) and self.include_detailed_logs.isChecked()) or False,
-            "include_recommendations": (getattr(self, "include_recommendations", None) and self.include_recommendations.isChecked()) or False,
+            "include_recommendations": (getattr(self, "include_recommendations", None) and self.include_recommendations.isChecked())
+            or False,
         }
 
         binary_path = report_config.get("binary_path", "")
@@ -1311,6 +1311,7 @@ class ReportManagerDialog(BaseDialog):
         if os.path.exists(template_path):
             try:
                 import json
+
                 with open(template_path, encoding="utf-8") as f:
                     template_data = json.load(f)
             except (OSError, json.JSONDecodeError) as e:
@@ -1349,9 +1350,7 @@ class ReportManagerDialog(BaseDialog):
 
         layout.addLayout(form_layout)
 
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
-        )
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(dialog.accept)
         button_box.rejected.connect(dialog.reject)
         layout.addWidget(button_box)
@@ -1448,8 +1447,10 @@ class ReportManagerDialog(BaseDialog):
 
         if os.path.exists(template_path):
             result = QMessageBox.question(
-                self, "Template Exists", f"Template '{template_name}' already exists. Overwrite?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                self,
+                "Template Exists",
+                f"Template '{template_name}' already exists. Overwrite?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
             if result != QMessageBox.StandardButton.Yes:
                 return
@@ -1498,6 +1499,7 @@ class ReportManagerDialog(BaseDialog):
 
             if hasattr(self, "template_list"):
                 from intellicrack.handlers.pyqt6_handler import QListWidgetItem
+
                 self.template_list.addItem(QListWidgetItem(template_name))
 
             QMessageBox.information(self, "Success", f"Template '{template_name}' created successfully")

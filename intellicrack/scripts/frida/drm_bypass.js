@@ -384,8 +384,8 @@ const DrmBypass = {
 
                             // Identify crypto strength indicators
                             if (argAnalysis.crypto_strength_indicators.length > 0) {
-                                hdcpAnalysis.crypto_strength_assessment
-                                    = argAnalysis.crypto_strength_indicators[0];
+                                hdcpAnalysis.crypto_strength_assessment =
+                                    argAnalysis.crypto_strength_indicators[0];
                             }
 
                             hdcpAnalysis.security_indicators = [
@@ -395,17 +395,17 @@ const DrmBypass = {
                         }
 
                         // Perform HDCP bypass opportunity assessment
-                        hdcpAnalysis.bypass_opportunities
-                            = this.assessHdcpBypassOpportunities(hdcpAnalysis);
+                        hdcpAnalysis.bypass_opportunities =
+                            this.assessHdcpBypassOpportunities(hdcpAnalysis);
 
                         // Store analysis for forensic purposes
                         this.storeHdcpAnalysis(hdcpAnalysis);
 
                         // Return genuine HDCP context detection based on comprehensive analysis
                         return (
-                            hdcpAnalysis.security_indicators.length > 2
-                            && hdcpAnalysis.bypass_opportunities.length > 0
-                            && hdcpAnalysis.hdcp_version_detected !== null
+                            hdcpAnalysis.security_indicators.length > 2 &&
+                            hdcpAnalysis.bypass_opportunities.length > 0 &&
+                            hdcpAnalysis.hdcp_version_detected !== null
                         );
                     },
                 });
@@ -496,8 +496,8 @@ const DrmBypass = {
                     }
 
                     // Analyze extracted data for bypass opportunities
-                    requestAnalysis.bypass_vectors
-                        = this.identifyRequestBypassVectors(requestAnalysis);
+                    requestAnalysis.bypass_vectors =
+                        this.identifyRequestBypassVectors(requestAnalysis);
 
                     // Store comprehensive analysis
                     this.storeRequestAnalysis(requestAnalysis);
@@ -701,8 +701,8 @@ const DrmBypass = {
 
                             // Extract license request data
                             if (argAnalysis.contains_license_request) {
-                                licenseAnalysis.license_request_data
-                                    = argAnalysis.license_request_data;
+                                licenseAnalysis.license_request_data =
+                                    argAnalysis.license_request_data;
                             }
 
                             // Extract DRM context information
@@ -730,12 +730,12 @@ const DrmBypass = {
                         }
 
                         // Determine optimal bypass strategy based on analysis
-                        licenseAnalysis.bypass_strategy
-                            = this.determinePlayReadyBypassStrategy(licenseAnalysis);
+                        licenseAnalysis.bypass_strategy =
+                            this.determinePlayReadyBypassStrategy(licenseAnalysis);
 
                         // Assess vulnerabilities in license acquisition flow
-                        licenseAnalysis.vulnerability_assessment
-                            = this.assessPlayReadyVulnerabilities(licenseAnalysis);
+                        licenseAnalysis.vulnerability_assessment =
+                            this.assessPlayReadyVulnerabilities(licenseAnalysis);
 
                         // Store comprehensive license analysis
                         this.storePlayReadyLicenseAnalysis(licenseAnalysis);
@@ -1067,9 +1067,9 @@ const DrmBypass = {
         for (const module of modules) {
             // Focus on Widevine-related modules
             if (
-                module.name.toLowerCase().includes('widevine')
-                || module.name.toLowerCase().includes('wvcdm')
-                || module.name.toLowerCase().includes('chrome')
+                module.name.toLowerCase().includes('widevine') ||
+                module.name.toLowerCase().includes('wvcdm') ||
+                module.name.toLowerCase().includes('chrome')
             ) {
                 for (const funcName of widevineFunctions) {
                     this.hookWidevineFunction(module.name, funcName);
@@ -1197,8 +1197,8 @@ const DrmBypass = {
 
                             // Extract provisioning request data
                             if (argAnalysis.contains_provisioning_request) {
-                                provisioningAnalysis.provisioning_request_data
-                                    = argAnalysis.provisioning_request_data;
+                                provisioningAnalysis.provisioning_request_data =
+                                    argAnalysis.provisioning_request_data;
                             }
 
                             // Extract device identity information
@@ -1211,8 +1211,8 @@ const DrmBypass = {
 
                             // Assess security level
                             if (argAnalysis.security_level) {
-                                provisioningAnalysis.security_level_assessment
-                                    = argAnalysis.security_level;
+                                provisioningAnalysis.security_level_assessment =
+                                    argAnalysis.security_level;
                             }
 
                             // Detect CDM version
@@ -1230,12 +1230,12 @@ const DrmBypass = {
                         }
 
                         // Assess bypass feasibility based on analysis
-                        provisioningAnalysis.bypass_feasibility
-                            = this.assessWidevineBypassFeasibility(provisioningAnalysis);
+                        provisioningAnalysis.bypass_feasibility =
+                            this.assessWidevineBypassFeasibility(provisioningAnalysis);
 
                         // Identify attack vectors for provisioning bypass
-                        provisioningAnalysis.attack_vectors
-                            = this.identifyWidevineAttackVectors(provisioningAnalysis);
+                        provisioningAnalysis.attack_vectors =
+                            this.identifyWidevineAttackVectors(provisioningAnalysis);
 
                         // Store comprehensive provisioning analysis
                         this.storeWidevineProvisioningAnalysis(provisioningAnalysis);
@@ -1374,8 +1374,8 @@ const DrmBypass = {
 
                             // Extract license request payload
                             if (argAnalysis.contains_license_request_payload) {
-                                licenseRequestAnalysis.license_request_payload
-                                    = argAnalysis.license_request_payload;
+                                licenseRequestAnalysis.license_request_payload =
+                                    argAnalysis.license_request_payload;
                             }
 
                             // Extract PSSH (Protection System Specific Header) data
@@ -1408,12 +1408,12 @@ const DrmBypass = {
                         }
 
                         // Determine optimal bypass method
-                        licenseRequestAnalysis.bypass_method
-                            = this.determineWidevineLicenseBypassMethod(licenseRequestAnalysis);
+                        licenseRequestAnalysis.bypass_method =
+                            this.determineWidevineLicenseBypassMethod(licenseRequestAnalysis);
 
                         // Identify exploitation vectors for license manipulation
-                        licenseRequestAnalysis.exploitation_vectors
-                            = this.identifyWidevineLicenseExploitationVectors(licenseRequestAnalysis);
+                        licenseRequestAnalysis.exploitation_vectors =
+                            this.identifyWidevineLicenseExploitationVectors(licenseRequestAnalysis);
 
                         // Store comprehensive license request analysis
                         this.storeWidevineLicenseRequestAnalysis(licenseRequestAnalysis);
@@ -1510,8 +1510,8 @@ const DrmBypass = {
 
         for (const module of modules) {
             if (
-                module.name.toLowerCase().includes('widevine')
-                || module.name.toLowerCase().includes('wvcdm')
+                module.name.toLowerCase().includes('widevine') ||
+                module.name.toLowerCase().includes('wvcdm')
             ) {
                 for (const funcName of decryptFunctions) {
                     this.hookWidevineDecryptFunction(module.name, funcName);
@@ -1666,16 +1666,16 @@ const DrmBypass = {
                     timeBypassAnalysis.temporal_vulnerabilities = timeAnalysis.vulnerabilities;
 
                     // Determine optimal time manipulation strategy
-                    timeBypassAnalysis.manipulation_strategy
-                        = this.determineTimeManipulationStrategy(timeAnalysis, functionName);
+                    timeBypassAnalysis.manipulation_strategy =
+                        this.determineTimeManipulationStrategy(timeAnalysis, functionName);
 
                     // Identify bypass techniques for time-based protections
-                    timeBypassAnalysis.bypass_techniques
-                        = this.identifyTimeBypassTechniques(timeAnalysis);
+                    timeBypassAnalysis.bypass_techniques =
+                        this.identifyTimeBypassTechniques(timeAnalysis);
 
                     // Assess exploitation vectors for temporal attacks
-                    timeBypassAnalysis.exploitation_vectors
-                        = this.assessTemporalExploitationVectors(timeAnalysis);
+                    timeBypassAnalysis.exploitation_vectors =
+                        this.assessTemporalExploitationVectors(timeAnalysis);
 
                     const { config } = this.parent.parent;
                     if (config.streaming.bypassTimeBasedProtection) {
@@ -1827,12 +1827,12 @@ const DrmBypass = {
                     }
 
                     // Identify bypass strategies for domain restrictions
-                    domainRequestAnalysis.bypass_strategies
-                        = this.identifyDomainBypassStrategies(domainRequestAnalysis);
+                    domainRequestAnalysis.bypass_strategies =
+                        this.identifyDomainBypassStrategies(domainRequestAnalysis);
 
                     // Assess security implications of bypass attempts
-                    domainRequestAnalysis.security_implications
-                        = this.assessDomainBypassSecurity(domainRequestAnalysis);
+                    domainRequestAnalysis.security_implications =
+                        this.assessDomainBypassSecurity(domainRequestAnalysis);
 
                     // Store comprehensive domain request analysis
                     this.storeDomainRequestAnalysis(domainRequestAnalysis);
@@ -1840,9 +1840,9 @@ const DrmBypass = {
                     // Return comprehensive request details for domain bypass
                     return {
                         url:
-                            domainRequestAnalysis.extracted_url
-                            || globalThis.TARGET_URL
-                            || 'internal.local',
+                            domainRequestAnalysis.extracted_url ||
+                            globalThis.TARGET_URL ||
+                            'internal.local',
                         headers:
                             domainRequestAnalysis.extracted_headers.length > 0
                                 ? domainRequestAnalysis.extracted_headers
@@ -1991,21 +1991,21 @@ const DrmBypass = {
                     }
 
                     // Determine bypass methods for telemetry blocking
-                    telemetryAnalysis.bypass_methods
-                        = this.determineTelemetryBypassMethods(telemetryAnalysis);
+                    telemetryAnalysis.bypass_methods =
+                        this.determineTelemetryBypassMethods(telemetryAnalysis);
 
                     // Develop blocking strategies
-                    telemetryAnalysis.blocking_strategies
-                        = this.developTelemetryBlockingStrategies(telemetryAnalysis);
+                    telemetryAnalysis.blocking_strategies =
+                        this.developTelemetryBlockingStrategies(telemetryAnalysis);
 
                     // Store comprehensive telemetry analysis
                     this.storeTelemetryAnalysis(telemetryAnalysis);
 
                     // Determine if this is genuine telemetry based on comprehensive analysis
-                    const isTelemetryDetected
-                        = telemetryAnalysis.telemetry_indicators_detected.length > 2
-                        || telemetryAnalysis.data_collection_vectors.length > 1
-                        || telemetryAnalysis.tracking_mechanisms.length > 0;
+                    const isTelemetryDetected =
+                        telemetryAnalysis.telemetry_indicators_detected.length > 2 ||
+                        telemetryAnalysis.data_collection_vectors.length > 1 ||
+                        telemetryAnalysis.tracking_mechanisms.length > 0;
 
                     return {
                         isTelemetry: isTelemetryDetected,
@@ -2217,9 +2217,9 @@ const DrmBypass = {
         for (const module of modules) {
             // Look for Chrome/Chromium EME implementation
             if (
-                module.name.toLowerCase().includes('chrome')
-                || module.name.toLowerCase().includes('blink')
-                || module.name.toLowerCase().includes('content')
+                module.name.toLowerCase().includes('chrome') ||
+                module.name.toLowerCase().includes('blink') ||
+                module.name.toLowerCase().includes('content')
             ) {
                 for (const funcName of emeFunctions) {
                     this.hookEMEFunction(module.name, funcName);
@@ -2250,16 +2250,16 @@ const DrmBypass = {
                         // Analyze the original EME return value
                         const emeAnalysis = this.analyzeEmeReturnValue(retval, functionName);
                         emeBypassAnalysis.media_key_vulnerabilities = emeAnalysis.vulnerabilities;
-                        emeBypassAnalysis.access_control_weaknesses
-                            = emeAnalysis.access_control_issues;
+                        emeBypassAnalysis.access_control_weaknesses =
+                            emeAnalysis.access_control_issues;
 
                         // Determine optimal EME manipulation strategy
-                        emeBypassAnalysis.manipulation_strategy
-                            = this.determineEmeManipulationStrategy(emeAnalysis, functionName);
+                        emeBypassAnalysis.manipulation_strategy =
+                            this.determineEmeManipulationStrategy(emeAnalysis, functionName);
 
                         // Identify bypass techniques for EME operations
-                        emeBypassAnalysis.bypass_techniques
-                            = this.identifyEmeBypassTechniques(emeAnalysis);
+                        emeBypassAnalysis.bypass_techniques =
+                            this.identifyEmeBypassTechniques(emeAnalysis);
 
                         const { config } = this.parent.parent;
 
@@ -2397,8 +2397,8 @@ const DrmBypass = {
 
                         // Analyze the original key session return value
                         const sessionAnalysis = this.analyzeKeySessionRetval(retval, functionName);
-                        keySessionAnalysis.session_vulnerabilities
-                            = sessionAnalysis.vulnerabilities;
+                        keySessionAnalysis.session_vulnerabilities =
+                            sessionAnalysis.vulnerabilities;
                         keySessionAnalysis.license_weaknesses = sessionAnalysis.license_issues;
 
                         // Determine optimal key session manipulation strategy
@@ -2408,8 +2408,8 @@ const DrmBypass = {
                         );
 
                         // Identify bypass techniques for key sessions
-                        keySessionAnalysis.bypass_techniques
-                            = this.identifySessionBypassTechniques(sessionAnalysis);
+                        keySessionAnalysis.bypass_techniques =
+                            this.identifySessionBypassTechniques(sessionAnalysis);
 
                         const { config } = this.parent.parent;
                         if (config.eme.bypassKeySessionLimits) {
@@ -2565,18 +2565,18 @@ const DrmBypass = {
 
                             // Analyze the original decryption return value
                             const decryptAnalysis = this.analyzeDecryptionRetval(retval);
-                            decryptionAnalysis.decryption_vulnerabilities
-                                = decryptAnalysis.vulnerabilities;
-                            decryptionAnalysis.content_protection_weaknesses
-                                = decryptAnalysis.protection_issues;
+                            decryptionAnalysis.decryption_vulnerabilities =
+                                decryptAnalysis.vulnerabilities;
+                            decryptionAnalysis.content_protection_weaknesses =
+                                decryptAnalysis.protection_issues;
 
                             // Determine optimal decryption manipulation strategy
-                            decryptionAnalysis.manipulation_strategy
-                                = this.determineDecryptionStrategy(decryptAnalysis);
+                            decryptionAnalysis.manipulation_strategy =
+                                this.determineDecryptionStrategy(decryptAnalysis);
 
                             // Identify bypass techniques for decryption operations
-                            decryptionAnalysis.bypass_techniques
-                                = this.identifyDecryptionBypassTechniques(decryptAnalysis);
+                            decryptionAnalysis.bypass_techniques =
+                                this.identifyDecryptionBypassTechniques(decryptAnalysis);
 
                             const { config } = this.parent.parent;
                             if (config.decryption.interceptEncryptedContent) {
@@ -2655,21 +2655,21 @@ const DrmBypass = {
                         }
 
                         // Identify bypass opportunities based on analysis
-                        decryptionAnalysis.bypass_opportunities
-                            = this.identifyDecryptionBypassOpportunities(decryptionAnalysis);
+                        decryptionAnalysis.bypass_opportunities =
+                            this.identifyDecryptionBypassOpportunities(decryptionAnalysis);
 
                         // Assess vulnerabilities in the decryption process
-                        decryptionAnalysis.vulnerability_assessment
-                            = this.assessDecryptionVulnerabilities(decryptionAnalysis);
+                        decryptionAnalysis.vulnerability_assessment =
+                            this.assessDecryptionVulnerabilities(decryptionAnalysis);
 
                         // Store comprehensive decryption analysis
                         this.storeDrmDecryptionAnalysis(decryptionAnalysis);
 
                         // Return genuine DRM decryption detection based on comprehensive analysis
                         return (
-                            decryptionAnalysis.encryption_algorithms_detected.length > 0
-                            || decryptionAnalysis.key_material_identified.length > 0
-                            || decryptionAnalysis.content_protection_indicators.length > 1
+                            decryptionAnalysis.encryption_algorithms_detected.length > 0 ||
+                            decryptionAnalysis.key_material_identified.length > 0 ||
+                            decryptionAnalysis.content_protection_indicators.length > 1
                         );
                     },
                 });
@@ -2710,17 +2710,17 @@ const DrmBypass = {
 
                         // Analyze the original key derivation return value
                         const kdfRetvalAnalysis = this.analyzeKdfRetval(retval);
-                        kdfAnalysis.key_derivation_vulnerabilities
-                            = kdfRetvalAnalysis.vulnerabilities;
+                        kdfAnalysis.key_derivation_vulnerabilities =
+                            kdfRetvalAnalysis.vulnerabilities;
                         kdfAnalysis.cryptographic_weaknesses = kdfRetvalAnalysis.crypto_issues;
 
                         // Determine optimal key derivation manipulation strategy
-                        kdfAnalysis.manipulation_strategy
-                            = this.determineKdfManipulationStrategy(kdfRetvalAnalysis);
+                        kdfAnalysis.manipulation_strategy =
+                            this.determineKdfManipulationStrategy(kdfRetvalAnalysis);
 
                         // Identify bypass techniques for key derivation operations
-                        kdfAnalysis.bypass_techniques
-                            = this.identifyKdfBypassTechniques(kdfRetvalAnalysis);
+                        kdfAnalysis.bypass_techniques =
+                            this.identifyKdfBypassTechniques(kdfRetvalAnalysis);
 
                         const { config } = this.parent.parent;
                         if (config.decryption.spoofDecryptionKeys) {
@@ -2830,12 +2830,12 @@ const DrmBypass = {
                         }
 
                         // Identify bypass techniques for key operations
-                        keySessionAnalysis.bypass_techniques
-                            = this.identifyKeySessionBypassTechniques(keySessionAnalysis);
+                        keySessionAnalysis.bypass_techniques =
+                            this.identifyKeySessionBypassTechniques(keySessionAnalysis);
 
                         // Assess exploitation vectors for key extraction
-                        keySessionAnalysis.exploitation_vectors
-                            = this.assessKeyExtractionVectors(keySessionAnalysis);
+                        keySessionAnalysis.exploitation_vectors =
+                            this.assessKeyExtractionVectors(keySessionAnalysis);
 
                         // Store comprehensive key session analysis
                         this.storeWindowsKeySessionAnalysis(keySessionAnalysis);
@@ -2985,12 +2985,12 @@ const DrmBypass = {
                     }
 
                     // Identify bypass insertion points in the request
-                    requestAnalysis.bypass_insertion_points
-                        = this.identifyRequestBypassPoints(requestAnalysis);
+                    requestAnalysis.bypass_insertion_points =
+                        this.identifyRequestBypassPoints(requestAnalysis);
 
                     // Assess manipulation opportunities for DRM bypass
-                    requestAnalysis.manipulation_opportunities
-                        = this.assessRequestManipulationOpportunities(requestAnalysis);
+                    requestAnalysis.manipulation_opportunities =
+                        this.assessRequestManipulationOpportunities(requestAnalysis);
 
                     // Store comprehensive request analysis
                     this.storeDrmRequestAnalysis(requestAnalysis);
@@ -3367,9 +3367,9 @@ const DrmBypass = {
 
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.policyStatus
-                        && !this.policyStatus.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.policyStatus &&
+                        !this.policyStatus.isNull()
                     ) {
                         // Force certificate validation to succeed
                         this.policyStatus.writeU32(0); // No errors
@@ -3408,53 +3408,53 @@ const DrmBypass = {
                 if (hook.includes('HDCP') || hook.includes('Hdcp')) {
                     categories['HDCP Protection']++;
                 } else if (
-                    hook.includes('PlayReady')
-                    || hook.includes('PR_')
-                    || hook.includes('DRM_')
+                    hook.includes('PlayReady') ||
+                    hook.includes('PR_') ||
+                    hook.includes('DRM_')
                 ) {
                     categories['PlayReady DRM']++;
                 } else if (
-                    hook.includes('Widevine')
-                    || hook.includes('WV_')
-                    || hook.includes('CDM')
+                    hook.includes('Widevine') ||
+                    hook.includes('WV_') ||
+                    hook.includes('CDM')
                 ) {
                     categories['Widevine DRM']++;
                 } else if (
-                    hook.includes('Time')
-                    || hook.includes('Geo')
-                    || hook.includes('Domain')
-                    || hook.includes('Telemetry')
+                    hook.includes('Time') ||
+                    hook.includes('Geo') ||
+                    hook.includes('Domain') ||
+                    hook.includes('Telemetry')
                 ) {
                     categories['Streaming DRM']++;
                 } else if (
-                    hook.includes('Tpm')
-                    || hook.includes('TEE')
-                    || hook.includes('Hardware')
+                    hook.includes('Tpm') ||
+                    hook.includes('TEE') ||
+                    hook.includes('Hardware')
                 ) {
                     categories['Hardware DRM']++;
                 } else if (
-                    hook.includes('EME')
-                    || hook.includes('MediaKey')
-                    || hook.includes('Session')
+                    hook.includes('EME') ||
+                    hook.includes('MediaKey') ||
+                    hook.includes('Session')
                 ) {
                     categories['EME APIs']++;
                 } else if (
-                    hook.includes('Decrypt')
-                    || hook.includes('Content')
-                    || hook.includes('Key')
-                    || hook.includes('KDF')
+                    hook.includes('Decrypt') ||
+                    hook.includes('Content') ||
+                    hook.includes('Key') ||
+                    hook.includes('KDF')
                 ) {
                     categories['Content Decryption']++;
                 } else if (
-                    hook.includes('Network')
-                    || hook.includes('Communication')
-                    || hook.includes('Service')
+                    hook.includes('Network') ||
+                    hook.includes('Communication') ||
+                    hook.includes('Service')
                 ) {
                     categories['DRM Communication']++;
                 } else if (
-                    hook.includes('License')
-                    || hook.includes('Registry')
-                    || hook.includes('Validation')
+                    hook.includes('License') ||
+                    hook.includes('Registry') ||
+                    hook.includes('Validation')
                 ) {
                     categories['License Validation']++;
                 } else if (hook.includes('Cert') || hook.includes('Certificate')) {
@@ -3463,13 +3463,8 @@ const DrmBypass = {
             }
 
             const activeSystems = [];
-            const {
-                config,
-                interceptedRequests,
-                bypassedChecks,
-                spoofedLicenses,
-                hooksInstalled,
-            } = this;
+            const { config, interceptedRequests, bypassedChecks, spoofedLicenses, hooksInstalled } =
+                this;
             if (config.hdcp.enabled) {
                 activeSystems.push({
                     name: 'HDCP Bypass',

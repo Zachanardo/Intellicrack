@@ -253,6 +253,7 @@ fn main() {
         let search_paths = vec![
             pixi_env_path.clone(),
             pixi_env_path.join("Library/bin"),
+            pixi_env_path.join("Library/lib/jvm/bin"),
             pixi_env_path.join("DLLs"),
             pixi_env_path.join("Lib/site-packages/torchvision"),
             pixi_env_path.join("Lib/site-packages/torch/lib"),
@@ -283,10 +284,6 @@ fn main() {
             "libexpat.dll",
             "freetype.dll",
             "libpng16.dll",
-            "libblas.dll",
-            "libcblas.dll",
-            "liblapack.dll",
-            "liblapacke.dll",
             "tbb12.dll",
             "tbbmalloc.dll",
             "mkl_rt.2.dll",
@@ -294,6 +291,7 @@ fn main() {
             "mkl_intel_thread.2.dll",
             "libiomp5md.dll",
             "mkl_sycl_blas.5.dll",
+            "mkl_sycl_lapack.5.dll",
         ];
 
         // --- Standard PYDs, warn if not found ---

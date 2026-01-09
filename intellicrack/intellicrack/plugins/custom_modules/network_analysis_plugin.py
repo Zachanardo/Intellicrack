@@ -1,5 +1,4 @@
-"""
-Network Analysis Plugin Template
+"""Network Analysis Plugin Template
 Specialized template for network traffic analysis
 """
 
@@ -10,6 +9,7 @@ import sys
 from typing import Dict, List, Optional
 
 from intellicrack.utils.subprocess_security import secure_run
+
 
 class NetworkAnalysisPlugin:
     def __init__(self):
@@ -66,7 +66,7 @@ class NetworkAnalysisPlugin:
 
         except Exception as e:
             logger.exception(f"Network monitoring error: {e}")
-            results.append(f"Error: {str(e)}")
+            results.append(f"Error: {e!s}")
             results.append("Fallback: Using netstat-based monitoring")
             results.extend(self._fallback_network_monitor(target_process))
 
@@ -79,7 +79,7 @@ class NetworkAnalysisPlugin:
         try:
             # Try to use pypcap or scapy if available
             try:
-                from scapy.all import sniff, IP, TCP, UDP
+                from scapy.all import IP, TCP, UDP, sniff
                 results.append("Using Scapy for packet capture")
 
                 # Get process connections first
@@ -140,8 +140,7 @@ class NetworkAnalysisPlugin:
                     try:
                         output = secure_run(cmd, capture_output=True, text=True).stdout
                         results.append(f"Network connections for PID {pid}:")
-                        results.extend(output.strip().split('
-')[1:])  # Skip header
+                        results.extend(output.strip().split('\n')[1:])  # Skip header
                     except subprocess.CalledProcessError as e:
                         results.append(f"Failed to get network connections for PID {pid}: {e}")
                     except (OSError, FileNotFoundError):
@@ -152,8 +151,7 @@ class NetworkAnalysisPlugin:
                 cmd = ["tcpdump", "-c", "10", "-n", "-i", "any"]
                 output = secure_run(cmd, capture_output=True, text=True, timeout=5).stdout
                 results.append("Captured traffic:")
-                results.extend(output.strip().split('
-'))
+                results.extend(output.strip().split('\n'))
             except subprocess.TimeoutExpired:
                 results.append("Packet capture timed out")
             except:
@@ -183,8 +181,7 @@ class NetworkAnalysisPlugin:
                 except (subprocess.CalledProcessError, FileNotFoundError):
                     cmd = ["netstat", "-tunap"]
                     output = secure_run(cmd, capture_output=True, text=True).stdout
-            lines = output.strip().split('
-')
+            lines = output.strip().split('\n')
 
             if target_process:
                 pid = self._get_process_pid(target_process)
@@ -218,19 +215,17 @@ class NetworkAnalysisPlugin:
                 if sys.platform == "win32":
                     cmd = ["wmic", "process", "where", f"name like '%{process_name}%'", "get", "processid"]
                     output = secure_run(cmd, capture_output=True, text=True).stdout
-                    lines = output.strip().split('
-')
+                    lines = output.strip().split('\n')
                     if len(lines) > 1:
                         return int(lines[1].strip())
                 else:
                     cmd = ["pgrep", "-f", process_name]
                     output = secure_run(cmd, capture_output=True, text=True).stdout
-                    return int(output.strip().split('
-')[0])
+                    return int(output.strip().split('\n')[0])
             except (subprocess.CalledProcessError, ValueError, IndexError) as e:
                 self.logger.debug(f"Failed to get PID for process '{process_name}': {e}")
             except (OSError, FileNotFoundError):
-                self.logger.debug(f"Process enumeration command not available on this system")
+                self.logger.debug("Process enumeration command not available on this system")
         return None
 
     def _get_process_connections(self, pid):
@@ -291,14 +286,11 @@ class NetworkAnalysisPlugin:
             netstat_result = secure_run(netstat_cmd, capture_output=True, text=True, stderr=subprocess.DEVNULL)
 
             # Filter output for tcp/udp lines
-            lines = netstat_result.stdout.strip().split('
-')
+            lines = netstat_result.stdout.strip().split('\n')
             filtered_lines = [line for line in lines if any(proto in line.lower() for proto in ['tcp', 'udp'])]
-            output = '
-'.join(filtered_lines)
+            output = '\n'.join(filtered_lines)
 
-            lines = output.strip().split('
-')
+            lines = output.strip().split('\n')
             results.append("Active connections:")
 
             for line in lines[:20]:  # Limit output
@@ -308,6 +300,7 @@ class NetworkAnalysisPlugin:
             results.append(f"Netstat error: {e}")
 
         return results
+
 
 def register():
     return NetworkAnalysisPlugin()

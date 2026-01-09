@@ -27,13 +27,12 @@ import contextlib
 import hashlib
 import heapq
 import hmac
+import io
 import json
 import logging
 import os
-import io
 import pickle  # noqa: S403
 import platform
-from typing import cast
 import socket
 import struct
 import threading
@@ -43,7 +42,7 @@ import uuid
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 
 if TYPE_CHECKING:

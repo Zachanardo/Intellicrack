@@ -34,6 +34,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QPushButton,
     QTabWidget,
     QTextEdit,
+    QThread,
     QVBoxLayout,
     QWidget,
     pyqtSignal,
@@ -48,6 +49,46 @@ if TYPE_CHECKING:
     from PyQt6.QtWidgets import QScrollBar
 
 logger = get_logger(__name__)
+
+
+class ModelDiscoveryWorker(QThread):
+    """Worker thread for model discovery to avoid blocking the UI."""
+
+    discovery_complete = pyqtSignal(list, dict)
+    error_occurred = pyqtSignal(str)
+
+    def __init__(self, force_refresh: bool = False) -> None:
+        """Initialize the model discovery worker.
+
+        Args:
+            force_refresh: Whether to force refresh of discovered models.
+        """
+        super().__init__()
+        self.force_refresh = force_refresh
+        self._running = True
+
+    def run(self) -> None:
+        """Run model discovery in background thread."""
+        try:
+            from ...ai.llm_config_manager import get_llm_config_manager
+            from ...ai.model_discovery_service import get_model_discovery_service
+
+            config_manager = get_llm_config_manager()
+            discovery_service = get_model_discovery_service()
+
+            configured_models = config_manager.list_model_configs()
+            discovered_models = discovery_service.discover_all_models(force_refresh=self.force_refresh)
+
+            if self._running:
+                self.discovery_complete.emit(configured_models, discovered_models)
+        except Exception as e:
+            logger.exception("Failed to discover models: %s", e)
+            if self._running:
+                self.error_occurred.emit(str(e))
+
+    def stop(self) -> None:
+        """Stop the discovery process."""
+        self._running = False
 
 
 class AIAssistantWidget(QWidget):
@@ -1281,66 +1322,84 @@ Return ONLY the code, no explanations."""
         """Load available AI models using dynamic API-based discovery.
 
         Discovers both configured and API-discovered models from all
-        providers. Updates the model combo box with available options
-        and displays appropriate welcome/error messages. Supports multiple
-        API providers through dynamic discovery service.
+        providers in a background thread to avoid blocking the UI.
+        Updates the model combo box with available options and displays
+        appropriate welcome/error messages.
 
         Args:
             force_refresh: Force refresh of discovered models from APIs.
         """
-        try:
-            from ...ai.llm_config_manager import get_llm_config_manager
-            from ...ai.model_discovery_service import get_model_discovery_service
+        self.model_combo.clear()
+        self.model_combo.addItem("Loading models...")
+        self.model_combo.setEnabled(False)
 
-            config_manager = get_llm_config_manager()
-            discovery_service = get_model_discovery_service()
+        self._model_discovery_worker = ModelDiscoveryWorker(force_refresh=force_refresh)
+        self._model_discovery_worker.discovery_complete.connect(self._on_model_discovery_complete)
+        self._model_discovery_worker.error_occurred.connect(self._on_model_discovery_error)
+        self._model_discovery_worker.finished.connect(self._on_model_discovery_finished)
+        self._model_discovery_worker.start()
 
-            configured_models = config_manager.list_model_configs()
-            discovered_models = discovery_service.discover_all_models(force_refresh=force_refresh)
+    def _on_model_discovery_complete(self, configured_models: list[str], discovered_models: dict[str, list[object]]) -> None:
+        """Handle model discovery completion.
 
-            self.available_models = []
-            self.model_combo.clear()
+        Args:
+            configured_models: List of configured model IDs.
+            discovered_models: Dictionary mapping provider names to model lists.
+        """
+        self.available_models = []
+        self.model_combo.clear()
 
-            if configured_models:
-                for model_id in configured_models:
-                    self.available_models.append(model_id)
-                    self.model_combo.addItem(f" {model_id}")
+        if configured_models:
+            for model_id in configured_models:
+                self.available_models.append(model_id)
+                self.model_combo.addItem(f" {model_id}")
 
-            if discovered_models:
-                for provider_name, models in sorted(discovered_models.items()):
-                    if models:
-                        self.model_combo.insertSeparator(self.model_combo.count())
-                        self.model_combo.addItem(f"── {provider_name} API Models ──")
-                        combo_model: QAbstractItemModel | None = self.model_combo.model()
-                        if combo_model is not None and hasattr(combo_model, "item"):
-                            item = combo_model.item(self.model_combo.count() - 1)
-                            if item is not None:
-                                item.setEnabled(False)
+        if discovered_models:
+            for provider_name, models in sorted(discovered_models.items()):
+                if models:
+                    self.model_combo.insertSeparator(self.model_combo.count())
+                    self.model_combo.addItem(f"-- {provider_name} API Models --")
+                    combo_model: QAbstractItemModel | None = self.model_combo.model()
+                    if combo_model is not None and hasattr(combo_model, "item"):
+                        item = combo_model.item(self.model_combo.count() - 1)
+                        if item is not None:
+                            item.setEnabled(False)
 
-                        for model in models:
-                            display_name = f"🌐 {provider_name}: {model.name}"
-                            self.available_models.append(model.id)
-                            self.model_combo.addItem(display_name)
+                    for model in models:
+                        display_name = f"[API] {provider_name}: {model.name}"
+                        self.available_models.append(model.id)
+                        self.model_combo.addItem(display_name)
 
-            if not self.available_models:
-                self.model_combo.addItem("No models available")
-                self.model_combo.setEnabled(False)
-                self._show_no_models_prompt()
-                logger.warning("No AI models available (neither configured nor discovered)")
-                return
-
-            self.model_combo.setEnabled(True)
-            total_models = len(self.available_models)
-            self._show_welcome_message(total_models)
-            logger.info("Loaded %d AI models from API discovery", total_models)
-
-        except Exception as e:
-            logger.exception("Failed to load models: %s", e)
-            self.available_models = []
-            self.model_combo.clear()
-            self.model_combo.addItem("Error loading models")
+        if not self.available_models:
+            self.model_combo.addItem("No models available")
             self.model_combo.setEnabled(False)
-            self._show_error_message(str(e))
+            self._show_no_models_prompt()
+            logger.warning("No AI models available (neither configured nor discovered)")
+            return
+
+        self.model_combo.setEnabled(True)
+        total_models = len(self.available_models)
+        self._show_welcome_message(total_models)
+        logger.info("Loaded %d AI models from API discovery", total_models)
+
+    def _on_model_discovery_error(self, error_msg: str) -> None:
+        """Handle model discovery error.
+
+        Args:
+            error_msg: The error message.
+        """
+        logger.error("Model discovery failed: %s", error_msg)
+        self.available_models = []
+        self.model_combo.clear()
+        self.model_combo.addItem("Error loading models")
+        self.model_combo.setEnabled(False)
+        self._show_error_message(error_msg)
+
+    def _on_model_discovery_finished(self) -> None:
+        """Handle model discovery worker finished signal."""
+        if hasattr(self, "_model_discovery_worker") and self._model_discovery_worker is not None:
+            self._model_discovery_worker.deleteLater()
+            self._model_discovery_worker = None
 
     def _show_no_models_prompt(self) -> None:
         """Display prompt when no models are configured.

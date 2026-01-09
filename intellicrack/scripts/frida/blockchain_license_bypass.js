@@ -552,7 +552,11 @@ const BlockchainLicenseBypass = {
             }
 
             // Call original fetch
-            const response = await Reflect.apply(originalFetch, this, [url, options, ...restFetchArgs]);
+            const response = await Reflect.apply(originalFetch, this, [
+                url,
+                options,
+                ...restFetchArgs,
+            ]);
 
             // Intercept response
             if (this.isBlockchainURL(url)) {
@@ -804,10 +808,10 @@ const BlockchainLicenseBypass = {
     // Modify license response
     modifyLicenseResponse: response => {
         if (
-            response.result
-            && (response.result === '0x0'
-                || response.result
-                    === '0x0000000000000000000000000000000000000000000000000000000000000000')
+            response.result &&
+            (response.result === '0x0' ||
+                response.result ===
+                    '0x0000000000000000000000000000000000000000000000000000000000000000')
         ) {
             response.result = '0x0000000000000000000000000000000000000000000000000000000000000001';
         }
@@ -887,10 +891,10 @@ const BlockchainLicenseBypass = {
 
         // x86/x64 prologues
         const prologues = [
-            [0x55, 0x48, 0x89, 0xE5], // push rbp; mov rbp, rsp
-            [0x55, 0x89, 0xE5], // push ebp; mov ebp, esp
-            [0x48, 0x83, 0xEC], // sub rsp, XX
-            [0x48, 0x89, 0x5C, 0x24], // mov [rsp+XX], rbx
+            [0x55, 0x48, 0x89, 0xe5], // push rbp; mov rbp, rsp
+            [0x55, 0x89, 0xe5], // push ebp; mov ebp, esp
+            [0x48, 0x83, 0xec], // sub rsp, XX
+            [0x48, 0x89, 0x5c, 0x24], // mov [rsp+XX], rbx
         ];
 
         return prologues.some(prologue =>

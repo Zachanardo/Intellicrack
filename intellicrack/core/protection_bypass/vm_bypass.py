@@ -11,6 +11,7 @@ from typing import Any
 from ...utils.binary.binary_io import analyze_binary_for_strings
 from ...utils.core.import_checks import FRIDA_AVAILABLE, WINREG_AVAILABLE, winreg
 
+
 # Virtualization Detection Bypass Module
 #
 # Copyright (C) 2025 Zachary Flint

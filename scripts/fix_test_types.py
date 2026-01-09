@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Comprehensive script to fix mypy type annotation issues in test files.
+"""Comprehensive script to fix mypy type annotation issues in test files.
 Handles fixtures, test methods, and helper functions.
 """
 import re

@@ -380,7 +380,9 @@ else:
                     plugin_count = len(self.installed_plugins) if hasattr(self, "installed_plugins") else 0
                     self.status_label.setText(f"Local repository: {plugin_count} plugins found")
 
-                logger.info("Loaded %d plugins from local repository", len(self.installed_plugins) if hasattr(self, "installed_plugins") else 0)
+                logger.info(
+                    "Loaded %d plugins from local repository", len(self.installed_plugins) if hasattr(self, "installed_plugins") else 0
+                )
 
             except Exception as e:
                 logger.error("Failed to load local repository: %s", e, exc_info=True)

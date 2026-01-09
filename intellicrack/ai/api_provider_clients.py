@@ -89,16 +89,16 @@ class BaseProviderClient(ABC):
             json_response: dict[str, Any] = response.json()
             return json_response
         except requests.exceptions.Timeout:
-            logger.exception("Request to %s timed out", url)
+            logger.debug("Request to %s timed out", url)
             return None
         except requests.exceptions.ConnectionError:
-            logger.exception("Failed to connect to %s", url)
+            logger.debug("Service not available at %s", url)
             return None
         except requests.exceptions.HTTPError as e:
-            logger.exception("HTTP error %d: %s", e.response.status_code, e.response.text)
+            logger.debug("HTTP error %d from %s: %s", e.response.status_code, url, e.response.text[:200])
             return None
         except Exception as e:
-            logger.exception("Unexpected error making request to %s: %s", url, e)
+            logger.debug("Request to %s failed: %s", url, e)
             return None
 
 

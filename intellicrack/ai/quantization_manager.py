@@ -127,7 +127,7 @@ class TorchModelProtocol(Protocol):
     operations including half precision conversion and module iteration.
     """
 
-    def half(self) -> "TorchModelProtocol":
+    def half(self) -> TorchModelProtocol:
         """Convert model to half precision (float16)."""
         ...
 

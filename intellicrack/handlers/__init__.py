@@ -43,7 +43,6 @@ _handler_modules: list[tuple[str, str]] = [
     ("pdfkit_handler", "PDF generation"),
     ("pefile_handler", "PE file analysis"),
     ("psutil_handler", "system utilities"),
-    ("pyelftools_handler", "ELF file analysis"),
     ("pyqt6_handler", "PyQt6 GUI framework"),
     ("requests_handler", "HTTP requests"),
     ("sqlite3_handler", "SQLite database"),

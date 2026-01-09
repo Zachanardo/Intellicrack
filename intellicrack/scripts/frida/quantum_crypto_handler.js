@@ -353,7 +353,7 @@ const QuantumCryptoHandler = {
     scanForKyber() {
         // Kyber polynomial operations use q=3329
         const kyberQ = 3329;
-        const qBytes = [(kyberQ >> 8) & 0xFF, kyberQ & 0xFF];
+        const qBytes = [(kyberQ >> 8) & 0xff, kyberQ & 0xff];
 
         try {
             const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
@@ -406,10 +406,10 @@ const QuantumCryptoHandler = {
         try {
             // Search for the constant
             const qBytes = [
-                (dilithiumQ >> 24) & 0xFF,
-                (dilithiumQ >> 16) & 0xFF,
-                (dilithiumQ >> 8) & 0xFF,
-                dilithiumQ & 0xFF,
+                (dilithiumQ >> 24) & 0xff,
+                (dilithiumQ >> 16) & 0xff,
+                (dilithiumQ >> 8) & 0xff,
+                dilithiumQ & 0xff,
             ];
 
             const pattern = qBytes.map(b => b.toString(16).padStart(2, '0')).join(' ');
@@ -632,7 +632,7 @@ const QuantumCryptoHandler = {
                 onEnter: args => {
                     // Manipulate quantum parameters
                     if (args[0]) {
-                        args[0] = ptr(0xDE_AD_BE_EF); // Predictable entropy
+                        args[0] = ptr(0xde_ad_be_ef); // Predictable entropy
                     }
                     send({
                         type: 'info',
@@ -688,8 +688,8 @@ const QuantumCryptoHandler = {
 
         // Verification functions - return success
         if (
-            (lowerName.includes('verify') || lowerName.includes('check'))
-            && this.config.bypass.skip_verification
+            (lowerName.includes('verify') || lowerName.includes('check')) &&
+            this.config.bypass.skip_verification
         ) {
             send({
                 type: 'bypass',
@@ -702,8 +702,8 @@ const QuantumCryptoHandler = {
 
         // Validation functions - return valid
         if (
-            (lowerName.includes('valid') || lowerName.includes('authenticate'))
-            && this.config.bypass.return_success
+            (lowerName.includes('valid') || lowerName.includes('authenticate')) &&
+            this.config.bypass.return_success
         ) {
             send({
                 type: 'bypass',
@@ -1450,8 +1450,8 @@ const QuantumCryptoHandler = {
 
             case 'SPHINCS+': {
                 if (
-                    (lowerName.includes('verify') || lowerName.includes('open'))
-                    && retval.toInt32() !== 0
+                    (lowerName.includes('verify') || lowerName.includes('open')) &&
+                    retval.toInt32() !== 0
                 ) {
                     send({
                         type: 'bypass',
@@ -1466,8 +1466,8 @@ const QuantumCryptoHandler = {
             default: {
                 // Generic bypass
                 if (
-                    (lowerName.includes('verify') || lowerName.includes('check'))
-                    && retval.toInt32() !== 0
+                    (lowerName.includes('verify') || lowerName.includes('check')) &&
+                    retval.toInt32() !== 0
                 ) {
                     send({
                         type: 'bypass',
@@ -1518,7 +1518,7 @@ const QuantumCryptoHandler = {
     detectFALCON() {
         // FALCON uses q = 12289 and specific polynomial structures
         const falconQ = 12_289;
-        const qBytes = [(falconQ >> 8) & 0xFF, falconQ & 0xFF];
+        const qBytes = [(falconQ >> 8) & 0xff, falconQ & 0xff];
 
         try {
             const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
@@ -2306,10 +2306,10 @@ const QuantumCryptoHandler = {
         bikeConstants.forEach(constant => {
             try {
                 const constBytes = [
-                    (constant >> 24) & 0xFF,
-                    (constant >> 16) & 0xFF,
-                    (constant >> 8) & 0xFF,
-                    constant & 0xFF,
+                    (constant >> 24) & 0xff,
+                    (constant >> 16) & 0xff,
+                    (constant >> 8) & 0xff,
+                    constant & 0xff,
                 ];
 
                 const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
@@ -2344,7 +2344,7 @@ const QuantumCryptoHandler = {
         frodoParams.forEach(param => {
             try {
                 // Search for n parameter
-                const nBytes = [(param.n >> 8) & 0xFF, param.n & 0xFF];
+                const nBytes = [(param.n >> 8) & 0xff, param.n & 0xff];
                 const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
                     pattern: nBytes.map(b => b.toString(16).padStart(2, '0')).join(' '),
                 });
@@ -2410,7 +2410,7 @@ const QuantumCryptoHandler = {
         const kyberQ = 3329;
 
         try {
-            const qBytes = [(kyberQ >> 8) & 0xFF, kyberQ & 0xFF];
+            const qBytes = [(kyberQ >> 8) & 0xff, kyberQ & 0xff];
             const ranges = [
                 {
                     base: startAddr,
@@ -2602,10 +2602,10 @@ const QuantumCryptoHandler = {
 
         try {
             const qBytes = [
-                (dilithiumQ >> 24) & 0xFF,
-                (dilithiumQ >> 16) & 0xFF,
-                (dilithiumQ >> 8) & 0xFF,
-                dilithiumQ & 0xFF,
+                (dilithiumQ >> 24) & 0xff,
+                (dilithiumQ >> 16) & 0xff,
+                (dilithiumQ >> 8) & 0xff,
+                dilithiumQ & 0xff,
             ];
 
             const startAddr = ptr(p256Address).sub(searchRange);
@@ -2637,7 +2637,7 @@ const QuantumCryptoHandler = {
     // Scan for NewHope constants
     scanForNewHopeConstants() {
         const newHopeQ = 12_289;
-        const qBytes = [(newHopeQ >> 8) & 0xFF, newHopeQ & 0xFF];
+        const qBytes = [(newHopeQ >> 8) & 0xff, newHopeQ & 0xff];
 
         try {
             const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {

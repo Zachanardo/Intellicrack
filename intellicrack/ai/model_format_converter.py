@@ -30,6 +30,7 @@ from intellicrack.utils.type_safety import get_kwarg_typed, get_typed_item, vali
 
 from ..utils.logger import get_logger
 
+
 # Module-level type declarations for optional dependencies
 torch: types.ModuleType | None
 onnx: types.ModuleType | None

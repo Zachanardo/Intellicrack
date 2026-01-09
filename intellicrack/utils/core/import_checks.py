@@ -71,19 +71,9 @@ except ImportError as e:
     CAPSTONE_AVAILABLE = False
     capstone = None
 
-try:
-    from intellicrack.handlers.pyelftools_handler import (
-        HAS_PYELFTOOLS,
-        ELFFile as _ELFFile_import,
-    )
-
-    ELFFile: type[Any] | None = _ELFFile_import
-    PYELFTOOLS_AVAILABLE: bool = HAS_PYELFTOOLS
-except ImportError as e:
-    logger.exception("Import error in import_checks: %s", e)
-    PYELFTOOLS_AVAILABLE = False
-    HAS_PYELFTOOLS = False
-    ELFFile = None
+PYELFTOOLS_AVAILABLE: bool = False
+HAS_PYELFTOOLS: bool = False
+ELFFile: type[Any] | None = None
 
 # System monitoring
 try:

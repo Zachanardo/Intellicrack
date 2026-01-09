@@ -226,13 +226,13 @@ const BinaryPatcherAdvanced = {
             const configs = {
                 'license.dll': {
                     patches: [
-                        { offset: 0x12_34, data: [0x31, 0xC0, 0x40, 0xC3] }, // Return 1
+                        { offset: 0x12_34, data: [0x31, 0xc0, 0x40, 0xc3] }, // Return 1
                         { offset: 0x56_78, data: [0x90, 0x90, 0x90, 0x90, 0x90] }, // NOP sled
                     ],
                 },
                 'protection.so': {
                     patches: [
-                        { offset: 0x20_00, data: [0x31, 0xC0, 0xC3] }, // Return 0
+                        { offset: 0x20_00, data: [0x31, 0xc0, 0xc3] }, // Return 0
                     ],
                 },
             };
@@ -290,7 +290,7 @@ const BinaryPatcherAdvanced = {
 
                 encrypt: data => {
                     // Simple XOR encryption for demo
-                    const key = 0xDE_AD_BE_EF;
+                    const key = 0xde_ad_be_ef;
                     return [...data]
                         .map(c => String.fromCodePoint(c.codePointAt(0) ^ key))
                         .join('');
@@ -353,10 +353,7 @@ const BinaryPatcherAdvanced = {
             }
 
             // 2. Check for version strings
-            const versionPatterns = [
-                /version\s+(\d+\.\d+\.\d+)/i,
-                /v(\d+\.\d+\.\d+)/i,
-            ];
+            const versionPatterns = [/version\s+(\d+\.\d+\.\d+)/i, /v(\d+\.\d+\.\d+)/i];
 
             const moduleSize = module.size;
             const scanSize = Math.min(moduleSize, 0x1_00_00); // Scan first 64KB
@@ -404,12 +401,12 @@ const BinaryPatcherAdvanced = {
         readPEVersionInfo: base => {
             // Read PE headers to find version resource
             const dos = Memory.readU16(base);
-            if (dos !== 0x5A_4D) {
+            if (dos !== 0x5a_4d) {
                 // 'MZ'
                 return null;
             }
 
-            const peOffset = Memory.readU32(base.add(0x3C));
+            const peOffset = Memory.readU32(base.add(0x3c));
             const pe = Memory.readU32(base.add(peOffset));
             if (pe !== 0x00_00_45_50) {
                 return null;
@@ -705,10 +702,10 @@ const BinaryPatcherAdvanced = {
                 const dataHash = this.calculateChecksum(patch.data);
 
                 // Verify signature matches expected format
-                const signatureValid
-                    = patch.signature.length > 0
-                    && patch.signature.startsWith('0x')
-                    && patch.signature.length === 66; // Standard signature length
+                const signatureValid =
+                    patch.signature.length > 0 &&
+                    patch.signature.startsWith('0x') &&
+                    patch.signature.length === 66; // Standard signature length
 
                 if (!signatureValid) {
                     console.error(`[Signature] Invalid signature format: ${patch.signature}`);
@@ -773,8 +770,8 @@ const BinaryPatcherAdvanced = {
                     const targetAddress = nodeInfo.address || nodeInfo;
 
                     // Serialize patch data
-                    const patchBuffer
-                        = typeof patchData === 'string'
+                    const patchBuffer =
+                        typeof patchData === 'string'
                             ? Memory.allocUtf8String(patchData)
                             : Memory.alloc(patchData.length);
 
@@ -830,15 +827,15 @@ const BinaryPatcherAdvanced = {
 
             calculateChecksum: data => {
                 // CRC32 implementation for patch verification
-                let crc = 0xFF_FF_FF_FF;
+                let crc = 0xff_ff_ff_ff;
                 for (let i = 0; i < data.length; i++) {
                     const byte = typeof data === 'string' ? data.codePointAt(i) : data[i];
                     crc ^= byte;
                     for (let j = 0; j < 8; j++) {
-                        crc = (crc >>> 1) ^ (0xED_B8_83_20 & -(crc & 1));
+                        crc = (crc >>> 1) ^ (0xed_b8_83_20 & -(crc & 1));
                     }
                 }
-                return (crc ^ 0xFF_FF_FF_FF) >>> 0;
+                return (crc ^ 0xff_ff_ff_ff) >>> 0;
             },
         },
 
@@ -948,8 +945,8 @@ const BinaryPatcherAdvanced = {
                             '--',
                             'sh',
                             '-c',
-                            `pid=$(pgrep -f target_process); `
-                                + `echo "${Buffer.from(patchData).toString(
+                            `pid=$(pgrep -f target_process); ` +
+                                `echo "${Buffer.from(patchData).toString(
                                     'hex'
                                 )}" | xxd -r -p > /proc/$pid/mem`,
                         ];
@@ -1150,7 +1147,10 @@ const BinaryPatcherAdvanced = {
                                 if (patchData.preExecute) {
                                     console.log('[Lambda] Applying pre-execution patch');
                                     this.executePatchHandler(patchData.preExecute, {
-                                        event, context, callback, phase: 'pre',
+                                        event,
+                                        context,
+                                        callback,
+                                        phase: 'pre',
                                     });
                                 }
 
@@ -1161,7 +1161,11 @@ const BinaryPatcherAdvanced = {
                                 if (patchData.postExecute) {
                                     console.log('[Lambda] Applying post-execution patch');
                                     this.executePatchHandler(patchData.postExecute, {
-                                        event, context, callback, result, phase: 'post',
+                                        event,
+                                        context,
+                                        callback,
+                                        result,
+                                        phase: 'post',
                                     });
                                 }
 
@@ -1549,7 +1553,7 @@ const BinaryPatcherAdvanced = {
                 const ESP_COMMANDS = {
                     SYNC: 0x08,
                     WRITE_REG: 0x09,
-                    READ_REG: 0x0A,
+                    READ_REG: 0x0a,
                     FLASH_BEGIN: 0x02,
                     FLASH_DATA: 0x03,
                     FLASH_END: 0x04,
@@ -1740,7 +1744,9 @@ const BinaryPatcherAdvanced = {
                     protocol: this.detectProtocol(networkId),
                 };
 
-                console.log(`[SensorNet] Patching network ${network.id} using ${network.protocol} protocol`);
+                console.log(
+                    `[SensorNet] Patching network ${network.id} using ${network.protocol} protocol`
+                );
                 console.log(`[SensorNet] Found ${network.sensors.length} sensors to patch`);
 
                 // Apply patches to all sensors with network context
@@ -2008,8 +2014,8 @@ const BinaryPatcherAdvanced = {
                 }
 
                 // Get actual module version
-                const moduleVersion
-                    = module.version || Process.findModuleByName(module.name)?.version || '0.0.0';
+                const moduleVersion =
+                    module.version || Process.findModuleByName(module.name)?.version || '0.0.0';
                 console.log(
                     `[Version] Checking module: ${module.name} v${moduleVersion} >= v${minVersion}`
                 );
@@ -2175,10 +2181,10 @@ const BinaryPatcherAdvanced = {
                     if (patchData.apis) {
                         patchData.apis.forEach(api => {
                             if (
-                                !api.startsWith('kernel32.')
-                                && !api.startsWith('ntdll.')
-                                && !api.startsWith('user32.')
-                                && !api.startsWith('ws2_32.')
+                                !api.startsWith('kernel32.') &&
+                                !api.startsWith('ntdll.') &&
+                                !api.startsWith('user32.') &&
+                                !api.startsWith('ws2_32.')
                             ) {
                                 issues.push(`Non-Windows API reference: ${api}`);
                             }
@@ -2189,8 +2195,8 @@ const BinaryPatcherAdvanced = {
                     if (patchData.minWindowsVersion) {
                         const currentVersion = Process.env.OS_VERSION || '10.0';
                         if (
-                            Number.parseFloat(currentVersion)
-                            < Number.parseFloat(patchData.minWindowsVersion)
+                            Number.parseFloat(currentVersion) <
+                            Number.parseFloat(patchData.minWindowsVersion)
                         ) {
                             issues.push(
                                 `Windows version too old: ${currentVersion} < ${
@@ -2298,8 +2304,8 @@ const BinaryPatcherAdvanced = {
                     if (patchData.minMacOSVersion) {
                         const osVersion = Process.env.MACOS_VERSION || '11.0';
                         if (
-                            Number.parseFloat(osVersion)
-                            < Number.parseFloat(patchData.minMacOSVersion)
+                            Number.parseFloat(osVersion) <
+                            Number.parseFloat(patchData.minMacOSVersion)
                         ) {
                             issues.push(`macOS version too old: ${osVersion}`);
                             compatible = false;
@@ -2405,8 +2411,8 @@ const BinaryPatcherAdvanced = {
                     if (patchData.minIOSVersion) {
                         const iosVersion = Process.env.IOS_VERSION || '14.0';
                         if (
-                            Number.parseFloat(iosVersion)
-                            < Number.parseFloat(patchData.minIOSVersion)
+                            Number.parseFloat(iosVersion) <
+                            Number.parseFloat(patchData.minIOSVersion)
                         ) {
                             issues.push(`iOS version too old: ${iosVersion}`);
                             compatible = false;

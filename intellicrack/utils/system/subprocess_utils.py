@@ -208,7 +208,7 @@ def create_popen_with_encoding(cmd: list[str], encoding: str = "utf-8", timeout:
     except subprocess.TimeoutExpired:
         logger.warning("Process timed out after %s seconds", timeout)
         process.kill()
-        stdout, stderr = process.communicate()
+        stdout, stderr = process.communicate(timeout=10)
         return -1, stdout or "", stderr or ""
     except Exception as e:
         logger.exception("Error creating process: %s", e)

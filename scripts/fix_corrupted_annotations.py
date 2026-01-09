@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Fix corrupted type annotations in test files.
+"""Fix corrupted type annotations in test files.
 
 The fix_test_types.py script incorrectly produced patterns like:
 - `param: dict[str, Any]: Any`

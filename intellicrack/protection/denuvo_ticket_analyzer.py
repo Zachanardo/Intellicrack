@@ -39,8 +39,8 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 if TYPE_CHECKING:
-    import lief
     import capstone
+    import lief
 
     LiefBinary = lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary
 else:
@@ -966,11 +966,7 @@ class DenuvoTicketAnalyzer:
                     actual_exports = [e.name for e in dll_binary.exported_functions]
                     hooked_exports = self._identify_hooked_exports(dll_binary, original_exports)
 
-                    denuvo_sections = [
-                        s.name
-                        for s in dll_binary.sections
-                        if self._is_denuvo_section(s)
-                    ]
+                    denuvo_sections = [s.name for s in dll_binary.sections if self._is_denuvo_section(s)]
 
                     wrapper = SteamAPIWrapper(
                         dll_path=str(dll_path),
@@ -1890,43 +1886,43 @@ class DenuvoTicketAnalyzer:
         """
         return {
             "ticket_validation_v7": {
-                "bytes": b"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20",
+                "bytes": b"\x48\x89\x5c\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xec\x20",
                 "type": "ticket_validation",
                 "confidence": 0.95,
                 "description": "Denuvo v7+ ticket validation entry point (2024-2025)",
             },
             "ticket_validation_v6": {
-                "bytes": b"\x48\x89\x5C\x24\x10\x48\x89\x74\x24\x18\x55\x57\x41\x56",
+                "bytes": b"\x48\x89\x5c\x24\x10\x48\x89\x74\x24\x18\x55\x57\x41\x56",
                 "type": "ticket_validation",
                 "confidence": 0.93,
                 "description": "Denuvo v6 ticket validation routine",
             },
             "activation_trigger_call": {
-                "bytes": b"\xE8\xCC\xCC\xCC\xCC\x85\xC0\x74\xCC\x48\x8B",
+                "bytes": b"\xe8\xcc\xcc\xcc\xcc\x85\xc0\x74\xcc\x48\x8b",
                 "type": "activation_call",
                 "confidence": 0.85,
                 "description": "Call to activation validation function",
             },
             "steam_init_hook": {
-                "bytes": b"\xFF\x15\xCC\xCC\xCC\xCC\x48\x85\xC0\x74\xCC\x48\x8B\xC8\xE8",
+                "bytes": b"\xff\x15\xcc\xcc\xcc\xcc\x48\x85\xc0\x74\xcc\x48\x8b\xc8\xe8",
                 "type": "steam_hook",
                 "confidence": 0.90,
                 "description": "Steam API initialization hook",
             },
             "token_check": {
-                "bytes": b"\x48\x8D\x4C\x24\x20\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74",
+                "bytes": b"\x48\x8d\x4c\x24\x20\xe8\xcc\xcc\xcc\xcc\x84\xc0\x74",
                 "type": "token_validation",
                 "confidence": 0.88,
                 "description": "Activation token check routine",
             },
             "license_verify": {
-                "bytes": b"\x48\x8B\xD8\x48\x85\xC0\x74\xCC\x48\x8B\xC8\xE8\xCC\xCC\xCC\xCC\x84\xC0",
+                "bytes": b"\x48\x8b\xd8\x48\x85\xc0\x74\xcc\x48\x8b\xc8\xe8\xcc\xcc\xcc\xcc\x84\xc0",
                 "type": "license_check",
                 "confidence": 0.87,
                 "description": "License status verification",
             },
             "online_activation_v7": {
-                "bytes": b"\x48\x8B\xC4\x48\x89\x58\x08\x48\x89\x68\x10\x48\x89\x70\x18\x57\x41\x56",
+                "bytes": b"\x48\x8b\xc4\x48\x89\x58\x08\x48\x89\x68\x10\x48\x89\x70\x18\x57\x41\x56",
                 "type": "online_activation",
                 "confidence": 0.92,
                 "description": "Denuvo v7+ online activation routine (2025)",
@@ -1944,31 +1940,31 @@ class DenuvoTicketAnalyzer:
         """
         return {
             "crc32_check": {
-                "bytes": b"\xF2\x0F\x38\xF1",
+                "bytes": b"\xf2\x0f\x38\xf1",
                 "type": "crc32",
                 "algorithm": "CRC32C",
                 "confidence": 0.92,
             },
             "sha256_init": {
-                "bytes": b"\x48\x8D\x15\xCC\xCC\xCC\xCC\x48\x8D\x4C\x24\x20\xE8\xCC\xCC\xCC\xCC\x48\x8D\x15",
+                "bytes": b"\x48\x8d\x15\xcc\xcc\xcc\xcc\x48\x8d\x4c\x24\x20\xe8\xcc\xcc\xcc\xcc\x48\x8d\x15",
                 "type": "hash",
                 "algorithm": "SHA256",
                 "confidence": 0.90,
             },
             "memory_checksum": {
-                "bytes": b"\x33\xD2\x8B\xC2\x48\x8B\xCA\x48\xD1\xE9\x74\xCC\x48\x03\x04\xCB",
+                "bytes": b"\x33\xd2\x8b\xc2\x48\x8b\xca\x48\xd1\xe9\x74\xcc\x48\x03\x04\xcb",
                 "type": "checksum",
                 "algorithm": "Custom",
                 "confidence": 0.85,
             },
             "code_verification": {
-                "bytes": b"\x4C\x8B\xC1\x48\x8B\xD0\x48\x8B\xCE\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74",
+                "bytes": b"\x4c\x8b\xc1\x48\x8b\xd0\x48\x8b\xce\xe8\xcc\xcc\xcc\xcc\x84\xc0\x74",
                 "type": "code_integrity",
                 "algorithm": "HMAC-SHA256",
                 "confidence": 0.88,
             },
             "section_hash": {
-                "bytes": b"\x48\x8B\x01\xFF\x50\x08\x48\x8B\xD8\x48\x85\xC0\x74",
+                "bytes": b"\x48\x8b\x01\xff\x50\x08\x48\x8b\xd8\x48\x85\xc0\x74",
                 "type": "section_check",
                 "algorithm": "SHA1",
                 "confidence": 0.86,
@@ -1987,31 +1983,31 @@ class DenuvoTicketAnalyzer:
         """
         return {
             "rdtsc_check": {
-                "bytes": b"\x0F\x31\x48\x8B\xCC\x48\x2B\xCC\x48\x3B",
+                "bytes": b"\x0f\x31\x48\x8b\xcc\x48\x2b\xcc\x48\x3b",
                 "method": "RDTSC",
                 "instruction": "rdtsc; mov; sub; cmp (timing validation)",
                 "confidence": 0.95,
             },
             "rdtscp_check": {
-                "bytes": b"\x0F\x01\xF9\x48\x8B\xCC\x48\x2B\xCC",
+                "bytes": b"\x0f\x01\xf9\x48\x8b\xcc\x48\x2b\xcc",
                 "method": "RDTSCP",
                 "instruction": "rdtscp; mov; sub (timing validation)",
                 "confidence": 0.96,
             },
             "qpc_check": {
-                "bytes": b"\xFF\x15\xCC\xCC\xCC\xCC\x48\x8B\x44\x24\x20\x48\x2B\x44\x24\x28",
+                "bytes": b"\xff\x15\xcc\xcc\xcc\xcc\x48\x8b\x44\x24\x20\x48\x2b\x44\x24\x28",
                 "method": "QueryPerformanceCounter",
                 "instruction": "call qword ptr [QueryPerformanceCounter]",
                 "confidence": 0.90,
             },
             "gettickcount": {
-                "bytes": b"\xFF\x15\xCC\xCC\xCC\xCC\x2B\xC3\x3D",
+                "bytes": b"\xff\x15\xcc\xcc\xcc\xcc\x2b\xc3\x3d",
                 "method": "GetTickCount",
                 "instruction": "call qword ptr [GetTickCount64]",
                 "confidence": 0.88,
             },
             "timing_delta_check": {
-                "bytes": b"\x48\x2B\xC1\x48\x3D\xCC\xCC\xCC\xCC\x77",
+                "bytes": b"\x48\x2b\xc1\x48\x3d\xcc\xcc\xcc\xcc\x77",
                 "method": "Delta",
                 "instruction": "sub rax, rcx; cmp rax, threshold",
                 "confidence": 0.85,
@@ -2044,20 +2040,20 @@ class DenuvoTicketAnalyzer:
             }
 
             v7_patterns = [
-                b"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20",
-                b"\x48\x8B\xC4\x48\x89\x58\x08\x48\x89\x68\x10\x48\x89\x70\x18",
+                b"\x48\x89\x5c\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xec\x20",
+                b"\x48\x8b\xc4\x48\x89\x58\x08\x48\x89\x68\x10\x48\x89\x70\x18",
             ]
             v6_patterns = [
-                b"\x48\x89\x5C\x24\x10\x48\x89\x74\x24\x18\x55\x57\x41\x56",
-                b"\x40\x53\x48\x83\xEC\x20\x48\x8B\xD9\x48\x85\xC9",
+                b"\x48\x89\x5c\x24\x10\x48\x89\x74\x24\x18\x55\x57\x41\x56",
+                b"\x40\x53\x48\x83\xec\x20\x48\x8b\xd9\x48\x85\xc9",
             ]
             v5_patterns = [
-                b"\x48\x89\x5C\x24\x08\x57\x48\x83\xEC\x20\x48\x8B\xF9\xE8",
+                b"\x48\x89\x5c\x24\x08\x57\x48\x83\xec\x20\x48\x8b\xf9\xe8",
                 b"\x40\x55\x53\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57",
             ]
             v4_patterns = [
-                b"\x55\x8B\xEC\x83\xEC\x10\x53\x56\x57\x8B\x7D\x08",
-                b"\x56\x57\x8B\xF9\x8B\x07\x8B\x50\x04\xFF\xD2",
+                b"\x55\x8b\xec\x83\xec\x10\x53\x56\x57\x8b\x7d\x08",
+                b"\x56\x57\x8b\xf9\x8b\x07\x8b\x50\x04\xff\xd2",
             ]
 
             for section in binary.sections:
@@ -2125,7 +2121,7 @@ class DenuvoTicketAnalyzer:
 
         """
         matches: list[int] = []
-        wildcard_byte = b"\xCC"
+        wildcard_byte = b"\xcc"
 
         try:
             if wildcard_byte not in pattern:
@@ -2205,8 +2201,8 @@ class DenuvoTicketAnalyzer:
             end = min(len(section_data), offset + search_window)
             window_data = section_data[start:end]
 
-            call_pattern = b"\xE8"
-            jmp_pattern = b"\xFF\x15"
+            call_pattern = b"\xe8"
+            jmp_pattern = b"\xff\x15"
 
             call_positions = []
             pos = 0
@@ -2229,14 +2225,21 @@ class DenuvoTicketAnalyzer:
                             api_name = entry.name
 
                             crypto_apis = [
-                                "CryptEncrypt", "CryptDecrypt", "CryptHashData",
-                                "BCryptEncrypt", "BCryptDecrypt", "BCryptHashData",
+                                "CryptEncrypt",
+                                "CryptDecrypt",
+                                "CryptHashData",
+                                "BCryptEncrypt",
+                                "BCryptDecrypt",
+                                "BCryptHashData",
                             ]
                             network_apis = [
-                                "InternetOpenW", "HttpSendRequestW", "WinHttpSendRequest",
+                                "InternetOpenW",
+                                "HttpSendRequestW",
+                                "WinHttpSendRequest",
                             ]
                             validation_apis = [
-                                "CryptVerifySignature", "BCryptVerifySignature",
+                                "CryptVerifySignature",
+                                "BCryptVerifySignature",
                             ]
 
                             if api_name in crypto_apis or api_name in network_apis or api_name in validation_apis:
@@ -2372,7 +2375,7 @@ class DenuvoTicketAnalyzer:
 
         """
         try:
-            ret_pattern = b"\xC3"
+            ret_pattern = b"\xc3"
             search_start = offset + 16
             search_end = min(len(section_data), offset + 4096)
 
@@ -2400,7 +2403,7 @@ class DenuvoTicketAnalyzer:
             if hasattr(binary, "sections"):
                 for section in binary.sections:
                     if section.virtual_address <= address < (section.virtual_address + section.size):
-                        if b"\xE8" in bytes(section.content):
+                        if b"\xe8" in bytes(section.content):
                             return "High (called frequently)"
 
             return "Medium (periodic)"
@@ -2495,7 +2498,7 @@ class DenuvoTicketAnalyzer:
             end = min(len(section_data), offset + window_size)
             window = section_data[start:end]
 
-            cmp_pattern = b"\x48\x3D"
+            cmp_pattern = b"\x48\x3d"
             pos = window.find(cmp_pattern)
 
             if pos != -1 and pos + 6 <= len(window):
@@ -2607,10 +2610,7 @@ class DenuvoTicketAnalyzer:
             if not denuvo_sections:
                 return []
 
-            denuvo_ranges = [
-                (s.virtual_address, s.virtual_address + s.size)
-                for s in denuvo_sections
-            ]
+            denuvo_ranges = [(s.virtual_address, s.virtual_address + s.size) for s in denuvo_sections]
 
             actual_exports = {e.name: e for e in dll_binary.exported_functions}
 
@@ -2682,7 +2682,7 @@ class DenuvoTicketAnalyzer:
             for section in binary.sections:
                 if section.characteristics & 0x20000000:
                     section_data = bytes(section.content)
-                    call_pattern = b"\xFF\x15"
+                    call_pattern = b"\xff\x15"
 
                     pos = section_data.find(call_pattern)
                     if pos != -1:
@@ -2738,9 +2738,9 @@ class DenuvoTicketAnalyzer:
             for section in binary.sections:
                 section_data = bytes(section.content)
 
-                if b"\x48\x89\x5C\x24\x08" in section_data:
+                if b"\x48\x89\x5c\x24\x08" in section_data:
                     return "SHA256"
-                elif b"\xF2\x0F\x38\xF1" in section_data:
+                elif b"\xf2\x0f\x38\xf1" in section_data:
                     return "CRC32C"
 
             hash_apis = ["CryptHashData", "BCryptHashData"]

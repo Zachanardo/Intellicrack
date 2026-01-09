@@ -51,8 +51,8 @@ const EnhancedHardwareSpoofer = {
             diskModel: 'WDC WD10EZEX-00BN5A0',
             macAddress: '00:1A:2B:3C:4D:5E',
             machineGuid:
-                `{`
-                + `A1B2C3D4-E5F6-7890-ABCD-${Math.random().toString(16).slice(2, 14).toUpperCase()}}`,
+                `{` +
+                `A1B2C3D4-E5F6-7890-ABCD-${Math.random().toString(16).slice(2, 14).toUpperCase()}}`,
             productId: generateWindowsProductId(),
             windowsSerial: `00330-80000-00000-AA${Math.floor(Math.random() * 1000)
                 .toString()
@@ -139,10 +139,10 @@ const EnhancedHardwareSpoofer = {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() === 0
-                        && this.infoClass === 1
-                        && this.buffer
-                        && !this.buffer.isNull()
+                        retval.toInt32() === 0 &&
+                        this.infoClass === 1 &&
+                        this.buffer &&
+                        !this.buffer.isNull()
                     ) {
                         try {
                             const _processorInfo = this.buffer;
@@ -360,10 +360,10 @@ const EnhancedHardwareSpoofer = {
                         self.stats.totalBypasses++;
 
                         if (
-                            this.dataPtr
-                            && !this.dataPtr.isNull()
-                            && this.dataSizePtr
-                            && !this.dataSizePtr.isNull()
+                            this.dataPtr &&
+                            !this.dataPtr.isNull() &&
+                            this.dataSizePtr &&
+                            !this.dataSizePtr.isNull()
                         ) {
                             try {
                                 const spoofedValue = self.getSpoofedRegistryValue(
@@ -403,8 +403,8 @@ const EnhancedHardwareSpoofer = {
                             const keyPath = args[1].readUtf16String();
                             for (const hardwareKey of hardwareKeys) {
                                 if (
-                                    keyPath
-                                    && keyPath.toUpperCase().includes(hardwareKey.toUpperCase())
+                                    keyPath &&
+                                    keyPath.toUpperCase().includes(hardwareKey.toUpperCase())
                                 ) {
                                     this.isHardwareKey = true;
                                     this.keyPath = keyPath;
@@ -474,7 +474,7 @@ const EnhancedHardwareSpoofer = {
                         self.stats.smbiosHooks++;
                         self.stats.totalBypasses++;
 
-                        if (this.signature === 0x52_53_4D_42) {
+                        if (this.signature === 0x52_53_4d_42) {
                             try {
                                 self.spoofSmbiosTable(this.buffer, returnedSize);
                             } catch {
@@ -568,8 +568,8 @@ const EnhancedHardwareSpoofer = {
                 offset += length;
                 while (offset < size - 1) {
                     if (
-                        buffer.add(offset).readU8() === 0
-                        && buffer.add(offset + 1).readU8() === 0
+                        buffer.add(offset).readU8() === 0 &&
+                        buffer.add(offset + 1).readU8() === 0
                     ) {
                         offset += 2;
                         break;
@@ -639,10 +639,10 @@ const EnhancedHardwareSpoofer = {
                         try {
                             const path = args[0].readUtf16String();
                             if (
-                                path
-                                && (path.includes('\\\\.\\PhysicalDrive')
-                                    || path.includes('\\\\.\\SCSI')
-                                    || path.includes('\\\\.\\IDE'))
+                                path &&
+                                (path.includes('\\\\.\\PhysicalDrive') ||
+                                    path.includes('\\\\.\\SCSI') ||
+                                    path.includes('\\\\.\\IDE'))
                             ) {
                                 this.isDiskAccess = true;
                                 this.diskPath = path;
@@ -754,16 +754,16 @@ const EnhancedHardwareSpoofer = {
                     this.outBuffer = args[4];
                     this.outBufferSize = args[5].toInt32();
 
-                    const IOCTL_STORAGE_QUERY_PROPERTY = 0x2D_14_00;
+                    const IOCTL_STORAGE_QUERY_PROPERTY = 0x2d_14_00;
                     const IOCTL_DISK_GET_DRIVE_GEOMETRY = 0x7_00_00;
-                    const IOCTL_SCSI_MINIPORT_IDENTIFY = 0x1B_05_01;
-                    const SMART_RCV_DRIVE_DATA = 0x7_C0_88;
+                    const IOCTL_SCSI_MINIPORT_IDENTIFY = 0x1b_05_01;
+                    const SMART_RCV_DRIVE_DATA = 0x7_c0_88;
 
                     if (
-                        this.ioControlCode === IOCTL_STORAGE_QUERY_PROPERTY
-                        || this.ioControlCode === IOCTL_DISK_GET_DRIVE_GEOMETRY
-                        || this.ioControlCode === IOCTL_SCSI_MINIPORT_IDENTIFY
-                        || this.ioControlCode === SMART_RCV_DRIVE_DATA
+                        this.ioControlCode === IOCTL_STORAGE_QUERY_PROPERTY ||
+                        this.ioControlCode === IOCTL_DISK_GET_DRIVE_GEOMETRY ||
+                        this.ioControlCode === IOCTL_SCSI_MINIPORT_IDENTIFY ||
+                        this.ioControlCode === SMART_RCV_DRIVE_DATA
                     ) {
                         this.isHardwareQuery = true;
                         this.queryType = this.ioControlCode.toString(16);

@@ -30,6 +30,7 @@ try:
     from PyQt6.QtCore import (
         PYQT_VERSION_STR,
         QT_VERSION_STR,
+        QAbstractAnimation,
         QAbstractItemModel,
         QAbstractTableModel,
         QBuffer,
@@ -43,11 +44,14 @@ try:
         QMetaObject,
         QModelIndex,
         QObject,
+        QParallelAnimationGroup,
         QPoint,
         QProcess,
+        QPropertyAnimation,
         QRect,
         QRegularExpression,
         QRunnable,
+        QSequentialAnimationGroup,
         QSize,
         Qt,
         QThread,
@@ -777,6 +781,7 @@ except ImportError as e:
             The widget will be cleaned up asynchronously.
 
             """
+
             def cleanup() -> None:
                 """Clean up the widget and remove from instances."""
                 self._cleanup()
@@ -1324,6 +1329,7 @@ except ImportError as e:
         globals()["PYQT_VERSION_STR"] = "Fallback"
         _set_qt_globals(
             [
+                "QAbstractAnimation",
                 "QAbstractItemModel",
                 "QAbstractItemView",
                 "QAbstractScrollArea",
@@ -1342,6 +1348,9 @@ except ImportError as e:
                 "QDateTime",
                 "QDesktopServices",
                 "QDialog",
+                "QParallelAnimationGroup",
+                "QPropertyAnimation",
+                "QSequentialAnimationGroup",
             ],
             FallbackWidget,
         )
@@ -1349,6 +1358,7 @@ except ImportError as e:
         globals()["PYQT_VERSION_STR"] = None
         _set_qt_globals(
             [
+                "QAbstractAnimation",
                 "QAbstractItemModel",
                 "QAbstractItemView",
                 "QAbstractScrollArea",
@@ -1360,6 +1370,9 @@ except ImportError as e:
                 "QButtonGroup",
                 "QCheckBox",
                 "QCloseEvent",
+                "QParallelAnimationGroup",
+                "QPropertyAnimation",
+                "QSequentialAnimationGroup",
             ],
             None,
         )
@@ -1758,6 +1771,7 @@ __all__ = [
     "HAS_PYQT",
     "PYQT6_AVAILABLE",
     "PYQT_VERSION_STR",
+    "QAbstractAnimation",
     "QAbstractItemModel",
     "QAbstractItemView",
     "QAbstractScrollArea",
@@ -1822,6 +1836,7 @@ __all__ = [
     "QPaintEvent",
     "QPainter",
     "QPalette",
+    "QParallelAnimationGroup",
     "QPdfDocument",
     "QPdfView",
     "QPen",
@@ -1833,6 +1848,7 @@ __all__ = [
     "QProcess",
     "QProgressBar",
     "QProgressDialog",
+    "QPropertyAnimation",
     "QPushButton",
     "QRadioButton",
     "QRect",
@@ -1841,6 +1857,7 @@ __all__ = [
     "QRunnable",
     "QScrollArea",
     "QScrollBar",
+    "QSequentialAnimationGroup",
     "QShortcut",
     "QShowEvent",
     "QSize",

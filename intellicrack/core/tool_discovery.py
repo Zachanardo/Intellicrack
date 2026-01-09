@@ -44,6 +44,40 @@ except ImportError:
     logger.warning("Terminal manager not available for tool discovery")
 
 
+def get_project_root() -> Path:
+    """Get the Intellicrack project root directory robustly.
+
+    Searches for project markers to identify the root directory.
+    Prioritizes pyproject.toml as the definitive marker, then falls back
+    to checking for tools/ directory with core/ subdirectory in intellicrack/.
+
+    Returns:
+        Path to the project root directory.
+
+    """
+    current = Path(__file__).resolve().parent
+    for parent in [current, *current.parents]:
+        if (parent / "pyproject.toml").exists() and (parent / "intellicrack").is_dir():
+            return parent
+    for parent in [current, *current.parents]:
+        tools_dir = parent / "tools"
+        intellicrack_dir = parent / "intellicrack"
+        if tools_dir.is_dir() and intellicrack_dir.is_dir():
+            if (intellicrack_dir / "__init__.py").exists() and (intellicrack_dir / "core").is_dir():
+                return parent
+    return current.parent.parent
+
+
+def get_project_tools_dir() -> Path:
+    """Get the project's tools directory.
+
+    Returns:
+        Path to the tools directory within the project root.
+
+    """
+    return get_project_root() / "tools"
+
+
 class ValidationResult(TypedDict):
     """Type definition for tool validation results."""
 
@@ -94,23 +128,15 @@ class ToolValidator:
                 validation["issues"].append("Ghidra installation files not found")
                 return validation
 
-            try:
-                result = subprocess.run(
-                    [tool_path, "--version"],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=15,
-                )
-
-                if result.returncode == 0:
-                    version_text = result.stdout or result.stderr
-                    if version_match := re.search(r"(\d+\.\d+(?:\.\d+)?)", version_text):
+            app_props_path = ghidra_dir / "Ghidra" / "application.properties"
+            if app_props_path.exists():
+                try:
+                    props_content = app_props_path.read_text(encoding="utf-8")
+                    if version_match := re.search(r"application\.version\s*=\s*(\d+\.\d+(?:\.\d+)?)", props_content):
                         validation["version"] = version_match[1]
-
-            except Exception as e:
-                logger.exception("Exception in tool_discovery: %s", e)
-                validation["issues"].append(f"Version check failed: {e}")
+                except Exception as e:
+                    logger.debug("Failed to read Ghidra application.properties: %s", e)
+                    validation["issues"].append(f"Version read failed: {e}")
 
             validation["capabilities"].extend(
                 [
@@ -719,9 +745,14 @@ class AdvancedToolDiscovery:
         }
 
         executables: list[str] = config.get("executables", [])
-        if found_path := self._search_in_path(executables):
+        if found_path := self._search_project_tools(tool_name, executables):
             tool_info |= self._validate_and_populate(found_path, tool_name)
-            tool_info["discovery_method"] = "PATH"
+            tool_info["discovery_method"] = "project_tools"
+
+        if not tool_info["available"]:
+            if found_path := self._search_in_path(executables):
+                tool_info |= self._validate_and_populate(found_path, tool_name)
+                tool_info["discovery_method"] = "PATH"
 
         if not tool_info["available"] and config["search_strategy"] == "installation_based":
             if found_path := self._search_installations(tool_name, executables):
@@ -758,6 +789,76 @@ class AdvancedToolDiscovery:
         for executable in executables:
             if path := shutil.which(executable):
                 return path
+        return None
+
+    def _search_project_tools(self, tool_name: str, executables: list[str]) -> str | None:
+        """Search for tool in the project's tools/ directory and pixi environment.
+
+        This method takes priority over PATH and system installations,
+        allowing project-local tool versions to be used.
+
+        Args:
+            tool_name: Name of the tool to search for.
+            executables: List of executable names to search for.
+
+        Returns:
+            Full path to the executable if found, None otherwise.
+
+        """
+        tools_dir = get_project_tools_dir()
+        project_root = get_project_root()
+
+        tool_dir_mappings: dict[str, list[str]] = {
+            "nasm": ["NASM", "nasm"],
+            "ghidra": ["ghidra", "Ghidra"],
+            "radare2": ["radare2", "r2"],
+            "qemu": ["qemu", "QEMU"],
+            "accesschk": ["accesschk", "AccessChk", "SysinternalsSuite"],
+            "masm": ["masm", "MASM"],
+            "frida": ["frida", "Frida"],
+        }
+        tool_dirs = tool_dir_mappings.get(tool_name, [tool_name, tool_name.upper(), tool_name.lower()])
+
+        if tools_dir.exists():
+            for dir_name in tool_dirs:
+                tool_dir = tools_dir / dir_name
+                if not tool_dir.exists():
+                    continue
+
+                search_subdirs = [tool_dir, tool_dir / "bin"]
+                for search_dir in search_subdirs:
+                    if not search_dir.exists():
+                        continue
+                    for executable in executables:
+                        exe_path = search_dir / executable
+                        if exe_path.exists() and os.access(exe_path, os.X_OK):
+                            logger.info("Found %s in project tools: %s", tool_name, exe_path)
+                            return str(exe_path)
+                        if sys.platform == "win32":
+                            exe_with_ext = search_dir / f"{executable}.exe"
+                            if exe_with_ext.exists():
+                                logger.info("Found %s in project tools: %s", tool_name, exe_with_ext)
+                                return str(exe_with_ext)
+
+        pixi_paths = [
+            project_root / ".pixi" / "envs" / "default" / "bin",
+            project_root / ".pixi" / "envs" / "default" / "Library" / "bin",
+            project_root / ".pixi" / "envs" / "default" / "Scripts",
+        ]
+        for pixi_dir in pixi_paths:
+            if not pixi_dir.exists():
+                continue
+            for executable in executables:
+                exe_path = pixi_dir / executable
+                if exe_path.exists() and os.access(exe_path, os.X_OK):
+                    logger.info("Found %s in pixi environment: %s", tool_name, exe_path)
+                    return str(exe_path)
+                if sys.platform == "win32":
+                    exe_with_ext = pixi_dir / f"{executable}.exe"
+                    if exe_with_ext.exists():
+                        logger.info("Found %s in pixi environment: %s", tool_name, exe_with_ext)
+                        return str(exe_with_ext)
+
         return None
 
     def _search_installations(self, tool_name: str, executables: list[str]) -> str | None:
@@ -874,18 +975,15 @@ class AdvancedToolDiscovery:
                                             install_location = str(install_location_tuple[0])
                                             if install_location and os.path.exists(install_location):
                                                 return install_location
-                                    except FileNotFoundError as e:
-                                        logger.exception("File not found in tool_discovery: %s", e)
+                                    except FileNotFoundError:
                                         continue
-                            except OSError as e:
-                                logger.exception("OS error in tool_discovery: %s", e)
+                            except OSError:
                                 continue
-                except OSError as e:
-                    logger.exception("OS error in tool_discovery: %s", e)
+                except OSError:
                     continue
 
-        except ImportError as e:
-            logger.exception("Import error in tool_discovery: %s", e)
+        except ImportError:
+            pass
         except Exception as e:
             logger.debug("Registry search failed: %s", e)
 
@@ -893,6 +991,9 @@ class AdvancedToolDiscovery:
 
     def _get_installation_paths(self, tool_name: str) -> list[str]:
         """Get tool-specific installation search paths based on platform and tool type.
+
+        Prioritizes the project tools/ directory first, then falls back to
+        system-wide installation locations.
 
         Args:
             tool_name: Name of the tool to get paths for.
@@ -902,6 +1003,21 @@ class AdvancedToolDiscovery:
 
         """
         paths: list[str] = []
+        tools_dir = get_project_tools_dir()
+        tool_dir_mappings: dict[str, list[str]] = {
+            "nasm": ["NASM", "nasm"],
+            "ghidra": ["ghidra", "Ghidra"],
+            "radare2": ["radare2", "r2"],
+            "qemu": ["qemu", "QEMU"],
+            "accesschk": ["accesschk", "AccessChk", "SysinternalsSuite"],
+            "masm": ["masm", "MASM"],
+            "frida": ["frida", "Frida"],
+        }
+        tool_dirs = tool_dir_mappings.get(tool_name, [tool_name, tool_name.upper(), tool_name.lower()])
+        for dir_name in tool_dirs:
+            project_tool_path = tools_dir / dir_name
+            if project_tool_path.exists():
+                paths.append(str(project_tool_path))
 
         if tool_name == "accesschk":
             if sys.platform == "win32":
@@ -982,11 +1098,6 @@ class AdvancedToolDiscovery:
             if sys.platform == "win32":
                 paths.extend(
                     [
-                        os.path.join(
-                            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-                            "tools",
-                            "NASM",
-                        ),
                         "C:\\Program Files\\NASM",
                         "C:\\Program Files (x86)\\NASM",
                         "C:\\NASM",
@@ -994,7 +1105,6 @@ class AdvancedToolDiscovery:
                         os.path.expanduser(
                             "~\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe",
                         ),
-                        "C:\\Users\\%USERNAME%\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe",
                     ],
                 )
             else:
@@ -1020,6 +1130,24 @@ class AdvancedToolDiscovery:
                         "/usr/bin",
                         "/usr/local/bin",
                         "/opt/qemu",
+                    ],
+                )
+
+        elif tool_name == "radare2":
+            if sys.platform == "win32":
+                paths.extend(
+                    [
+                        "C:\\Program Files\\radare2",
+                        "C:\\radare2",
+                        "C:\\Tools\\radare2",
+                    ],
+                )
+            else:
+                paths.extend(
+                    [
+                        "/usr/bin",
+                        "/usr/local/bin",
+                        "/opt/radare2",
                     ],
                 )
 

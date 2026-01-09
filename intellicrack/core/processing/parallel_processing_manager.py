@@ -97,6 +97,14 @@ class ParallelProcessingManager:
 
         self.logger.info("Parallel processing initialized with %s workers", self.num_workers)
 
+    def __del__(self) -> None:
+        """Destructor to ensure workers are stopped on cleanup."""
+        if self.running:
+            try:
+                self.stop_processing()
+            except Exception:
+                pass
+
     def set_binary(self, binary_path: str) -> bool:
         """Set the binary file to process.
 

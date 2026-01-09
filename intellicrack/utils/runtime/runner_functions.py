@@ -240,72 +240,28 @@ def get_resource_path(package: str, resource_path: str) -> str:
 def run_network_license_server(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
     """Run the network license server emulator.
 
+    This function has been deprecated. For FlexLM emulation, use external tools
+    like py-kms for KMS or dedicated FlexLM emulators.
+
     Args:
         app_instance: Application instance for output updates (optional).
-        **kwargs: Configuration options including 'port', 'host', 'debug'.
+        **kwargs: Configuration options (unused).
 
     Returns:
-        Dictionary containing status, message, and server_config.
+        Dictionary containing status and deprecation message.
 
     """
-    try:
-        port_raw = kwargs.get("port", 27000)
-        port = 27000
-        try:
-            port = int(cast("str | int", port_raw)) if port_raw is not None else 27000
-        except (ValueError, TypeError):
-            logger.warning("Invalid port '%s' provided, using default 27000", port_raw)
-            port = 27000
-
-        # Get license server URL from configuration
-        from intellicrack.utils.service_utils import get_service_url
-
-        license_url = get_service_url("license_server")
-        default_host = license_url.replace("http://", "").replace("https://", "").split(":")[0]
-        host = kwargs.get("host", default_host)
-        debug_mode = kwargs.get("debug", False)
-
-        logger.info("Starting network license server on %s:%s", host, port)
-
-        # Update app instance if provided
-        if app_instance and hasattr(app_instance, "update_output"):
-            if hasattr(app_instance.update_output, "emit"):
-                app_instance.update_output.emit(f"Starting license server on {host}:{port}")
-            elif callable(app_instance.update_output):
-                app_instance.update_output(f"Starting license server on {host}:{port}")
-
-        # Try to use existing network license server
-        try:
-            from intellicrack.plugins.custom_modules.license_server_emulator import LicenseServerEmulator as NetworkLicenseServerEmulator
-
-            config = {
-                "listen_ip": host,
-                "listen_ports": [port],
-                "dns_redirect": True,
-                "ssl_intercept": True,
-                "record_traffic": debug_mode,
-                "auto_respond": True,
-                "response_delay": 0.1,
-            }
-            server = NetworkLicenseServerEmulator(config)
-            server.start_servers()
-
-            result: dict[str, object] = {
-                "status": "success",
-                "message": f"Network license server started on {host}:{port}",
-                "server_config": {"host": host, "port": port, "debug": debug_mode},
-            }
-
-            _emit_output(app_instance, "License server started successfully")
-
-            return result
-        except ImportError:
-            logger.warning("NetworkLicenseServerEmulator not available")
-            return {"status": "error", "message": "Network license server not available"}
-
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.exception("Error running network license server: %s", e)
-        return {"status": "error", "message": str(e)}
+    _ = kwargs
+    logger.warning("Network license server emulator has been deprecated")
+    if app_instance and hasattr(app_instance, "update_output"):
+        if hasattr(app_instance.update_output, "emit"):
+            app_instance.update_output.emit("License server emulator deprecated - use external tools")
+        elif callable(app_instance.update_output):
+            app_instance.update_output("License server emulator deprecated - use external tools")
+    return {
+        "status": "deprecated",
+        "message": "Network license server emulator has been removed. Use external tools like py-kms for KMS activation or dedicated FlexLM emulators.",
+    }
 
 
 def run_ssl_tls_interceptor(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
@@ -3128,7 +3084,11 @@ def _autonomous_detect_targets(target_binary: str, analysis_result: BinaryAnalys
     targets_found: list[str] = []
     license_checks: list[str] = []
     vulnerabilities_raw: list[dict[str, Any]] = []
-    result: TargetDetectionResult = {"targets_found": targets_found, "license_checks": license_checks, "vulnerabilities": cast("list[VulnerabilityInfo]", vulnerabilities_raw)}
+    result: TargetDetectionResult = {
+        "targets_found": targets_found,
+        "license_checks": license_checks,
+        "vulnerabilities": cast("list[VulnerabilityInfo]", vulnerabilities_raw),
+    }
 
     try:
         # Use existing vulnerability detection
@@ -3305,7 +3265,11 @@ def _autonomous_apply_patches(target_binary: str, patches: list[PatchInfo], stra
     results_raw: list[dict[str, Any]] = []
     applied_count = 0
     failed_count = 0
-    result: PatchApplicationResult = {"applied_count": applied_count, "failed_count": failed_count, "results": cast("list[PatchInfo]", results_raw)}
+    result: PatchApplicationResult = {
+        "applied_count": applied_count,
+        "failed_count": failed_count,
+        "results": cast("list[PatchInfo]", results_raw),
+    }
 
     try:
         for patch in patches:

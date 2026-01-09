@@ -360,9 +360,7 @@ impl IntellicrackLauncher {
                 tracing::info!("Python subprocess started (PID: {})", child.id());
                 println!("\n✓ Python subprocess started successfully");
                 println!("PID: {}", child.id());
-                println!(
-                    "Monitoring process output..."
-                );
+                println!("Monitoring process output...");
 
                 // WAIT for the process to exit so we can capture logs!
                 tracing::info!("Waiting for Python process to exit...");

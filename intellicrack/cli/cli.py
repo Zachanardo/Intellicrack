@@ -83,7 +83,10 @@ except ImportError as e:
     logger.debug("Architecture import not available: %s", e)
 
 try:
-    from intellicrack.core.exploitation.bypass_engine import BypassEngine, PayloadType as _PayloadType
+    from intellicrack.core.exploitation.bypass_engine import (
+        BypassEngine,
+        PayloadType as _PayloadType,
+    )
 
     PayloadEngine = BypassEngine
     PayloadTemplates = None

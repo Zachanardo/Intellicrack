@@ -613,7 +613,7 @@ class AIAssistant:
             from ..utils.analysis.binary_analysis import analyze_binary
 
             analysis_results = analyze_binary(binary_path)
-            summary = getattr(analysis_results, 'summary', 'No analysis available')
+            summary = getattr(analysis_results, "summary", "No analysis available")
             return f"Binary analysis context: {summary}\n"
         return ""
 

@@ -114,8 +114,12 @@ class BaseTab(QWidget):
                     if widget is not None:
                         widget.deleteLater()
                         widgets_removed += 1
-            logger.debug("%s: clear_layout() removed %d widgets, layout still exists: %s",
-                        self.__class__.__name__, widgets_removed, self.layout() is not None)
+            logger.debug(
+                "%s: clear_layout() removed %d widgets, layout still exists: %s",
+                self.__class__.__name__,
+                widgets_removed,
+                self.layout() is not None,
+            )
         else:
             logger.warning("%s: clear_layout() called but no layout found!", self.__class__.__name__)
 

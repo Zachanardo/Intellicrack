@@ -205,8 +205,6 @@ class FridaCertificateHooks:
         "schannel": "schannel_bypass.js",
         "openssl": "openssl_bypass.js",
         "cryptoapi": "cryptoapi_bypass.js",
-        "android": "android_pinning.js",
-        "ios": "ios_pinning.js",
         "universal": "universal_ssl_bypass.js",
     }
 
@@ -776,7 +774,6 @@ class FridaCertificateHooks:
         """
         return self
 
-
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
@@ -795,4 +792,3 @@ class FridaCertificateHooks:
 
         """
         self.detach()
-

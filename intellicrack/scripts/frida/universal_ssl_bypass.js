@@ -106,8 +106,6 @@ function activateBypassForLibrary(libType) {
         cryptoapi: 'cryptoapi_bypass.js',
         openssl: 'openssl_bypass.js',
         boringssl: 'openssl_bypass.js',
-        android: 'android_pinning.js',
-        ios: 'ios_pinning.js',
         nss: 'generic_ssl_bypass',
         gnutls: 'generic_ssl_bypass',
         mbedtls: 'generic_ssl_bypass',
@@ -174,15 +172,15 @@ function activateGenericBypass() {
 
                     const isLikelyCertFunc = commonValidationPatterns.some(
                         pattern =>
-                            name.includes(pattern)
-                            && (name.includes('cert')
-                                || name.includes('Cert')
-                                || name.includes('ssl')
-                                || name.includes('SSL')
-                                || name.includes('tls')
-                                || name.includes('TLS')
-                                || name.includes('trust')
-                                || name.includes('Trust'))
+                            name.includes(pattern) &&
+                            (name.includes('cert') ||
+                                name.includes('Cert') ||
+                                name.includes('ssl') ||
+                                name.includes('SSL') ||
+                                name.includes('tls') ||
+                                name.includes('TLS') ||
+                                name.includes('trust') ||
+                                name.includes('Trust'))
                     );
 
                     if (isLikelyCertFunc) {
@@ -207,7 +205,9 @@ function activateGenericBypass() {
                             log(`Generic hook installed: ${module.name}!${name}`);
 
                             if (hooksInstalled >= 50) {
-                                log('Hook limit reached (50), stopping further generic hook installation');
+                                log(
+                                    'Hook limit reached (50), stopping further generic hook installation'
+                                );
                                 limitReached = true;
                             }
                         } catch (hookError) {
@@ -279,8 +279,8 @@ function performSelfTest() {
         testResults.testPassed = true;
         testResults.status = 'All systems operational';
     } else if (detectedLibraries.length > 0 && activeBypasses.length === 0) {
-        testResults.status
-            = 'Libraries detected but bypasses not loaded - may need external script injection';
+        testResults.status =
+            'Libraries detected but bypasses not loaded - may need external script injection';
     } else {
         testResults.status = 'No TLS libraries detected - target may not use SSL/TLS';
     }

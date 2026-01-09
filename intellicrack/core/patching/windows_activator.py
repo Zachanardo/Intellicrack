@@ -873,20 +873,37 @@ class WindowsActivator:
             start_time = time_module.time()
             timeout = 300
 
-            while process.poll() is None:
-                if time_module.time() - start_time > timeout:
-                    process.terminate()
-                    result["error"] = "Activation process timed out"
-                    if output_callback:
-                        output_callback("ERROR: Activation process timed out", True)
-                    break
+            try:
+                while process.poll() is None:
+                    if time_module.time() - start_time > timeout:
+                        process.terminate()
+                        try:
+                            process.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            process.kill()
+                            process.wait()
+                        result["error"] = "Activation process timed out"
+                        if output_callback:
+                            output_callback("ERROR: Activation process timed out", True)
+                        break
 
-                try:
-                    line, is_stderr = output_queue.get(timeout=0.1)
-                    if output_callback:
-                        output_callback(line, is_stderr)
-                except queue.Empty:
-                    continue
+                    try:
+                        line, is_stderr = output_queue.get(timeout=0.1)
+                        if output_callback:
+                            output_callback(line, is_stderr)
+                    except queue.Empty:
+                        continue
+            finally:
+                if process.poll() is None:
+                    try:
+                        process.terminate()
+                        try:
+                            process.wait(timeout=5)
+                        except subprocess.TimeoutExpired:
+                            process.kill()
+                            process.wait()
+                    except OSError:
+                        pass
 
             stdout_thread.join(timeout=2)
             stderr_thread.join(timeout=2)
@@ -1173,7 +1190,14 @@ class WindowsActivatorInteractive:
 
             while process.poll() is None:
                 if time_module.time() - start_time > timeout:
-                    process.terminate()
+                    try:
+                        process.terminate()
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait(timeout=3)
+                    except OSError:
+                        pass
                     result["error"] = "Process timed out"
                     break
 

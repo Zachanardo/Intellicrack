@@ -123,8 +123,8 @@ const ArxanBypass = {
         }
 
         try {
-            const peb
-                = Process.pointerSize === 8
+            const peb =
+                Process.pointerSize === 8
                     ? ptr(Process.getCurrentThreadId()).readU64()
                     : ptr(Process.getCurrentThreadId()).readU32();
 
@@ -219,10 +219,10 @@ const ArxanBypass = {
                 },
                 onLeave(retval) {
                     if (
-                        this.size === 16
-                        || this.size === 20
-                        || this.size === 32
-                        || this.size === 64
+                        this.size === 16 ||
+                        this.size === 20 ||
+                        this.size === 32 ||
+                        this.size === 64
                     ) {
                         retval.replace(0);
                     }
@@ -377,7 +377,7 @@ const ArxanBypass = {
             Interceptor.attach(raiseException, {
                 onEnter(args) {
                     const exceptionCode = args[0].toInt32();
-                    if (exceptionCode === 0x80_00_00_03 || exceptionCode === 0xC0_00_00_05) {
+                    if (exceptionCode === 0x80_00_00_03 || exceptionCode === 0xc0_00_00_05) {
                         this.shouldBlock = true;
                     }
                 },
@@ -463,9 +463,9 @@ const ArxanBypass = {
 
         modules.forEach(module => {
             if (
-                module.name.toLowerCase().includes('arxan')
-                || module.name.toLowerCase().includes('guardit')
-                || module.name.toLowerCase().includes('transform')
+                module.name.toLowerCase().includes('arxan') ||
+                module.name.toLowerCase().includes('guardit') ||
+                module.name.toLowerCase().includes('transform')
             ) {
                 this.log('info', `Found potential Arxan module: ${module.name}`);
 
@@ -476,7 +476,7 @@ const ArxanBypass = {
                     matches.forEach(match => {
                         try {
                             Memory.protect(match.address, 16, 'rwx');
-                            match.address.writeByteArray([0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3]);
+                            match.address.writeByteArray([0xb8, 0x01, 0x00, 0x00, 0x00, 0xc3]);
                             patchCount++;
                             this.log('debug', `Patched CRC32 check at ${match.address}`);
                         } catch (error) {

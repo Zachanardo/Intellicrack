@@ -131,15 +131,9 @@ class ProtectionKnowledgeBase:
         - bypass_strategies: Generic bypass strategies by category
         - analysis_workflows: Standard analysis methodologies
         """
-        self.protection_schemes: dict[str, ProtectionSchemeInfo] = (
-            self._initialize_protection_schemes()
-        )
-        self.bypass_strategies: dict[str, list[str]] = (
-            self._initialize_bypass_strategies()
-        )
-        self.analysis_workflows: dict[str, list[str]] = (
-            self._initialize_analysis_workflows()
-        )
+        self.protection_schemes: dict[str, ProtectionSchemeInfo] = self._initialize_protection_schemes()
+        self.bypass_strategies: dict[str, list[str]] = self._initialize_bypass_strategies()
+        self.analysis_workflows: dict[str, list[str]] = self._initialize_analysis_workflows()
 
     def _initialize_protection_schemes(self) -> dict[str, ProtectionSchemeInfo]:
         """Initialize comprehensive protection scheme database with production-ready bypass strategies.

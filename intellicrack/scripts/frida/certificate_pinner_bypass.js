@@ -148,8 +148,8 @@ const CertificatePinnerBypass = {
         // Check for .NET
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('clr.dll')
-                || module.name.toLowerCase().includes('coreclr.dll')
+                module.name.toLowerCase().includes('clr.dll') ||
+                module.name.toLowerCase().includes('coreclr.dll')
             ) {
                 this.platform.dotnet = true;
             }
@@ -995,10 +995,8 @@ const CertificatePinnerBypass = {
 
             // Hook delegate methods
             if (NSURLSessionDelegate) {
-                const origMethod
-                    = NSURLSessionDelegate[
-                        '- URLSession:didReceiveChallenge:completionHandler:'
-                    ];
+                const origMethod =
+                    NSURLSessionDelegate['- URLSession:didReceiveChallenge:completionHandler:'];
                 if (origMethod) {
                     Interceptor.attach(origMethod.implementation, {
                         onEnter: args => {
@@ -1102,8 +1100,8 @@ const CertificatePinnerBypass = {
         // Search for custom implementations
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('app')
-                || module.name.toLowerCase().includes('lib')
+                module.name.toLowerCase().includes('app') ||
+                module.name.toLowerCase().includes('lib')
             ) {
                 module.enumerateExports().forEach(exp => {
                     const name = exp.name.toLowerCase();
@@ -1314,16 +1312,16 @@ const CertificatePinnerBypass = {
         const self = this;
 
         // Hook Chrome CT verification APIs
-        const chromeCTPattern
-            = Process.platform === 'windows'
+        const chromeCTPattern =
+            Process.platform === 'windows'
                 ? '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA 48 8B F1'
                 : '55 48 89 E5 41 57 41 56 53 48 83 EC 18 49 89 FE 49 89 F7';
 
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('chrome')
-                || module.name.toLowerCase().includes('cert')
-                || module.name.toLowerCase().includes('ssl')
+                module.name.toLowerCase().includes('chrome') ||
+                module.name.toLowerCase().includes('cert') ||
+                module.name.toLowerCase().includes('ssl')
             ) {
                 try {
                     const matches = Memory.scanSync(module.base, module.size, chromeCTPattern);
@@ -1406,8 +1404,8 @@ const CertificatePinnerBypass = {
                     const CTPolicyManager = Java.use(
                         'android.security.net.config.CertificateTransparencyPolicy'
                     );
-                    CTPolicyManager.isCertificateTransparencyVerificationRequired.implementation
-                        = hostname => {
+                    CTPolicyManager.isCertificateTransparencyVerificationRequired.implementation =
+                        hostname => {
                             self.stats.certificateTransparencyBypassEvents++;
                             send({
                                 type: 'bypass',
@@ -1474,16 +1472,16 @@ const CertificatePinnerBypass = {
         const self = this;
 
         // Hook DNS CAA record validation
-        const dnsQuery
-            = Module.findExportByName(null, 'res_query')
-            || Module.findExportByName('dnsapi.dll', 'DnsQuery_A')
-            || Module.findExportByName('dnsapi.dll', 'DnsQuery_W');
+        const dnsQuery =
+            Module.findExportByName(null, 'res_query') ||
+            Module.findExportByName('dnsapi.dll', 'DnsQuery_A') ||
+            Module.findExportByName('dnsapi.dll', 'DnsQuery_W');
 
         if (dnsQuery) {
             Interceptor.attach(dnsQuery, {
                 onEnter(args) {
-                    const queryType
-                        = Process.platform === 'windows' ? args[1].toInt32() : args[2].toInt32();
+                    const queryType =
+                        Process.platform === 'windows' ? args[1].toInt32() : args[2].toInt32();
                     // CAA record type = 257
                     if (queryType === 257) {
                         this.isCAAQuery = true;
@@ -1519,13 +1517,13 @@ const CertificatePinnerBypass = {
         // Hook OpenSSL CAA validation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('ssl')
-                || module.name.toLowerCase().includes('crypto')
+                module.name.toLowerCase().includes('ssl') ||
+                module.name.toLowerCase().includes('crypto')
             ) {
                 try {
                     // Pattern for CAA record validation
-                    const caaPattern
-                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
+                    const caaPattern =
+                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
                     const matches = Memory.scanSync(module.base, module.size, caaPattern);
 
                     matches.forEach(match => {
@@ -1605,10 +1603,10 @@ const CertificatePinnerBypass = {
     // 3. HTTP Public Key Pinning (HPKP) Advanced Bypass
     hookHttpPublicKeyPinningAdvancedBypass() {
         // Hook HPKP header processing
-        const parseHeaders
-            = Module.findExportByName(null, 'HTTP_ParseHeaders')
-            || Module.findExportByName('wininet.dll', 'HttpAddRequestHeadersA')
-            || Module.findExportByName('wininet.dll', 'HttpAddRequestHeadersW');
+        const parseHeaders =
+            Module.findExportByName(null, 'HTTP_ParseHeaders') ||
+            Module.findExportByName('wininet.dll', 'HttpAddRequestHeadersA') ||
+            Module.findExportByName('wininet.dll', 'HttpAddRequestHeadersW');
 
         if (parseHeaders) {
             Interceptor.attach(parseHeaders, {
@@ -1616,9 +1614,9 @@ const CertificatePinnerBypass = {
                     try {
                         const headers = args[1].readUtf8String() || args[1].readUtf16String();
                         if (
-                            headers
-                            && (headers.includes('Public-Key-Pins')
-                                || headers.includes('Public-Key-Pins-Report-Only'))
+                            headers &&
+                            (headers.includes('Public-Key-Pins') ||
+                                headers.includes('Public-Key-Pins-Report-Only'))
                         ) {
                             // Remove HPKP headers
                             let cleanHeaders = headers.replaceAll(
@@ -1660,13 +1658,13 @@ const CertificatePinnerBypass = {
         // Hook Chrome HPKP implementation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('chrome')
-                || module.name.toLowerCase().includes('content')
+                module.name.toLowerCase().includes('chrome') ||
+                module.name.toLowerCase().includes('content')
             ) {
                 try {
                     // Pattern for HPKP validation
-                    const hpkpPattern
-                        = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B DA 48 8B F9 48 8B F1';
+                    const hpkpPattern =
+                        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B DA 48 8B F9 48 8B F1';
                     const matches = Memory.scanSync(module.base, module.size, hpkpPattern);
 
                     matches.forEach(match => {
@@ -1780,20 +1778,20 @@ const CertificatePinnerBypass = {
         const self = this;
 
         // Hook DANE TLSA record queries
-        const dnsQuery
-            = Module.findExportByName(null, 'res_query')
-            || Module.findExportByName('dnsapi.dll', 'DnsQuery_A');
+        const dnsQuery =
+            Module.findExportByName(null, 'res_query') ||
+            Module.findExportByName('dnsapi.dll', 'DnsQuery_A');
 
         if (dnsQuery) {
             Interceptor.attach(dnsQuery, {
                 onEnter(args) {
-                    const queryType
-                        = Process.platform === 'windows' ? args[1].toInt32() : args[2].toInt32();
+                    const queryType =
+                        Process.platform === 'windows' ? args[1].toInt32() : args[2].toInt32();
                     // TLSA record type = 52
                     if (queryType === 52) {
                         this.isTLSAQuery = true;
-                        this.hostname
-                            = Process.platform === 'windows'
+                        this.hostname =
+                            Process.platform === 'windows'
                                 ? args[0].readUtf8String()
                                 : args[0].readUtf8String();
                         send({
@@ -1823,9 +1821,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook OpenSSL DANE validation
-        const daneVerify
-            = Module.findExportByName(null, 'SSL_CTX_dane_enable')
-            || Module.findExportByName(null, 'SSL_dane_enable');
+        const daneVerify =
+            Module.findExportByName(null, 'SSL_CTX_dane_enable') ||
+            Module.findExportByName(null, 'SSL_dane_enable');
 
         if (daneVerify) {
             Interceptor.replace(
@@ -1851,9 +1849,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook DANE certificate verification
-        const daneVerifyCert
-            = Module.findExportByName(null, 'SSL_get0_dane_authority')
-            || Module.findExportByName(null, 'SSL_get0_dane_tlsa');
+        const daneVerifyCert =
+            Module.findExportByName(null, 'SSL_get0_dane_authority') ||
+            Module.findExportByName(null, 'SSL_get0_dane_tlsa');
 
         if (daneVerifyCert) {
             Interceptor.replace(
@@ -1885,13 +1883,13 @@ const CertificatePinnerBypass = {
         // Hook browser DANE implementations
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('firefox')
-                || module.name.toLowerCase().includes('gecko')
+                module.name.toLowerCase().includes('firefox') ||
+                module.name.toLowerCase().includes('gecko')
             ) {
                 try {
                     // Pattern for Mozilla DANE validation
-                    const danePattern
-                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
+                    const danePattern =
+                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
                     const matches = Memory.scanSync(module.base, module.size, danePattern);
 
                     matches.slice(0, 5).forEach(match => {
@@ -1941,9 +1939,9 @@ const CertificatePinnerBypass = {
     // 5. Signed Certificate Timestamps (SCT) Validation Bypass
     hookSignedCertificateTimestampsBypass() {
         // Hook SCT validation in OpenSSL
-        const sctVerify
-            = Module.findExportByName(null, 'SCT_verify')
-            || Module.findExportByName(null, 'SCT_verify_signature');
+        const sctVerify =
+            Module.findExportByName(null, 'SCT_verify') ||
+            Module.findExportByName(null, 'SCT_verify_signature');
 
         if (sctVerify) {
             Interceptor.replace(
@@ -1977,13 +1975,13 @@ const CertificatePinnerBypass = {
         // Hook Chrome SCT validation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('chrome')
-                || module.name.toLowerCase().includes('blink')
+                module.name.toLowerCase().includes('chrome') ||
+                module.name.toLowerCase().includes('blink')
             ) {
                 try {
                     // Pattern for Chrome SCT validation
-                    const sctPattern
-                        = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
+                    const sctPattern =
+                        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
                     const matches = Memory.scanSync(module.base, module.size, sctPattern);
 
                     matches.slice(0, 10).forEach(match => {
@@ -2090,8 +2088,8 @@ const CertificatePinnerBypass = {
             try {
                 const { NSURLSession, NSURLCredential: NSURLCredentialClass } = ObjC.classes;
                 if (NSURLSession) {
-                    const sctValidation
-                        = NSURLSession['- URLSession:task:didReceiveChallenge:completionHandler:'];
+                    const sctValidation =
+                        NSURLSession['- URLSession:task:didReceiveChallenge:completionHandler:'];
                     if (sctValidation) {
                         Interceptor.attach(sctValidation.implementation, {
                             onEnter: args => {
@@ -2144,9 +2142,9 @@ const CertificatePinnerBypass = {
     // 6. Modern TLS 1.3 Security Features Bypass
     hookModernTls13SecurityBypass() {
         // Hook TLS 1.3 session ticket validation
-        const tls13Validate
-            = Module.findExportByName(null, 'tls13_process_new_session_ticket')
-            || Module.findExportByName(null, 'SSL_process_ticket');
+        const tls13Validate =
+            Module.findExportByName(null, 'tls13_process_new_session_ticket') ||
+            Module.findExportByName(null, 'SSL_process_ticket');
 
         if (tls13Validate) {
             Interceptor.attach(tls13Validate, {
@@ -2166,9 +2164,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook TLS 1.3 certificate verification
-        const tls13CertVerify
-            = Module.findExportByName(null, 'tls13_process_certificate_verify')
-            || Module.findExportByName(null, 'SSL_verify_certificate');
+        const tls13CertVerify =
+            Module.findExportByName(null, 'tls13_process_certificate_verify') ||
+            Module.findExportByName(null, 'SSL_verify_certificate');
 
         if (tls13CertVerify) {
             Interceptor.replace(
@@ -2199,9 +2197,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook TLS 1.3 PSK (Pre-Shared Key) validation
-        const tls13PSK
-            = Module.findExportByName(null, 'tls13_generate_psk_binders')
-            || Module.findExportByName(null, 'SSL_use_psk_identity_hint');
+        const tls13PSK =
+            Module.findExportByName(null, 'tls13_generate_psk_binders') ||
+            Module.findExportByName(null, 'SSL_use_psk_identity_hint');
 
         if (tls13PSK) {
             Interceptor.attach(tls13PSK, {
@@ -2230,9 +2228,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook TLS 1.3 early data validation
-        const tls13EarlyData
-            = Module.findExportByName(null, 'SSL_get_early_data_status')
-            || Module.findExportByName(null, 'tls13_process_early_data');
+        const tls13EarlyData =
+            Module.findExportByName(null, 'SSL_get_early_data_status') ||
+            Module.findExportByName(null, 'tls13_process_early_data');
 
         if (tls13EarlyData) {
             Interceptor.replace(
@@ -2260,14 +2258,14 @@ const CertificatePinnerBypass = {
         // Hook browser TLS 1.3 implementations
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('ssl')
-                || module.name.toLowerCase().includes('tls')
-                || module.name.toLowerCase().includes('crypto')
+                module.name.toLowerCase().includes('ssl') ||
+                module.name.toLowerCase().includes('tls') ||
+                module.name.toLowerCase().includes('crypto')
             ) {
                 try {
                     // Pattern for TLS 1.3 handshake verification
-                    const tls13Pattern
-                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
+                    const tls13Pattern =
+                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
                     const matches = Memory.scanSync(module.base, module.size, tls13Pattern);
 
                     matches.slice(0, 5).forEach(match => {
@@ -2319,9 +2317,9 @@ const CertificatePinnerBypass = {
         const self = this;
 
         // Hook ALPN protocol selection
-        const alpnSelect
-            = Module.findExportByName(null, 'SSL_CTX_set_alpn_select_cb')
-            || Module.findExportByName(null, 'SSL_select_next_proto');
+        const alpnSelect =
+            Module.findExportByName(null, 'SSL_CTX_set_alpn_select_cb') ||
+            Module.findExportByName(null, 'SSL_select_next_proto');
 
         if (alpnSelect) {
             Interceptor.attach(alpnSelect, {
@@ -2350,9 +2348,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook HTTP/2 ALPN validation
-        const http2Alpn
-            = Module.findExportByName(null, 'nghttp2_session_want_read')
-            || Module.findExportByName(null, 'SSL_CTX_set_alpn_protos');
+        const http2Alpn =
+            Module.findExportByName(null, 'nghttp2_session_want_read') ||
+            Module.findExportByName(null, 'SSL_CTX_set_alpn_protos');
 
         if (http2Alpn) {
             Interceptor.attach(http2Alpn, {
@@ -2455,13 +2453,13 @@ const CertificatePinnerBypass = {
         // Hook Chrome ALPN negotiation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('chrome')
-                || module.name.toLowerCase().includes('net')
+                module.name.toLowerCase().includes('chrome') ||
+                module.name.toLowerCase().includes('net')
             ) {
                 try {
                     // Pattern for Chrome ALPN negotiation
-                    const alpnPattern
-                        = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
+                    const alpnPattern =
+                        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
                     const matches = Memory.scanSync(module.base, module.size, alpnPattern);
 
                     matches.slice(0, 3).forEach(match => {
@@ -2510,9 +2508,9 @@ const CertificatePinnerBypass = {
     // 8. Online Certificate Status Protocol (OCSP) Must-Staple Bypass
     hookOnlineCertificateStatusProtocolBypass() {
         // Hook OCSP stapling validation
-        const ocspStaple
-            = Module.findExportByName(null, 'SSL_CTX_set_tlsext_status_cb')
-            || Module.findExportByName(null, 'OCSP_response_status');
+        const ocspStaple =
+            Module.findExportByName(null, 'SSL_CTX_set_tlsext_status_cb') ||
+            Module.findExportByName(null, 'OCSP_response_status');
 
         if (ocspStaple) {
             Interceptor.replace(
@@ -2540,9 +2538,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook OCSP response verification
-        const ocspVerify
-            = Module.findExportByName(null, 'OCSP_basic_verify')
-            || Module.findExportByName(null, 'OCSP_resp_verify');
+        const ocspVerify =
+            Module.findExportByName(null, 'OCSP_basic_verify') ||
+            Module.findExportByName(null, 'OCSP_resp_verify');
 
         if (ocspVerify) {
             Interceptor.replace(
@@ -2573,9 +2571,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook OCSP certificate status checking
-        const ocspCertStatus
-            = Module.findExportByName(null, 'OCSP_cert_status_str')
-            || Module.findExportByName(null, 'OCSP_single_get0_status');
+        const ocspCertStatus =
+            Module.findExportByName(null, 'OCSP_cert_status_str') ||
+            Module.findExportByName(null, 'OCSP_single_get0_status');
 
         if (ocspCertStatus) {
             Interceptor.replace(
@@ -2724,14 +2722,14 @@ const CertificatePinnerBypass = {
         // Hook CABF baseline requirements validation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('ssl')
-                || module.name.toLowerCase().includes('crypto')
-                || module.name.toLowerCase().includes('cert')
+                module.name.toLowerCase().includes('ssl') ||
+                module.name.toLowerCase().includes('crypto') ||
+                module.name.toLowerCase().includes('cert')
             ) {
                 try {
                     // Pattern for certificate policy validation
-                    const cabfPattern
-                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
+                    const cabfPattern =
+                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
                     const matches = Memory.scanSync(module.base, module.size, cabfPattern);
 
                     matches.slice(0, 8).forEach(match => {
@@ -2779,9 +2777,9 @@ const CertificatePinnerBypass = {
         });
 
         // Hook certificate policy validation
-        const certPolicyCheck
-            = Module.findExportByName(null, 'X509_policy_check')
-            || Module.findExportByName(null, 'X509_VERIFY_PARAM_set_purpose');
+        const certPolicyCheck =
+            Module.findExportByName(null, 'X509_policy_check') ||
+            Module.findExportByName(null, 'X509_VERIFY_PARAM_set_purpose');
 
         if (certPolicyCheck) {
             Interceptor.attach(certPolicyCheck, {
@@ -2806,9 +2804,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook Extended Validation (EV) certificate validation
-        const evValidation
-            = Module.findExportByName(null, 'X509_check_purpose')
-            || Module.findExportByName(null, 'X509_verify_cert_purpose');
+        const evValidation =
+            Module.findExportByName(null, 'X509_check_purpose') ||
+            Module.findExportByName(null, 'X509_verify_cert_purpose');
 
         if (evValidation) {
             Interceptor.replace(
@@ -2902,13 +2900,13 @@ const CertificatePinnerBypass = {
         // Hook Chrome certificate authority validation
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('chrome')
-                || module.name.toLowerCase().includes('content')
+                module.name.toLowerCase().includes('chrome') ||
+                module.name.toLowerCase().includes('content')
             ) {
                 try {
                     // Pattern for Chrome CA validation
-                    const chromeCAPattern
-                        = '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
+                    const chromeCAPattern =
+                        '48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA';
                     const matches = Memory.scanSync(module.base, module.size, chromeCAPattern);
 
                     matches.slice(0, 5).forEach(match => {
@@ -2960,10 +2958,10 @@ const CertificatePinnerBypass = {
         const self = this;
 
         // Hook post-quantum cryptography validation
-        const pqcValidation
-            = Module.findExportByName(null, 'CRYSTALS_KYBER_keypair')
-            || Module.findExportByName(null, 'CRYSTALS_DILITHIUM_sign')
-            || Module.findExportByName(null, 'FALCON_sign');
+        const pqcValidation =
+            Module.findExportByName(null, 'CRYSTALS_KYBER_keypair') ||
+            Module.findExportByName(null, 'CRYSTALS_DILITHIUM_sign') ||
+            Module.findExportByName(null, 'FALCON_sign');
 
         if (pqcValidation) {
             Interceptor.replace(
@@ -2987,9 +2985,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook lattice-based cryptography validation
-        const latticeValidation
-            = Module.findExportByName(null, 'lattice_verify_signature')
-            || Module.findExportByName(null, 'ring_lwe_decrypt');
+        const latticeValidation =
+            Module.findExportByName(null, 'lattice_verify_signature') ||
+            Module.findExportByName(null, 'ring_lwe_decrypt');
 
         if (latticeValidation) {
             Interceptor.replace(
@@ -3019,9 +3017,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook homomorphic encryption validation
-        const heValidation
-            = Module.findExportByName(null, 'FHE_decrypt')
-            || Module.findExportByName(null, 'homomorphic_evaluate');
+        const heValidation =
+            Module.findExportByName(null, 'FHE_decrypt') ||
+            Module.findExportByName(null, 'homomorphic_evaluate');
 
         if (heValidation) {
             Interceptor.attach(heValidation, {
@@ -3043,14 +3041,14 @@ const CertificatePinnerBypass = {
         // Hook quantum-resistant certificate validation patterns
         Process.enumerateModules().forEach(module => {
             if (
-                module.name.toLowerCase().includes('quantum')
-                || module.name.toLowerCase().includes('pqc')
-                || module.name.toLowerCase().includes('crypto')
+                module.name.toLowerCase().includes('quantum') ||
+                module.name.toLowerCase().includes('pqc') ||
+                module.name.toLowerCase().includes('crypto')
             ) {
                 try {
                     // Pattern for quantum-safe validation
-                    const quantumPattern
-                        = '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
+                    const quantumPattern =
+                        '48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 83 EC ??';
                     const matches = Memory.scanSync(module.base, module.size, quantumPattern);
 
                     matches.slice(0, 3).forEach(match => {
@@ -3146,9 +3144,9 @@ const CertificatePinnerBypass = {
         }
 
         // Hook experimental quantum-safe TLS implementations
-        const quantumTLS
-            = Module.findExportByName(null, 'SSL_CTX_set_post_quantum_security_level')
-            || Module.findExportByName(null, 'SSL_enable_post_quantum');
+        const quantumTLS =
+            Module.findExportByName(null, 'SSL_CTX_set_post_quantum_security_level') ||
+            Module.findExportByName(null, 'SSL_enable_post_quantum');
 
         if (quantumTLS) {
             Interceptor.attach(quantumTLS, {

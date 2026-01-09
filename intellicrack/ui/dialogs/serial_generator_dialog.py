@@ -8,8 +8,7 @@ from datetime import datetime
 from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
-from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QCloseEvent, QFont
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,

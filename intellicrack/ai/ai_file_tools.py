@@ -194,9 +194,7 @@ if QDialog is not None:
     _GUIDialogClass = _FileApprovalDialogGUI
 
 
-FileApprovalDialogClass: type[ApprovalDialogProtocol] = (
-    _GUIDialogClass if _GUIDialogClass is not None else _ConsoleApprovalDialog
-)
+FileApprovalDialogClass: type[ApprovalDialogProtocol] = _GUIDialogClass if _GUIDialogClass is not None else _ConsoleApprovalDialog
 
 
 def create_approval_dialog(operation_type: str, details: str, parent: Any = None) -> bool:

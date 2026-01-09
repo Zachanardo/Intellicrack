@@ -1480,6 +1480,7 @@ class _FallbackQTest:
 
         """
         import time
+
         time.sleep(ms / 1000.0)
 
 
@@ -1551,6 +1552,7 @@ class _FallbackQApplication(_FallbackWidgetBase):
 
         with contextlib.suppress(Exception):
             import atexit
+
             atexit._run_exitfuncs()
 
         logger.debug("FallbackQApplication: Shutdown complete")
@@ -1560,8 +1562,7 @@ class _FallbackQFileDialog:
     """Production fallback file dialog class."""
 
     @staticmethod
-    def getOpenFileName(parent: Any = None, caption: str = "", directory: str = "",
-                        filter: str = "") -> tuple[str, str]:
+    def getOpenFileName(parent: Any = None, caption: str = "", directory: str = "", filter: str = "") -> tuple[str, str]:
         """Show a file open dialog.
 
         Args:
@@ -1577,8 +1578,7 @@ class _FallbackQFileDialog:
         return ("", filter)
 
     @staticmethod
-    def getSaveFileName(parent: Any = None, caption: str = "", directory: str = "",
-                        filter: str = "") -> tuple[str, str]:
+    def getSaveFileName(parent: Any = None, caption: str = "", directory: str = "", filter: str = "") -> tuple[str, str]:
         """Show a file save dialog.
 
         Args:
@@ -1630,8 +1630,9 @@ class _FallbackQInputDialog:
         return (text, True)
 
     @staticmethod
-    def getInt(parent: Any, title: str, label: str, value: int = 0, min_val: int = -2147483647,
-               max_val: int = 2147483647, step: int = 1) -> tuple[int, bool]:
+    def getInt(
+        parent: Any, title: str, label: str, value: int = 0, min_val: int = -2147483647, max_val: int = 2147483647, step: int = 1
+    ) -> tuple[int, bool]:
         """Show an integer input dialog.
 
         Args:

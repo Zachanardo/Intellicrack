@@ -25,9 +25,9 @@ from datetime import datetime
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
+    QCloseEvent,
     QDialog,
     QDialogButtonBox,
-    QCloseEvent,
     QFont,
     QLabel,
     QProgressBar,

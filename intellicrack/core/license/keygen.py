@@ -20,6 +20,7 @@ import z3
 
 from intellicrack.core.serial_generator import GeneratedSerial, SerialConstraints, SerialFormat, SerialNumberGenerator
 
+
 CREATE_SUSPENDED = 0x00000004 if sys.platform == "win32" else 0
 
 
@@ -1059,6 +1060,7 @@ class ConstraintExtractor:
             The constructed multiplicative algorithm.
 
         """
+
         def multiplicative_validate(key: str) -> int:
             """Validate key using multiplicative hash.
 
@@ -1934,8 +1936,17 @@ class KeyValidator:
                 return []
 
             validation_keywords = [
-                "license", "valid", "check", "serial", "register", "activate",
-                "verify", "auth", "key", "trial", "product"
+                "license",
+                "valid",
+                "check",
+                "serial",
+                "register",
+                "activate",
+                "verify",
+                "auth",
+                "key",
+                "trial",
+                "product",
             ]
 
             if hasattr(binary, "symbols"):
@@ -1977,11 +1988,21 @@ class KeyValidator:
                 binary_data = f.read()
 
             validation_strings = [
-                b"license", b"LICENSE", b"License",
-                b"serial", b"SERIAL", b"Serial",
-                b"key", b"KEY", b"Key",
-                b"valid", b"VALID", b"Valid",
-                b"register", b"REGISTER", b"Register",
+                b"license",
+                b"LICENSE",
+                b"License",
+                b"serial",
+                b"SERIAL",
+                b"Serial",
+                b"key",
+                b"KEY",
+                b"Key",
+                b"valid",
+                b"VALID",
+                b"Valid",
+                b"register",
+                b"REGISTER",
+                b"Register",
             ]
 
             for search_str in validation_strings:
@@ -2522,10 +2543,7 @@ class LicenseKeygen:
         if not self.binary_path:
             raise ValueError("Binary path required for key validation")
 
-        key_strings = [
-            k.serial if isinstance(k, GeneratedSerial) else k
-            for k in keys
-        ]
+        key_strings = [k.serial if isinstance(k, GeneratedSerial) else k for k in keys]
 
         if validation_config:
             validator = KeyValidator(self.binary_path, validation_config)

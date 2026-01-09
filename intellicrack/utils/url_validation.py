@@ -78,10 +78,7 @@ def is_safe_url(url: str, allow_local: bool = False) -> bool:
                 for _, _, _, _, sockaddr in resolved_ips:
                     ip = ipaddress.ip_address(sockaddr[0])
                     if _is_private_ip(ip):
-                        logger.warning(
-                            "Blocked URL: hostname %s resolves to private IP %s",
-                            hostname, sockaddr[0]
-                        )
+                        logger.warning("Blocked URL: hostname %s resolves to private IP %s", hostname, sockaddr[0])
                         return False
             except (socket.gaierror, OSError) as e:
                 logger.debug("DNS resolution failed for %s: %s", hostname, e)

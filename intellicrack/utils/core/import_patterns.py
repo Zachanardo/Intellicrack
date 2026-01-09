@@ -27,6 +27,7 @@ Android/Java analysis tools (zipfile, XML parsing), and system tools (psutil).
 import logging
 from typing import Any
 
+from defusedxml import ElementTree as ET
 
 logger = logging.getLogger(__name__)
 
@@ -69,22 +70,8 @@ except ImportError:
     logger.debug("lief not available")
 
 HAS_PYELFTOOLS: bool = False
-try:
-    from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
-
-    PYELFTOOLS_AVAILABLE = HAS_PYELFTOOLS
-except ImportError:
-    PYELFTOOLS_AVAILABLE = False
-    HAS_PYELFTOOLS = False
-    logger.debug("pyelftools not available")
-
-try:
-    from macholib.MachO import MachO
-
-    MACHOLIB_AVAILABLE = True
-except ImportError:
-    MACHOLIB_AVAILABLE = False
-    logger.debug("macholib not available")
+PYELFTOOLS_AVAILABLE: bool = False
+MACHOLIB_AVAILABLE: bool = False
 
 # Android/Java analysis tools
 try:
@@ -94,8 +81,6 @@ try:
 except ImportError:
     ZIPFILE_AVAILABLE = False
     logger.debug("zipfile not available")
-
-from defusedxml import ElementTree as ET
 
 XML_AVAILABLE = True
 

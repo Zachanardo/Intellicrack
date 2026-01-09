@@ -32,6 +32,8 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+from .process_registry import process_registry
+
 
 logger = logging.getLogger(__name__)
 
@@ -229,7 +231,6 @@ class AdobeInjectorProcess:
 
         # Start process
         try:
-            # Validate that cmd contains only safe, expected commands
             if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
                 raise ValueError(f"Unsafe command: {cmd}")
             self.process = subprocess.Popen(
@@ -240,8 +241,8 @@ class AdobeInjectorProcess:
                 cwd=str(self.adobe_injector_path.parent),
                 shell=False,
             )
+            process_registry.register(self.process, "adobe-injector")
 
-            # Wait for window to appear
             time.sleep(1.0)
 
             # Find Adobe Injector window
@@ -352,14 +353,27 @@ class AdobeInjectorProcess:
             self.process.stdin.flush()
 
     def terminate(self) -> None:
-        """Terminate Adobe Injector process.
-
-        """
+        """Terminate Adobe Injector process."""
         if self.process:
-            self.process.terminate()
-            self.process.wait(timeout=5)
-            self.process = None
-            self.hwnd = None
+            pid = self.process.pid
+            try:
+                self.process.terminate()
+                try:
+                    self.process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+                    self.process.wait(timeout=3)
+            except OSError:
+                logger.warning("Error terminating Adobe Injector process")
+            finally:
+                process_registry.unregister(pid)
+                self.process = None
+                self.hwnd = None
+
+    def __del__(self) -> None:
+        """Destructor to ensure process cleanup."""
+        if self.process is not None and self.process.poll() is None:
+            self.terminate()
 
 
 if TYPE_CHECKING:
@@ -401,9 +415,7 @@ class AdobeInjectorWidget(BaseWidget):
         self.init_adobe_injector()
 
     def setup_ui(self) -> None:
-        """Set up the UI layout.
-
-        """
+        """Set up the UI layout."""
         layout = QVBoxLayout(self)
 
         control_group = QGroupBox("Adobe Injector Control")
@@ -443,9 +455,7 @@ class AdobeInjectorWidget(BaseWidget):
         layout.addWidget(self.embed_container)
 
     def init_adobe_injector(self) -> None:
-        """Initialize Adobe Injector integration.
-
-        """
+        """Initialize Adobe Injector integration."""
         from intellicrack.utils.path_resolver import get_project_root
 
         adobe_injector_paths = [
@@ -503,9 +513,7 @@ class AdobeInjectorWidget(BaseWidget):
                 self.status_updated.emit(f"Error: {e}")
 
     def terminate_injector(self) -> None:
-        """Terminate embedded Adobe Injector.
-
-        """
+        """Terminate embedded Adobe Injector."""
         adobe_process = self.adobe_injector_process
         if adobe_process is not None:
             adobe_process.terminate()

@@ -1776,9 +1776,7 @@ rule Delphi_Compiler {
             self._matches = []
             logger.debug("Cleared all stored matches")
 
-    def _scan_memory_region(
-        self, data: bytes, base_address: int, categories: list[RuleCategory] | None
-    ) -> list[YaraMatch]:
+    def _scan_memory_region(self, data: bytes, base_address: int, categories: list[RuleCategory] | None) -> list[YaraMatch]:
         """Scan a memory region with filtered rules.
 
         Internal method to scan a single memory region with YARA rules, handling

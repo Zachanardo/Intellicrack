@@ -68,8 +68,8 @@ class CursorProtocol(Protocol):
     lastrowid: int | None
     arraysize: int
 
-    def execute(self, sql: str, parameters: list[Any] | None = None) -> "CursorProtocol": ...
-    def executemany(self, sql: str, seq_of_parameters: list[list[Any]]) -> "CursorProtocol": ...
+    def execute(self, sql: str, parameters: list[Any] | None = None) -> CursorProtocol: ...
+    def executemany(self, sql: str, seq_of_parameters: list[list[Any]]) -> CursorProtocol: ...
     def fetchone(self) -> tuple[Any, ...] | None: ...
     def fetchall(self) -> list[tuple[Any, ...]]: ...
     def fetchmany(self, size: int | None = None) -> list[tuple[Any, ...]]: ...
@@ -924,7 +924,7 @@ else:
 
         """
 
-        def __init__(self, connection: "FallbackConnection") -> None:
+        def __init__(self, connection: FallbackConnection) -> None:
             """Initialize cursor.
 
             Args:
@@ -945,7 +945,7 @@ else:
             self,
             sql: str,
             params: list[Any] | None = None,
-        ) -> "FallbackCursor":
+        ) -> FallbackCursor:
             """Execute SQL statement.
 
             Args:
@@ -980,7 +980,7 @@ else:
                 logger.error(error_msg)
                 raise DatabaseError(error_msg) from e
 
-        def executemany(self, sql: str, params_list: list[list[Any]]) -> "FallbackCursor":
+        def executemany(self, sql: str, params_list: list[list[Any]]) -> FallbackCursor:
             """Execute SQL with multiple parameter sets.
 
             Args:
@@ -1055,7 +1055,7 @@ else:
             """
             self._results = []
 
-        def __enter__(self) -> "FallbackCursor":
+        def __enter__(self) -> FallbackCursor:
             """Context manager entry.
 
             Args:
@@ -1178,7 +1178,7 @@ else:
             if self._db.path != ":memory:":
                 self._db._save_to_file()
 
-        def __enter__(self) -> "FallbackConnection":
+        def __enter__(self) -> FallbackConnection:
             """Context manager entry.
 
             Args:

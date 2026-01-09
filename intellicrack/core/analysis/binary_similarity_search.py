@@ -31,6 +31,7 @@ from intellicrack.utils.logger import logger
 
 from ...utils.protection_utils import calculate_entropy
 
+
 try:
     import numpy as np
 
@@ -156,7 +157,7 @@ class MinHashLSH:
             end = start + self.rows_per_band
             band_signature = tuple(signature[start:end])
             band_hash = self._hash_band_deterministic(band_signature)
-            self._buckets[(band_idx, band_hash)].add(key)
+            self._buckets[band_idx, band_hash].add(key)
 
     def query(self, features: set[str]) -> list[tuple[str, float]]:
         """Find similar items using LSH buckets.
@@ -235,7 +236,7 @@ class MinHashLSH:
             band_hash = self._hash_band_deterministic(band_signature)
 
             if (band_idx, band_hash) in self._buckets:
-                self._buckets[(band_idx, band_hash)].discard(key)
+                self._buckets[band_idx, band_hash].discard(key)
 
         del self._signatures[key]
         if key in self._path_to_index:
@@ -516,32 +517,28 @@ class BinarySimilaritySearch:
                             detailed_similarity = self._calculate_similarity(target_features, binary["features"])
 
                             if detailed_similarity >= threshold:
-                                similar_binaries.append(
-                                    {
-                                        "path": binary["path"],
-                                        "filename": binary.get("filename", os.path.basename(binary["path"])),
-                                        "similarity": detailed_similarity,
-                                        "lsh_similarity": lsh_similarity,
-                                        "cracking_patterns": binary["cracking_patterns"],
-                                        "added": binary.get("added", "Unknown"),
-                                        "file_size": binary.get("file_size", 0),
-                                    }
-                                )
+                                similar_binaries.append({
+                                    "path": binary["path"],
+                                    "filename": binary.get("filename", os.path.basename(binary["path"])),
+                                    "similarity": detailed_similarity,
+                                    "lsh_similarity": lsh_similarity,
+                                    "cracking_patterns": binary["cracking_patterns"],
+                                    "added": binary.get("added", "Unknown"),
+                                    "file_size": binary.get("file_size", 0),
+                                })
                             break
             else:
                 for binary in self.database["binaries"]:
                     similarity = self._calculate_similarity(target_features, binary["features"])
                     if similarity >= threshold:
-                        similar_binaries.append(
-                            {
-                                "path": binary["path"],
-                                "filename": binary.get("filename", os.path.basename(binary["path"])),
-                                "similarity": similarity,
-                                "cracking_patterns": binary["cracking_patterns"],
-                                "added": binary.get("added", "Unknown"),
-                                "file_size": binary.get("file_size", 0),
-                            }
-                        )
+                        similar_binaries.append({
+                            "path": binary["path"],
+                            "filename": binary.get("filename", os.path.basename(binary["path"])),
+                            "similarity": similarity,
+                            "cracking_patterns": binary["cracking_patterns"],
+                            "added": binary.get("added", "Unknown"),
+                            "file_size": binary.get("file_size", 0),
+                        })
 
             similar_binaries.sort(key=lambda x: x["similarity"], reverse=True)
 
@@ -1798,7 +1795,7 @@ class BinarySimilaritySearch:
                 cfg_sim = self.calculate_cfg_similarity(binary_path, result_path)
                 result["cfg_similarity"] = cfg_sim
 
-                composite_score = (result["similarity"] * 0.5 + ngram_sim * 0.3 + cfg_sim * 0.2)
+                composite_score = result["similarity"] * 0.5 + ngram_sim * 0.3 + cfg_sim * 0.2
                 result["composite_similarity"] = composite_score
 
             results.sort(key=lambda x: x.get("composite_similarity", 0), reverse=True)

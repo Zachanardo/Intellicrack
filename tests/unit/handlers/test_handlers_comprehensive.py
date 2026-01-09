@@ -121,14 +121,6 @@ except ImportError:
     pdfkit_handler = None  # type: ignore[assignment]
     PDFKIT_HANDLER_AVAILABLE = False
 
-try:
-    from intellicrack.handlers import pyelftools_handler
-    PYELFTOOLS_HANDLER_AVAILABLE = True
-except ImportError:
-    pyelftools_handler = None  # type: ignore[assignment]
-    PYELFTOOLS_HANDLER_AVAILABLE = False
-
-
 @pytest.mark.skipif(not PEFILE_HANDLER_AVAILABLE, reason="pefile_handler not available")
 class TestPEFileHandler:
     """Test PE file handler fallback functionality."""
@@ -419,16 +411,6 @@ class TestPDFKitHandler:
         """PDFKit handler module imports successfully."""
         assert hasattr(pdfkit_handler, "HAS_PDFKIT")
         assert isinstance(pdfkit_handler.HAS_PDFKIT, bool)
-
-
-@pytest.mark.skipif(not PYELFTOOLS_HANDLER_AVAILABLE, reason="pyelftools_handler not available")
-class TestPyElfToolsHandler:
-    """Test pyelftools ELF parsing handler."""
-
-    def test_pyelftools_handler_imports(self) -> None:
-        """Pyelftools handler module imports successfully."""
-        assert hasattr(pyelftools_handler, "HAS_PYELFTOOLS")
-        assert isinstance(pyelftools_handler.HAS_PYELFTOOLS, bool)
 
 
 @pytest.mark.real_data

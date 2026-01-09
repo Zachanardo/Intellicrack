@@ -98,6 +98,7 @@ class COMDebugDetector:
         }
 
         try:
+
             class GUID(ctypes.Structure):
                 _fields_ = [
                     ("Data1", wintypes.DWORD),
@@ -158,9 +159,7 @@ class COMDebugDetector:
     def _check_dbgeng_exports(self) -> bool:
         """Check if DbgEng.dll exports IDebugClient-related functions."""
         try:
-            dbgeng_path = os.path.join(
-                os.environ.get("SystemRoot", "C:\\Windows"), "System32", "dbgeng.dll"
-            )
+            dbgeng_path = os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32", "dbgeng.dll")
             if not os.path.exists(dbgeng_path):
                 return False
 
@@ -248,9 +247,7 @@ class COMDebugDetector:
             for i, method in enumerate(hooked_methods):
                 method_addr = ctypes.c_void_p.from_address(vtable_ptr + (i * 8)).value
                 if method_addr:
-                    result["hooked_methods"].append(
-                        {"name": method, "address": hex(method_addr), "index": i}
-                    )
+                    result["hooked_methods"].append({"name": method, "address": hex(method_addr), "index": i})
 
             result["hook_installed"] = True
             result["vtable_address"] = vtable_ptr
@@ -352,6 +349,7 @@ class COMDebugDetector:
     def _check_interface_active(self, clsid: str) -> bool:
         """Check if specific COM interface is active in process."""
         try:
+
             class GUID(ctypes.Structure):
                 _fields_ = [
                     ("Data1", wintypes.DWORD),
@@ -373,9 +371,7 @@ class COMDebugDetector:
                 guid.Data4[i + 2] = int(parts[4][i * 2 : i * 2 + 2], 16)
 
             interface_ptr = ctypes.c_void_p()
-            hr = self.ole32.CoCreateInstance(
-                ctypes.byref(guid), None, 1, ctypes.byref(guid), ctypes.byref(interface_ptr)
-            )
+            hr = self.ole32.CoCreateInstance(ctypes.byref(guid), None, 1, ctypes.byref(guid), ctypes.byref(interface_ptr))
 
             if hr == 0 and interface_ptr.value:
                 self.ole32.CoTaskMemFree(interface_ptr)
@@ -574,9 +570,7 @@ class COMDebugDetector:
 
             dcom_ports = [135, 593, 49152, 49153, 49154]
             remote_connections = [
-                conn
-                for conn in connections
-                if conn.status == "ESTABLISHED" and conn.raddr and conn.raddr.port in dcom_ports
+                conn for conn in connections if conn.status == "ESTABLISHED" and conn.raddr and conn.raddr.port in dcom_ports
             ]
 
             if remote_connections:
@@ -743,9 +737,7 @@ class COMDebugDetector:
 
         try:
             all_detection = self.enumerate_debugger_clsids()
-            non_amsi_clsids = [
-                clsid for clsid in all_detection["clsids_found"] if "AMSI" not in clsid.upper()
-            ]
+            non_amsi_clsids = [clsid for clsid in all_detection["clsids_found"] if "AMSI" not in clsid.upper()]
 
             result["debugging_detected"] = len(non_amsi_clsids) > 0
             result["detected_interfaces"] = non_amsi_clsids
@@ -793,13 +785,7 @@ class COMDebugDetector:
                 result["invalid_format"] = True
                 return result
 
-            if (
-                len(parts[0]) != 8
-                or len(parts[1]) != 4
-                or len(parts[2]) != 4
-                or len(parts[3]) != 4
-                or len(parts[4]) != 12
-            ):
+            if len(parts[0]) != 8 or len(parts[1]) != 4 or len(parts[2]) != 4 or len(parts[3]) != 4 or len(parts[4]) != 12:
                 result["invalid_format"] = True
                 return result
 
@@ -831,30 +817,24 @@ class COMDebugDetector:
             managed_api = self.detect_managed_debugging_api()
             script_debug = self.detect_script_engine_debugging()
 
-            result.update(
-                {
-                    "idebugclient_detected": idebugclient["interface_detected"],
-                    "dbgeng_loaded": dbgeng["dll_loaded"],
-                    "ole_debug_detected": ole_debug["interfaces_detected"],
-                    "icordebug_detected": icordebug["real_debugger_detected"],
-                    "icordebug_active": managed_api["icordebug_active"],
-                    "script_debugging_detected": script_debug["script_debugging_detected"],
-                }
-            )
+            result.update({
+                "idebugclient_detected": idebugclient["interface_detected"],
+                "dbgeng_loaded": dbgeng["dll_loaded"],
+                "ole_debug_detected": ole_debug["interfaces_detected"],
+                "icordebug_detected": icordebug["real_debugger_detected"],
+                "icordebug_active": managed_api["icordebug_active"],
+                "script_debugging_detected": script_debug["script_debugging_detected"],
+            })
 
-            result["debugger_detected"] = any(
-                [
-                    result["idebugclient_detected"],
-                    result["dbgeng_loaded"],
-                    result["ole_debug_detected"],
-                    result["icordebug_detected"],
-                    result["script_debugging_detected"],
-                ]
-            )
+            result["debugger_detected"] = any([
+                result["idebugclient_detected"],
+                result["dbgeng_loaded"],
+                result["ole_debug_detected"],
+                result["icordebug_detected"],
+                result["script_debugging_detected"],
+            ])
 
-            result["all_interfaces_hidden"] = not result["debugger_detected"] and len(
-                self.active_spoofs
-            ) > 0
+            result["all_interfaces_hidden"] = not result["debugger_detected"] and len(self.active_spoofs) > 0
 
             result["scan_complete"] = True
 

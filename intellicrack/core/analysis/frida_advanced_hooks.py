@@ -17,7 +17,6 @@ from intellicrack.utils.type_safety import ensure_dict, validate_type
 
 
 if TYPE_CHECKING:
-
     from frida.core import ScriptExportsSync, ScriptMessage
 
 

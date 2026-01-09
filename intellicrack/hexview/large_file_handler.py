@@ -74,6 +74,7 @@ except ImportError as e:
             A callable proxy object that mimics PyQt6 signal behavior.
 
         """
+
         class SignalProxy:
             """Proxy object that mimics PyQt6 signal behavior."""
 

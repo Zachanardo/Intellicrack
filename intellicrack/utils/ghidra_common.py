@@ -109,10 +109,10 @@ def run_ghidra_plugin(
 
         except subprocess.TimeoutExpired:
             process.kill()
-            stdout, stderr = process.communicate()
+            stdout, stderr = process.communicate(timeout=10)
             error_msg = f"Ghidra execution timed out after {timeout} seconds"
             logger.warning("Ghidra execution timed out after %s seconds", timeout)
-            return 124, stdout, error_msg  # 124 is standard timeout exit code
+            return 124, stdout, error_msg
 
     except Exception as e:
         error_msg = f"Ghidra execution failed: {e}"

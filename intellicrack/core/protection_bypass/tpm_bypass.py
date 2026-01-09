@@ -1953,13 +1953,9 @@ class TPMBypassEngine:
 
             sensitive_data = decrypted_sensitive[sens_offset : sens_offset + sensitive_data_size]
 
-            computed_inner_integrity = self._hmac_sha256(
-                auth_value or b"", decrypted_sensitive[: sens_offset + sensitive_data_size]
-            )
+            computed_inner_integrity = self._hmac_sha256(auth_value or b"", decrypted_sensitive[: sens_offset + sensitive_data_size])
 
-            if inner_integrity and not self._constant_time_compare(
-                computed_inner_integrity[:integrity_size], inner_integrity
-            ):
+            if inner_integrity and not self._constant_time_compare(computed_inner_integrity[:integrity_size], inner_integrity):
                 self.logger.debug("Inner integrity validation failed - returning data anyway")
 
             if self._looks_like_valid_key(sensitive_data):

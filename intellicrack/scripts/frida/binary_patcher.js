@@ -348,13 +348,13 @@ const BinaryPatcher = {
                     const nops = {
                         1: [0x90],
                         2: [0x66, 0x90],
-                        3: [0x0F, 0x1F, 0x00],
-                        4: [0x0F, 0x1F, 0x40, 0x00],
-                        5: [0x0F, 0x1F, 0x44, 0x00, 0x00],
-                        6: [0x66, 0x0F, 0x1F, 0x44, 0x00, 0x00],
-                        7: [0x0F, 0x1F, 0x80, 0x00, 0x00, 0x00, 0x00],
-                        8: [0x0F, 0x1F, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00],
-                        9: [0x66, 0x0F, 0x1F, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00],
+                        3: [0x0f, 0x1f, 0x00],
+                        4: [0x0f, 0x1f, 0x40, 0x00],
+                        5: [0x0f, 0x1f, 0x44, 0x00, 0x00],
+                        6: [0x66, 0x0f, 0x1f, 0x44, 0x00, 0x00],
+                        7: [0x0f, 0x1f, 0x80, 0x00, 0x00, 0x00, 0x00],
+                        8: [0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00],
+                        9: [0x66, 0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00],
                     };
 
                     const result = [];
@@ -375,18 +375,18 @@ const BinaryPatcher = {
                     const offset = to.sub(from).sub(5).toInt32();
 
                     // Near JMP (5 bytes)
-                    if (Math.abs(offset) <= 0x7F_FF_FF_FF) {
-                        return [0xE9, ...this.int32ToBytes(offset)];
+                    if (Math.abs(offset) <= 0x7f_ff_ff_ff) {
+                        return [0xe9, ...this.int32ToBytes(offset)];
                     }
 
                     // Far JMP using register (14 bytes)
                     const absAddr = to.toInt64();
                     return [
                         0x48,
-                        0xB8,
+                        0xb8,
                         ...this.int64ToBytes(absAddr), // MOV RAX, address
-                        0xFF,
-                        0xE0, // JMP RAX
+                        0xff,
+                        0xe0, // JMP RAX
                     ];
                 },
 
@@ -395,27 +395,27 @@ const BinaryPatcher = {
                     const offset = to.sub(from).sub(5).toInt32();
 
                     // Near CALL (5 bytes)
-                    if (Math.abs(offset) <= 0x7F_FF_FF_FF) {
-                        return [0xE8, ...this.int32ToBytes(offset)];
+                    if (Math.abs(offset) <= 0x7f_ff_ff_ff) {
+                        return [0xe8, ...this.int32ToBytes(offset)];
                     }
 
                     // Far CALL using register (14 bytes)
                     const absAddr = to.toInt64();
                     return [
                         0x48,
-                        0xB8,
+                        0xb8,
                         ...this.int64ToBytes(absAddr), // MOV RAX, address
-                        0xFF,
-                        0xD0, // CALL RAX
+                        0xff,
+                        0xd0, // CALL RAX
                     ];
                 },
 
                 // Generate RET instruction
                 generateRet: (popBytes = 0) => {
                     if (popBytes === 0) {
-                        return [0xC3]; // RET
+                        return [0xc3]; // RET
                     }
-                    return [0xC2, popBytes & 0xFF, (popBytes >> 8) & 0xFF]; // RET imm16
+                    return [0xc2, popBytes & 0xff, (popBytes >> 8) & 0xff]; // RET imm16
                 },
 
                 // Patch function to always return specific value
@@ -423,18 +423,18 @@ const BinaryPatcher = {
                     const bytes = [];
 
                     if (returnValue === 0) {
-                        bytes.push(0x31, 0xC0); // XOR EAX, EAX
+                        bytes.push(0x31, 0xc0); // XOR EAX, EAX
                     } else if (returnValue === 1) {
-                        bytes.push(0x31, 0xC0, 0x40); // XOR EAX, EAX; INC EAX
+                        bytes.push(0x31, 0xc0, 0x40); // XOR EAX, EAX; INC EAX
                     } else {
-                        bytes.push(0xB8, ...this.int32ToBytes(returnValue)); // MOV EAX, value
+                        bytes.push(0xb8, ...this.int32ToBytes(returnValue)); // MOV EAX, value
                     }
 
-                    bytes.push(0xC3); // RET
+                    bytes.push(0xc3); // RET
 
                     // Pad with NOPs if needed
-                    const originalSize
-                        = Memory.readU8(address.add(bytes.length - 1)) === 0xC3 ? bytes.length : 10;
+                    const originalSize =
+                        Memory.readU8(address.add(bytes.length - 1)) === 0xc3 ? bytes.length : 10;
                     while (bytes.length < originalSize) {
                         bytes.push(0x90); // NOP
                     }
@@ -444,15 +444,15 @@ const BinaryPatcher = {
 
                 // Helper functions
                 int32ToBytes: value => [
-                    value & 0xFF,
-                    (value >> 8) & 0xFF,
-                    (value >> 16) & 0xFF,
-                    (value >> 24) & 0xFF,
+                    value & 0xff,
+                    (value >> 8) & 0xff,
+                    (value >> 16) & 0xff,
+                    (value >> 24) & 0xff,
                 ],
 
                 int64ToBytes(value) {
-                    const low = value & 0xFF_FF_FF_FF;
-                    const high = Math.trunc(value) & 0xFF_FF_FF_FF;
+                    const low = value & 0xff_ff_ff_ff;
+                    const high = Math.trunc(value) & 0xff_ff_ff_ff;
                     return [...this.int32ToBytes(low), ...this.int32ToBytes(high)];
                 },
             },
@@ -463,7 +463,7 @@ const BinaryPatcher = {
 
                 // Generate NOP instruction
                 generateNop: (count = 1) => {
-                    const nop = [0x1F, 0x20, 0x03, 0xD5]; // NOP
+                    const nop = [0x1f, 0x20, 0x03, 0xd5]; // NOP
                     const result = [];
                     for (let i = 0; i < count; i++) {
                         result.push(...nop);
@@ -476,17 +476,17 @@ const BinaryPatcher = {
                     const offset = to.sub(from).toInt32() >> 2;
 
                     // B instruction (unconditional branch)
-                    if (Math.abs(offset) <= 0x1_FF_FF_FF) {
-                        const encoded = 0x14_00_00_00 | (offset & 0x3_FF_FF_FF);
+                    if (Math.abs(offset) <= 0x1_ff_ff_ff) {
+                        const encoded = 0x14_00_00_00 | (offset & 0x3_ff_ff_ff);
                         return this.int32ToBytes(encoded);
                     }
 
                     // Use ADRP + ADD + BR for long jumps with page offset
                     const page = (to.toInt64() >> 12) << 12;
-                    const pageOffset = to.toInt64() & 0xF_FF;
-                    const adrp = 0x90_00_00_00 | (((page >> 12) & 0x1F_FF_FF) << 5) | 0x10; // ADRP X16, page
+                    const pageOffset = to.toInt64() & 0xf_ff;
+                    const adrp = 0x90_00_00_00 | (((page >> 12) & 0x1f_ff_ff) << 5) | 0x10; // ADRP X16, page
                     const add = 0x91_00_00_00 | (pageOffset << 10) | (0x10 << 5) | 0x10; // ADD X16, X16, #pageOffset
-                    const br = 0xD6_1F_02_00; // BR X16
+                    const br = 0xd6_1f_02_00; // BR X16
 
                     return [
                         ...this.int32ToBytes(adrp),
@@ -500,24 +500,24 @@ const BinaryPatcher = {
                     const bytes = [];
 
                     if (value === 0) {
-                        bytes.push(...this.int32ToBytes(0xD2_80_00_00)); // MOV X0, #0
+                        bytes.push(...this.int32ToBytes(0xd2_80_00_00)); // MOV X0, #0
                     } else if (value === 1) {
-                        bytes.push(...this.int32ToBytes(0xD2_80_00_20)); // MOV X0, #1
+                        bytes.push(...this.int32ToBytes(0xd2_80_00_20)); // MOV X0, #1
                     } else {
-                        const movz = 0xD2_80_00_00 | ((value & 0xFF_FF) << 5);
+                        const movz = 0xd2_80_00_00 | ((value & 0xff_ff) << 5);
                         bytes.push(...this.int32ToBytes(movz));
                     }
 
-                    bytes.push(...this.int32ToBytes(0xD6_5F_03_C0)); // RET
+                    bytes.push(...this.int32ToBytes(0xd6_5f_03_c0)); // RET
 
                     return bytes;
                 },
 
                 int32ToBytes: value => [
-                    value & 0xFF,
-                    (value >> 8) & 0xFF,
-                    (value >> 16) & 0xFF,
-                    (value >> 24) & 0xFF,
+                    value & 0xff,
+                    (value >> 8) & 0xff,
+                    (value >> 16) & 0xff,
+                    (value >> 24) & 0xff,
                 ],
             },
 
@@ -526,13 +526,13 @@ const BinaryPatcher = {
                 name: 'WebAssembly',
 
                 // Patch WASM function to return constant
-                patchFunction: (_funcIndex, returnValue) => [0x41, returnValue, 0x0F],
+                patchFunction: (_funcIndex, returnValue) => [0x41, returnValue, 0x0f],
 
                 // Generate NOP in WASM
                 generateNop: () => [0x01], // nop
 
                 // Skip instruction
-                generateSkip: () => [0x0C, 0x00], // br 0 (branch to next)
+                generateSkip: () => [0x0c, 0x00], // br 0 (branch to next)
             },
 
             // JVM bytecode patching
@@ -550,10 +550,10 @@ const BinaryPatcher = {
                     } else if (value >= -128 && value <= 127) {
                         bytes.push(0x10, value); // bipush
                     } else {
-                        bytes.push(0x11, (value >> 8) & 0xFF, value & 0xFF); // sipush
+                        bytes.push(0x11, (value >> 8) & 0xff, value & 0xff); // sipush
                     }
 
-                    bytes.push(0xAC); // ireturn
+                    bytes.push(0xac); // ireturn
                     return bytes;
                 },
 
@@ -591,7 +591,7 @@ const BinaryPatcher = {
                     const view = new DataView(buffer);
                     return {
                         e_magic: view.getUint16(0, true),
-                        e_lfanew: view.getUint32(0x3C, true),
+                        e_lfanew: view.getUint32(0x3c, true),
                     };
                 },
 
@@ -611,7 +611,7 @@ const BinaryPatcher = {
 
                     const optHeaderOffset = offset + 24;
                     const magic = view.getUint16(optHeaderOffset, true);
-                    const is64bit = magic === 0x2_0B;
+                    const is64bit = magic === 0x2_0b;
 
                     const optionalHeader = {
                         Magic: magic,
@@ -685,13 +685,13 @@ const BinaryPatcher = {
                         }
 
                         const word = view.getUint16(i, true);
-                        checksum = (checksum & 0xFF_FF) + word + (checksum >> 16);
-                        if (checksum > 0xFF_FF) {
-                            checksum = (checksum & 0xFF_FF) + (checksum >> 16);
+                        checksum = (checksum & 0xff_ff) + word + (checksum >> 16);
+                        if (checksum > 0xff_ff) {
+                            checksum = (checksum & 0xff_ff) + (checksum >> 16);
                         }
                     }
 
-                    checksum = (checksum & 0xFF_FF) + (checksum >> 16);
+                    checksum = (checksum & 0xff_ff) + (checksum >> 16);
                     checksum += length;
 
                     // Write new checksum
@@ -723,8 +723,8 @@ const BinaryPatcher = {
                 rvaToOffset: (rva, sections) => {
                     for (const section of sections) {
                         if (
-                            rva >= section.VirtualAddress
-                            && rva < section.VirtualAddress + section.VirtualSize
+                            rva >= section.VirtualAddress &&
+                            rva < section.VirtualAddress + section.VirtualSize
                         ) {
                             return rva - section.VirtualAddress + section.PointerToRawData;
                         }
@@ -799,8 +799,8 @@ const BinaryPatcher = {
                     const view = new DataView(buffer);
                     const magic = view.getUint32(0, false);
 
-                    const is64bit = magic === 0xFE_ED_FA_CF || magic === 0xCF_FA_ED_FE;
-                    const isLittleEndian = magic === 0xCE_FA_ED_FE || magic === 0xCF_FA_ED_FE;
+                    const is64bit = magic === 0xfe_ed_fa_cf || magic === 0xcf_fa_ed_fe;
+                    const isLittleEndian = magic === 0xce_fa_ed_fe || magic === 0xcf_fa_ed_fe;
 
                     return {
                         magic,
@@ -824,7 +824,7 @@ const BinaryPatcher = {
                         const cmd = view.getUint32(offset, true);
                         const cmdsize = view.getUint32(offset + 4, true);
 
-                        if (cmd === 0x1D) {
+                        if (cmd === 0x1d) {
                             // LC_CODE_SIGNATURE
                             return {
                                 offset: view.getUint32(offset + 8, true),
@@ -937,13 +937,13 @@ const BinaryPatcher = {
 
             crc32(buffer, start, end) {
                 const crcTable = this.getCrc32Table();
-                let crc = 0xFF_FF_FF_FF;
+                let crc = 0xff_ff_ff_ff;
 
                 for (let i = start; i < end; i++) {
-                    crc = (crc >>> 8) ^ crcTable[(crc ^ buffer[i]) & 0xFF];
+                    crc = (crc >>> 8) ^ crcTable[(crc ^ buffer[i]) & 0xff];
                 }
 
-                return (crc ^ 0xFF_FF_FF_FF) >>> 0;
+                return (crc ^ 0xff_ff_ff_ff) >>> 0;
             },
 
             sum32: (buffer, start, end) => {
@@ -968,7 +968,7 @@ const BinaryPatcher = {
                     for (let i = 0; i < 256; i++) {
                         let c = i;
                         for (let j = 0; j < 8; j++) {
-                            c = c & 1 ? 0xED_B8_83_20 ^ (c >>> 1) : c >>> 1;
+                            c = c & 1 ? 0xed_b8_83_20 ^ (c >>> 1) : c >>> 1;
                         }
                         this.crcTable[i] = c >>> 0;
                     }
@@ -1044,7 +1044,7 @@ const BinaryPatcher = {
 
                     for (let i = 0; i < substituted.length - 1; i++) {
                         // Check for MOV instructions
-                        if (substituted[i] === 0x89 || substituted[i] === 0x8B) {
+                        if (substituted[i] === 0x89 || substituted[i] === 0x8b) {
                             const modRM = substituted[i + 1];
                             const mod = (modRM >> 6) & 0x03;
                             const reg = (modRM >> 3) & 0x07;
@@ -1054,12 +1054,12 @@ const BinaryPatcher = {
 
                             // Substitute reg field
                             if (regMap[reg] !== undefined) {
-                                newModRM = (newModRM & 0xC7) | (regMap[reg] << 3);
+                                newModRM = (newModRM & 0xc7) | (regMap[reg] << 3);
                             }
 
                             // Substitute rm field if it's a register (mod == 11)
                             if (mod === 0x03 && regMap[rm] !== undefined) {
-                                newModRM = (newModRM & 0xF8) | regMap[rm];
+                                newModRM = (newModRM & 0xf8) | regMap[rm];
                             }
 
                             substituted[i + 1] = newModRM;
@@ -1075,8 +1075,8 @@ const BinaryPatcher = {
                         [0x90], // NOP
                         [0x50, 0x58], // PUSH EAX; POP EAX
                         [0x51, 0x59], // PUSH ECX; POP ECX
-                        [0x87, 0xC0], // XCHG EAX, EAX
-                        [0x89, 0xC0], // MOV EAX, EAX
+                        [0x87, 0xc0], // XCHG EAX, EAX
+                        [0x89, 0xc0], // MOV EAX, EAX
                     ];
 
                     for (const byte of bytes) {
@@ -1084,8 +1084,8 @@ const BinaryPatcher = {
 
                         // Randomly insert junk
                         if (Math.random() < 0.2) {
-                            const junk
-                                = junkPatterns[Math.floor(Math.random() * junkPatterns.length)];
+                            const junk =
+                                junkPatterns[Math.floor(Math.random() * junkPatterns.length)];
                             result.push(...junk);
                         }
                     }
@@ -1156,14 +1156,14 @@ const BinaryPatcher = {
                                     const patchEnd = address.add(size);
 
                                     if (
-                                        targetAddr.compare(patchEnd) < 0
-                                        && targetEnd.compare(address) > 0
+                                        targetAddr.compare(patchEnd) < 0 &&
+                                        targetEnd.compare(address) > 0
                                     ) {
                                         // Calculate overlap
-                                        const overlapStart
-                                            = targetAddr.compare(address) > 0 ? targetAddr : address;
-                                        const overlapEnd
-                                            = targetEnd.compare(patchEnd) < 0 ? targetEnd : patchEnd;
+                                        const overlapStart =
+                                            targetAddr.compare(address) > 0 ? targetAddr : address;
+                                        const overlapEnd =
+                                            targetEnd.compare(patchEnd) < 0 ? targetEnd : patchEnd;
                                         const overlapSize = overlapEnd.sub(overlapStart).toInt32();
 
                                         // Redirect to original bytes
@@ -1262,8 +1262,8 @@ const BinaryPatcher = {
 
                     // Evict if necessary
                     while (
-                        this.currentCacheSize + size > this.maxCacheSize
-                        && this.cache.size > 0
+                        this.currentCacheSize + size > this.maxCacheSize &&
+                        this.cache.size > 0
                     ) {
                         const firstKey = this.cache.keys().next().value;
                         const firstValue = this.cache.get(firstKey);
@@ -1569,9 +1569,9 @@ const BinaryPatcher = {
         }
 
         // Update average time
-        metrics.averagePatchTime
-            = (metrics.averagePatchTime * (metrics.totalPatches - 1) + patchTime)
-            / metrics.totalPatches;
+        metrics.averagePatchTime =
+            (metrics.averagePatchTime * (metrics.totalPatches - 1) + patchTime) /
+            metrics.totalPatches;
     },
 
     // === PUBLIC API ===

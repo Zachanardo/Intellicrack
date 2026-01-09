@@ -46,15 +46,15 @@ const tpmEmulator = {
     config: {
         // TPM Properties
         tpmProperties: {
-            TPM_PT_FAMILY_INDICATOR: 0x32_2E_30_00, // "2.0"
+            TPM_PT_FAMILY_INDICATOR: 0x32_2e_30_00, // "2.0"
             TPM_PT_LEVEL: 0,
             TPM_PT_REVISION: 138,
             TPM_PT_DAY_OF_YEAR: 1,
             TPM_PT_YEAR: 2024,
-            TPM_PT_MANUFACTURER: 0x49_4E_54_43, // "INTC" (Intel)
-            TPM_PT_VENDOR_STRING_1: 0x49_6E_74_65, // "Inte"
-            TPM_PT_VENDOR_STRING_2: 0x6C_20_46_50, // "l TP"
-            TPM_PT_VENDOR_STRING_3: 0x4D_20_32_00, // "M 2."
+            TPM_PT_MANUFACTURER: 0x49_4e_54_43, // "INTC" (Intel)
+            TPM_PT_VENDOR_STRING_1: 0x49_6e_74_65, // "Inte"
+            TPM_PT_VENDOR_STRING_2: 0x6c_20_46_50, // "l TP"
+            TPM_PT_VENDOR_STRING_3: 0x4d_20_32_00, // "M 2."
             TPM_PT_VENDOR_STRING_4: 0x30_00_00_00, // "0"
             TPM_PT_VENDOR_TPM_TYPE: 1,
             TPM_PT_FIRMWARE_VERSION_1: 0x00_07_00_55,
@@ -410,16 +410,16 @@ const tpmEmulator = {
     // Process TPM 2.0 commands
     processTPMCommand(commandBuffer) {
         const tag = (commandBuffer[0] << 8) | commandBuffer[1];
-        const commandSize
-            = (commandBuffer[2] << 24)
-            | (commandBuffer[3] << 16)
-            | (commandBuffer[4] << 8)
-            | commandBuffer[5];
-        const commandCode
-            = (commandBuffer[6] << 24)
-            | (commandBuffer[7] << 16)
-            | (commandBuffer[8] << 8)
-            | commandBuffer[9];
+        const commandSize =
+            (commandBuffer[2] << 24) |
+            (commandBuffer[3] << 16) |
+            (commandBuffer[4] << 8) |
+            commandBuffer[5];
+        const commandCode =
+            (commandBuffer[6] << 24) |
+            (commandBuffer[7] << 16) |
+            (commandBuffer[8] << 8) |
+            commandBuffer[9];
 
         // Comprehensive TPM command size analysis and validation system
         const commandAnalysis = {
@@ -474,7 +474,7 @@ const tpmEmulator = {
                 return this.handleGetCapability(commandBuffer);
             }
 
-            case 0x00_00_01_7E: {
+            case 0x00_00_01_7e: {
                 // TPM2_PCR_Read
                 return this.handlePCRRead(commandBuffer);
             }
@@ -499,7 +499,7 @@ const tpmEmulator = {
                 return this.handleCreatePrimary(commandBuffer);
             }
 
-            case 0x00_00_01_4E: {
+            case 0x00_00_01_4e: {
                 // TPM2_NV_Read
                 return this.handleNVRead(commandBuffer);
             }
@@ -519,7 +519,7 @@ const tpmEmulator = {
                 return this.handleGetRandom(commandBuffer);
             }
 
-            case 0x00_00_01_5D: {
+            case 0x00_00_01_5d: {
                 // TPM2_Sign
                 return this.handleSign(commandBuffer);
             }
@@ -536,28 +536,28 @@ const tpmEmulator = {
                     action: 'unhandled_command',
                     command_code: `0x${commandCode.toString(16)}`,
                 });
-                return this.createErrorResponse(tag, 0x00_00_00_0D);
+                return this.createErrorResponse(tag, 0x00_00_00_0d);
             } // TPM_RC_COMMAND_CODE
         }
     },
 
     // Handle TPM2_GetCapability
     handleGetCapability(commandBuffer) {
-        const capability
-            = (commandBuffer[10] << 24)
-            | (commandBuffer[11] << 16)
-            | (commandBuffer[12] << 8)
-            | commandBuffer[13];
-        const property
-            = (commandBuffer[14] << 24)
-            | (commandBuffer[15] << 16)
-            | (commandBuffer[16] << 8)
-            | commandBuffer[17];
-        const propertyCount
-            = (commandBuffer[18] << 24)
-            | (commandBuffer[19] << 16)
-            | (commandBuffer[20] << 8)
-            | commandBuffer[21];
+        const capability =
+            (commandBuffer[10] << 24) |
+            (commandBuffer[11] << 16) |
+            (commandBuffer[12] << 8) |
+            commandBuffer[13];
+        const property =
+            (commandBuffer[14] << 24) |
+            (commandBuffer[15] << 16) |
+            (commandBuffer[16] << 8) |
+            commandBuffer[17];
+        const propertyCount =
+            (commandBuffer[18] << 24) |
+            (commandBuffer[19] << 16) |
+            (commandBuffer[20] << 8) |
+            commandBuffer[21];
 
         send({
             type: 'info',
@@ -577,10 +577,10 @@ const tpmEmulator = {
         response[offset++] = 0x00;
 
         // capabilityData
-        response[offset++] = (capability >> 24) & 0xFF;
-        response[offset++] = (capability >> 16) & 0xFF;
-        response[offset++] = (capability >> 8) & 0xFF;
-        response[offset++] = capability & 0xFF;
+        response[offset++] = (capability >> 24) & 0xff;
+        response[offset++] = (capability >> 16) & 0xff;
+        response[offset++] = (capability >> 8) & 0xff;
+        response[offset++] = capability & 0xff;
 
         switch (capability) {
             case 0x00_00_00_06: {
@@ -672,8 +672,8 @@ const tpmEmulator = {
             const hashAlg = (commandBuffer[11 + selIdx * 4] << 8) | commandBuffer[12 + selIdx * 4];
             const sizeOfSelect = commandBuffer[13 + selIdx * 4];
 
-            response[offset++] = (hashAlg >> 8) & 0xFF;
-            response[offset++] = hashAlg & 0xFF;
+            response[offset++] = (hashAlg >> 8) & 0xff;
+            response[offset++] = hashAlg & 0xff;
             response[offset++] = sizeOfSelect;
 
             // Copy PCR selection bitmap
@@ -716,8 +716,8 @@ const tpmEmulator = {
         quoteAnalysis.pcr_selection = bufferAnalysis.pcr_list;
 
         // Identify attestation vulnerabilities in command buffer
-        quoteAnalysis.attestation_vulnerabilities
-            = this.identifyAttestationVulnerabilities(bufferAnalysis);
+        quoteAnalysis.attestation_vulnerabilities =
+            this.identifyAttestationVulnerabilities(bufferAnalysis);
 
         // Determine bypass techniques for attestation
         quoteAnalysis.bypass_techniques = [
@@ -755,7 +755,7 @@ const tpmEmulator = {
         // signature - TPMT_SIGNATURE
         const signature = this.createSignature(attestData);
         offset = this.writeU16(response, offset, 0x00_14); // TPM_ALG_RSASSA
-        offset = this.writeU16(response, offset, 0x00_0B); // TPM_ALG_SHA256
+        offset = this.writeU16(response, offset, 0x00_0b); // TPM_ALG_SHA256
         offset = this.writeU16(response, offset, signature.length);
         for (const sigByte of signature) {
             response[offset++] = sigByte;
@@ -772,7 +772,7 @@ const tpmEmulator = {
 
         // TPMS_ATTEST structure
         // magic
-        attest[offset++] = 0xFF;
+        attest[offset++] = 0xff;
         attest[offset++] = 0x54;
         attest[offset++] = 0x43;
         attest[offset++] = 0x47;
@@ -783,7 +783,7 @@ const tpmEmulator = {
         // qualifiedSigner (name of signing key)
         offset = this.writeU16(attest, offset, 4);
         attest[offset++] = 0x00;
-        attest[offset++] = 0x0B; // SHA256
+        attest[offset++] = 0x0b; // SHA256
         attest[offset++] = 0x12;
         attest[offset++] = 0x34;
 
@@ -812,16 +812,16 @@ const tpmEmulator = {
         attest[offset++] = 0x00;
         attest[offset++] = 0x01; // count
         attest[offset++] = 0x00;
-        attest[offset++] = 0x0B; // SHA256
+        attest[offset++] = 0x0b; // SHA256
         attest[offset++] = 0x03; // sizeofSelect
-        attest[offset++] = 0xFF; // PCR 0-7
-        attest[offset++] = 0xFF; // PCR 8-15
-        attest[offset++] = 0xFF; // PCR 16-23
+        attest[offset++] = 0xff; // PCR 0-7
+        attest[offset++] = 0xff; // PCR 8-15
+        attest[offset++] = 0xff; // PCR 16-23
 
         // PCR digest (SHA256 of PCR values)
         offset = this.writeU16(attest, offset, 32);
         for (let pcrIdx = 0; pcrIdx < 32; pcrIdx++) {
-            attest[offset++] = 0xAA; // Emulated PCR digest value for attestation bypass
+            attest[offset++] = 0xaa; // Emulated PCR digest value for attestation bypass
         }
 
         return attest.slice(0, offset);
@@ -835,7 +835,7 @@ const tpmEmulator = {
 
         // Fill with deterministic but random-looking data
         for (let i = 0; i < 256; i++) {
-            signature[i] = (data[i % data.length] ^ 0xAA) & 0xFF;
+            signature[i] = (data[i % data.length] ^ 0xaa) & 0xff;
         }
 
         return signature;
@@ -844,11 +844,11 @@ const tpmEmulator = {
     // Handle TPM2_NV_Read
     handleNVRead(commandBuffer) {
         // Extract NV index
-        const nvIndex
-            = (commandBuffer[10] << 24)
-            | (commandBuffer[11] << 16)
-            | (commandBuffer[12] << 8)
-            | commandBuffer[13];
+        const nvIndex =
+            (commandBuffer[10] << 24) |
+            (commandBuffer[11] << 16) |
+            (commandBuffer[12] << 8) |
+            commandBuffer[13];
 
         send({
             type: 'info',
@@ -881,11 +881,11 @@ const tpmEmulator = {
 
     // Handle TPM2_NV_Write
     handleNVWrite(commandBuffer) {
-        const nvIndex
-            = (commandBuffer[10] << 24)
-            | (commandBuffer[11] << 16)
-            | (commandBuffer[12] << 8)
-            | commandBuffer[13];
+        const nvIndex =
+            (commandBuffer[10] << 24) |
+            (commandBuffer[11] << 16) |
+            (commandBuffer[12] << 8) |
+            commandBuffer[13];
 
         send({
             type: 'info',
@@ -926,8 +926,8 @@ const tpmEmulator = {
         primaryKeyAnalysis.template_analysis = bufferAnalysis.template;
 
         // Identify cryptographic vulnerabilities in key creation
-        primaryKeyAnalysis.cryptographic_vulnerabilities
-            = this.identifyKeyCreationVulnerabilities(bufferAnalysis);
+        primaryKeyAnalysis.cryptographic_vulnerabilities =
+            this.identifyKeyCreationVulnerabilities(bufferAnalysis);
 
         // Determine bypass techniques for primary key creation
         primaryKeyAnalysis.key_bypass_techniques = [
@@ -972,7 +972,7 @@ const tpmEmulator = {
         // creationHash - TPM2B_DIGEST
         offset = this.writeU16(response, offset, 32);
         for (let hashIdx = 0; hashIdx < 32; hashIdx++) {
-            response[offset++] = 0xBB;
+            response[offset++] = 0xbb;
         }
 
         // creationTicket - TPMT_TK_CREATION
@@ -980,14 +980,14 @@ const tpmEmulator = {
         offset = this.writeU32(response, offset, 0x40_00_00_01); // hierarchy
         offset = this.writeU16(response, offset, 32); // digest
         for (let ticketIdx = 0; ticketIdx < 32; ticketIdx++) {
-            response[offset++] = 0xCC;
+            response[offset++] = 0xcc;
         }
 
         // name - TPM2B_NAME
         offset = this.writeU16(response, offset, 34);
-        offset = this.writeU16(response, offset, 0x00_0B); // SHA256
+        offset = this.writeU16(response, offset, 0x00_0b); // SHA256
         for (let nameIdx = 0; nameIdx < 32; nameIdx++) {
-            response[offset++] = 0xDD;
+            response[offset++] = 0xdd;
         }
 
         this.updateResponseSize(response, offset);
@@ -1004,7 +1004,7 @@ const tpmEmulator = {
         offset = this.writeU16(publicArea, offset, 0x00_01); // TPM_ALG_RSA
 
         // nameAlg
-        offset = this.writeU16(publicArea, offset, 0x00_0B); // TPM_ALG_SHA256
+        offset = this.writeU16(publicArea, offset, 0x00_0b); // TPM_ALG_SHA256
 
         // objectAttributes
         offset = this.writeU32(publicArea, offset, 0x00_03_04_72); // fixedTPM, fixedParent, etc.
@@ -1030,7 +1030,7 @@ const tpmEmulator = {
 
         // RSA-2048 modulus for emulated TPM key
         for (let i = 0; i < 256; i++) {
-            publicArea[offset++] = 0xFF - i;
+            publicArea[offset++] = 0xff - i;
         }
 
         return publicArea.slice(0, offset);
@@ -1105,7 +1105,7 @@ const tpmEmulator = {
                     if (this.isTPM && retval.toInt32() >= 0) {
                         // Process based on IOCTL code
                         switch (this.ioControlCode) {
-                            case 0x22_C0_0C: {
+                            case 0x22_c0_0c: {
                                 // TPM_IOCTL_SUBMIT_COMMAND
                                 const response = self.processTPMCommand(
                                     new Uint8Array(this.inputData)
@@ -1114,10 +1114,10 @@ const tpmEmulator = {
                                 break;
                             }
 
-                            case 0x22_C0_14: {
+                            case 0x22_c0_14: {
                                 // TPM_IOCTL_GET_CAPABILITY
                                 // Return TPM 2.0 capability
-                                this.outputBuffer.writeU32(0x32_2E_30_00); // "2.0"
+                                this.outputBuffer.writeU32(0x32_2e_30_00); // "2.0"
                                 break;
                             }
 
@@ -1260,7 +1260,8 @@ const tpmEmulator = {
                             args
                         );
                         this.providerAnalysisResult = providerAnalysis;
-                        windowsTPMAnalysis.provider_analysis[this.pszProviderName] = providerAnalysis;
+                        windowsTPMAnalysis.provider_analysis[this.pszProviderName] =
+                            providerAnalysis;
 
                         // Store provider analysis using self context
                         self.storeWindowsTPMProviderAnalysis(providerAnalysis);
@@ -1396,8 +1397,8 @@ const tpmEmulator = {
     // Helper functions
     writeResponseHeader(buffer, offset, tag, responseCode) {
         // TPM response header
-        buffer[offset++] = (tag >> 8) & 0xFF;
-        buffer[offset++] = tag & 0xFF;
+        buffer[offset++] = (tag >> 8) & 0xff;
+        buffer[offset++] = tag & 0xff;
 
         // Size (will be calculated and updated later)
         offset += 4;
@@ -1410,10 +1411,10 @@ const tpmEmulator = {
 
     updateResponseSize: (buffer, size) => {
         // Update size field in header
-        buffer[2] = (size >> 24) & 0xFF;
-        buffer[3] = (size >> 16) & 0xFF;
-        buffer[4] = (size >> 8) & 0xFF;
-        buffer[5] = size & 0xFF;
+        buffer[2] = (size >> 24) & 0xff;
+        buffer[3] = (size >> 16) & 0xff;
+        buffer[4] = (size >> 8) & 0xff;
+        buffer[5] = size & 0xff;
     },
 
     createSuccessResponse(tag) {
@@ -1437,16 +1438,16 @@ const tpmEmulator = {
     },
 
     writeU16: (buffer, offset, value) => {
-        buffer[offset++] = (value >> 8) & 0xFF;
-        buffer[offset++] = value & 0xFF;
+        buffer[offset++] = (value >> 8) & 0xff;
+        buffer[offset++] = value & 0xff;
         return offset;
     },
 
     writeU32: (buffer, offset, value) => {
-        buffer[offset++] = (value >> 24) & 0xFF;
-        buffer[offset++] = (value >> 16) & 0xFF;
-        buffer[offset++] = (value >> 8) & 0xFF;
-        buffer[offset++] = value & 0xFF;
+        buffer[offset++] = (value >> 24) & 0xff;
+        buffer[offset++] = (value >> 16) & 0xff;
+        buffer[offset++] = (value >> 8) & 0xff;
+        buffer[offset++] = value & 0xff;
         return offset;
     },
 
@@ -1464,7 +1465,7 @@ const tpmEmulator = {
             0x00_01, // TPM_ALG_RSA
             0x00_14, // TPM_ALG_RSASSA
             0x00_16, // TPM_ALG_RSAES
-            0x00_0B, // TPM_ALG_SHA256
+            0x00_0b, // TPM_ALG_SHA256
             0x00_04, // TPM_ALG_SHA1
             0x00_12, // TPM_ALG_SHA512
             0x00_06, // TPM_ALG_AES
@@ -1505,22 +1506,22 @@ const tpmEmulator = {
         // SHA1 bank
         offset = this.writeU16(response, offset, 0x00_04); // TPM_ALG_SHA1
         offset = this.writeU8(response, offset, 3); // sizeofSelect
-        offset = this.writeU8(response, offset, 0xFF); // PCR 0-7
-        offset = this.writeU8(response, offset, 0xFF); // PCR 8-15
-        offset = this.writeU8(response, offset, 0xFF); // PCR 16-23
+        offset = this.writeU8(response, offset, 0xff); // PCR 0-7
+        offset = this.writeU8(response, offset, 0xff); // PCR 8-15
+        offset = this.writeU8(response, offset, 0xff); // PCR 16-23
 
         // SHA256 bank
-        offset = this.writeU16(response, offset, 0x00_0B); // TPM_ALG_SHA256
+        offset = this.writeU16(response, offset, 0x00_0b); // TPM_ALG_SHA256
         offset = this.writeU8(response, offset, 3); // sizeofSelect
-        offset = this.writeU8(response, offset, 0xFF); // PCR 0-7
-        offset = this.writeU8(response, offset, 0xFF); // PCR 8-15
-        offset = this.writeU8(response, offset, 0xFF); // PCR 16-23
+        offset = this.writeU8(response, offset, 0xff); // PCR 0-7
+        offset = this.writeU8(response, offset, 0xff); // PCR 8-15
+        offset = this.writeU8(response, offset, 0xff); // PCR 16-23
 
         return offset;
     },
 
     writeU8: (buffer, offset, value) => {
-        buffer[offset++] = value & 0xFF;
+        buffer[offset++] = value & 0xff;
         return offset;
     },
 
@@ -1593,8 +1594,8 @@ const tpmEmulator = {
         authSessionAnalysis.nonce_caller = bufferAnalysis.nonce_caller;
 
         // Identify auth session vulnerabilities
-        authSessionAnalysis.session_vulnerabilities
-            = this.identifyAuthSessionVulnerabilities(bufferAnalysis);
+        authSessionAnalysis.session_vulnerabilities =
+            this.identifyAuthSessionVulnerabilities(bufferAnalysis);
 
         // Determine bypass techniques for auth sessions
         authSessionAnalysis.auth_bypass_techniques = [
@@ -1620,7 +1621,7 @@ const tpmEmulator = {
         offset = this.writeResponseHeader(response, offset, 0x80_01, 0x00_00_00_00);
 
         // sessionHandle
-        const sessionHandle = 0x03_00_00_00 + Math.floor(Math.random() * 0xFF_FF_FF);
+        const sessionHandle = 0x03_00_00_00 + Math.floor(Math.random() * 0xff_ff_ff);
         offset = this.writeU32(response, offset, sessionHandle);
 
         // nonceTPM
@@ -1655,8 +1656,8 @@ const tpmEmulator = {
         createAnalysis.creation_pcr = bufferAnalysis.creation_pcr;
 
         // Identify creation vulnerabilities
-        createAnalysis.creation_vulnerabilities
-            = this.identifyCreationVulnerabilities(bufferAnalysis);
+        createAnalysis.creation_vulnerabilities =
+            this.identifyCreationVulnerabilities(bufferAnalysis);
 
         // Determine bypass techniques for object creation
         createAnalysis.object_bypass_techniques = [
@@ -1701,7 +1702,7 @@ const tpmEmulator = {
         offset = this.writeU16(response, offset, 0); // empty creationData
         offset = this.writeU16(response, offset, 32); // creationHash
         for (let createHashIdx = 0; createHashIdx < 32; createHashIdx++) {
-            response[offset++] = 0xEE;
+            response[offset++] = 0xee;
         }
 
         // creationTicket
@@ -1735,12 +1736,12 @@ const tpmEmulator = {
 
         // signature - TPMT_SIGNATURE
         offset = this.writeU16(response, offset, 0x00_14); // TPM_ALG_RSASSA
-        offset = this.writeU16(response, offset, 0x00_0B); // TPM_ALG_SHA256
+        offset = this.writeU16(response, offset, 0x00_0b); // TPM_ALG_SHA256
 
         // signature value
         offset = this.writeU16(response, offset, 256);
         for (let i = 0; i < 256; i++) {
-            response[offset++] = (i * 0x11) & 0xFF;
+            response[offset++] = (i * 0x11) & 0xff;
         }
 
         this.updateResponseSize(response, offset);
@@ -1964,7 +1965,7 @@ const tpmEmulator = {
 
     // Simplified SHA256 implementation for production use
     sha256Hash: data => {
-        let hash = 0x81_1C_9D_C5;
+        let hash = 0x81_1c_9d_c5;
         for (let i = 0; i < data.length; i++) {
             hash = Math.imul(hash ^ data.codePointAt(i), 0x1_00_01_93);
         }
@@ -1973,7 +1974,7 @@ const tpmEmulator = {
 
     // SHA1 hash implementation
     sha1Hash: data => {
-        let hash = 0x81_1C_9D_C5;
+        let hash = 0x81_1c_9d_c5;
         for (let i = 0; i < data.length; i++) {
             hash = Math.imul(hash ^ data.codePointAt(i), 0x1_00_01_93);
         }
@@ -2008,8 +2009,8 @@ const tpmEmulator = {
                     onEnter(args) {
                         const varName = args[0].readUtf16String();
                         if (
-                            varName
-                            && (varName.includes('SecureBoot') || varName.includes('SetupMode'))
+                            varName &&
+                            (varName.includes('SecureBoot') || varName.includes('SetupMode'))
                         ) {
                             this.isSecureBootVar = true;
                             // Use self to update TPM platform state for SecureBoot bypass
@@ -2051,7 +2052,7 @@ const tpmEmulator = {
                         onLeave(retval) {
                             if (this.isUefiFirmwareQuery) {
                                 // Manipulate UEFI firmware table data for TPM bypass
-                                retval.replace(0xC0_00_00_02); // NTSTATUS: Function unavailable for bypass
+                                retval.replace(0xc0_00_00_02); // NTSTATUS: Function unavailable for bypass
                             }
                         },
                     });
@@ -2091,8 +2092,8 @@ const tpmEmulator = {
                     Interceptor.attach(fveOpen, {
                         onLeave: retval => {
                             // Use self to track BitLocker bypass state in TPM emulator
-                            this.platformConfig.bitLockerBypassCount
-                                = (this.platformConfig.bitLockerBypassCount || 0) + 1;
+                            this.platformConfig.bitLockerBypassCount =
+                                (this.platformConfig.bitLockerBypassCount || 0) + 1;
                             this.platformConfig.lastBitLockerBypass = Date.now();
 
                             send({
@@ -2201,8 +2202,8 @@ const tpmEmulator = {
                         if (varName?.includes('Boot')) {
                             this.isBootVar = true;
                             // Use self to track UEFI runtime bypass state in TPM emulator
-                            self.platformConfig.uefiRuntimeBypassCount
-                                = (self.platformConfig.uefiRuntimeBypassCount || 0) + 1;
+                            self.platformConfig.uefiRuntimeBypassCount =
+                                (self.platformConfig.uefiRuntimeBypassCount || 0) + 1;
                             self.platformConfig.lastUefiBypass = Date.now();
 
                             send({
@@ -2293,7 +2294,7 @@ const tpmEmulator = {
     generateAttestationQuote(nonce, pcrSelection) {
         // Build attestation structure
         const attestation = {
-            magic: 0xFF_54_43_47,
+            magic: 0xff_54_43_47,
             type: 0x80_18,
             qualifiedSigner: this.config.keys.attestationKey.handle,
             extraData: nonce,
@@ -2342,11 +2343,11 @@ const tpmEmulator = {
 
         // Generate deterministic signature based on key and hash
         for (let i = 0; i < 256; i++) {
-            const byte
-                = (Number.parseInt(hash.slice(i % 64, (i % 64) + 1), 16)
-                    ^ (key.handle >> ((i % 4) * 8))
-                    ^ (i * 17))
-                & 0xFF;
+            const byte =
+                (Number.parseInt(hash.slice(i % 64, (i % 64) + 1), 16) ^
+                    (key.handle >> ((i % 4) * 8)) ^
+                    (i * 17)) &
+                0xff;
             signature += byte.toString(16).padStart(2, '0');
         }
 

@@ -441,7 +441,7 @@ except ImportError as e:
             self.encryptor_obj: object | None = None
             self.decryptor_obj: object | None = None
 
-        def encryptor(self) -> "FallbackEncryptor":
+        def encryptor(self) -> FallbackEncryptor:
             """Get encryptor.
 
             Returns:
@@ -451,7 +451,7 @@ except ImportError as e:
             self.encryptor_obj = FallbackEncryptor(self.algorithm, self.mode)
             return self.encryptor_obj
 
-        def decryptor(self) -> "FallbackDecryptor":
+        def decryptor(self) -> FallbackDecryptor:
             """Get decryptor.
 
             Returns:
@@ -733,7 +733,7 @@ except ImportError as e:
         @staticmethod
         def generate_private_key(
             public_exponent: int = 65537, key_size: int = 2048, backend: object | None = None
-        ) -> "FallbackRSAPrivateKey":
+        ) -> FallbackRSAPrivateKey:
             """Generate RSA private key.
 
             Args:
@@ -832,7 +832,7 @@ except ImportError as e:
             self.d = d
             self.key_size = n.bit_length()
 
-        def public_key(self) -> "FallbackRSAPublicKey":
+        def public_key(self) -> FallbackRSAPublicKey:
             """Get public key.
 
             Returns:
@@ -1125,7 +1125,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 """
                 self.block_size = block_size
 
-            def padder(self) -> "FallbackPadder":
+            def padder(self) -> FallbackPadder:
                 """Get padder for this scheme.
 
                 Returns:
@@ -1134,7 +1134,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 """
                 return FallbackPadder(self.block_size)
 
-            def unpadder(self) -> "FallbackUnpadder":
+            def unpadder(self) -> FallbackUnpadder:
                 """Get unpadder for this scheme.
 
                 Returns:
@@ -1289,7 +1289,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
     default_backend = _default_backend
 
     # X.509 certificate handling
-    def _load_pem_x509_certificate(data: bytes, backend: object | None = None) -> "FallbackX509Certificate":
+    def _load_pem_x509_certificate(data: bytes, backend: object | None = None) -> FallbackX509Certificate:
         """Load PEM certificate.
 
         Args:
@@ -1497,7 +1497,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             """
             return "2038-01-19"
 
-        def public_key(self) -> "FallbackRSAPublicKey":
+        def public_key(self) -> FallbackRSAPublicKey:
             """Extract public key from certificate.
 
             Parses the SubjectPublicKeyInfo structure from the certificate
@@ -1610,6 +1610,9 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
                         Probabilistic Signature Scheme for digital signatures.
                         """
+
+                        MAX_LENGTH: int = 0
+                        AUTO: int = -1
 
                         def __init__(self, mgf: object, salt_length: int) -> None:
                             """Initialize PSS padding.

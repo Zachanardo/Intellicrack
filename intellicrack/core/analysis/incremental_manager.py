@@ -30,10 +30,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from intellicrack.core.config_manager import get_config
-from intellicrack.utils.core.secure_serialization import (
-    secure_pickle_dump,
-    secure_pickle_load,
-)
+from intellicrack.utils.core.secure_serialization import secure_pickle_dump, secure_pickle_load
 from intellicrack.utils.logger import logger
 
 

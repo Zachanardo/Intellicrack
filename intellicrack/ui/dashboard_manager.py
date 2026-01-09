@@ -113,10 +113,7 @@ class DashboardManager:
         if hasattr(self.app, "potential_patches") and isinstance(self.app.potential_patches, list):
             pending_count = len(self.app.potential_patches)
 
-        patch_activities = [
-            a for a in self.recent_activities
-            if a.get("type", "").lower() in {"patch", "patching", "binary_patch"}
-        ]
+        patch_activities = [a for a in self.recent_activities if a.get("type", "").lower() in {"patch", "patching", "binary_patch"}]
         if patch_activities:
             last_patch_time = patch_activities[0].get("timestamp")
 
@@ -133,10 +130,7 @@ class DashboardManager:
         analyzed and analysis timestamps.
         """
         analysis_types = ("analysis", "analyze", "scan", "detection", "protection")
-        analysis_activities = [
-            a for a in self.recent_activities
-            if any(t in a.get("type", "").lower() for t in analysis_types)
-        ]
+        analysis_activities = [a for a in self.recent_activities if any(t in a.get("type", "").lower() for t in analysis_types)]
         total_analyses = len(analysis_activities)
 
         recent_analysis_time: str | None = None
@@ -144,8 +138,7 @@ class DashboardManager:
             recent_analysis_time = analysis_activities[0].get("timestamp")
 
         protection_activities = [
-            a for a in self.recent_activities
-            if "protection" in a.get("type", "").lower() or "detect" in a.get("description", "").lower()
+            a for a in self.recent_activities if "protection" in a.get("type", "").lower() or "detect" in a.get("description", "").lower()
         ]
         protection_detections = len(protection_activities)
 
@@ -165,27 +158,20 @@ class DashboardManager:
         licensing protection analysis.
         """
         license_types = ("license", "validation", "serial", "keygen", "activation")
-        license_activities = [
-            a for a in self.recent_activities
-            if any(t in a.get("type", "").lower() for t in license_types)
-        ]
+        license_activities = [a for a in self.recent_activities if any(t in a.get("type", "").lower() for t in license_types)]
 
         validations_performed = sum(
-            1 for a in license_activities
-            if "validation" in a.get("type", "").lower() or "validate" in a.get("description", "").lower()
+            1 for a in license_activities if "validation" in a.get("type", "").lower() or "validate" in a.get("description", "").lower()
         )
 
         serials_generated = sum(
-            1 for a in license_activities
-            if any(s in a.get("type", "").lower() for s in ("serial", "keygen"))
-            or "generated" in a.get("description", "").lower()
+            1
+            for a in license_activities
+            if any(s in a.get("type", "").lower() for s in ("serial", "keygen")) or "generated" in a.get("description", "").lower()
         )
 
         last_validation_time: str | None = None
-        validation_activities = [
-            a for a in license_activities
-            if "validation" in a.get("type", "").lower()
-        ]
+        validation_activities = [a for a in license_activities if "validation" in a.get("type", "").lower()]
         if validation_activities:
             last_validation_time = validation_activities[0].get("timestamp")
 
@@ -205,25 +191,19 @@ class DashboardManager:
         vulnerability detection, and exploitation attempts.
         """
         dynamic_types = ("dynamic", "runtime", "frida", "debug", "trace")
-        dynamic_activities = [
-            a for a in self.recent_activities
-            if any(t in a.get("type", "").lower() for t in dynamic_types)
-        ]
+        dynamic_activities = [a for a in self.recent_activities if any(t in a.get("type", "").lower() for t in dynamic_types)]
         dynamic_analyses = len(dynamic_activities)
 
         vuln_types = ("vulnerability", "vuln", "cve", "weakness", "flaw")
         vuln_activities = [
-            a for a in self.recent_activities
-            if any(t in a.get("type", "").lower() for t in vuln_types)
-            or any(t in a.get("description", "").lower() for t in vuln_types)
+            a
+            for a in self.recent_activities
+            if any(t in a.get("type", "").lower() for t in vuln_types) or any(t in a.get("description", "").lower() for t in vuln_types)
         ]
         vulnerabilities_found = len(vuln_activities)
 
         exploit_types = ("exploit", "payload", "rop", "shellcode", "bypass")
-        exploit_activities = [
-            a for a in self.recent_activities
-            if any(t in a.get("type", "").lower() for t in exploit_types)
-        ]
+        exploit_activities = [a for a in self.recent_activities if any(t in a.get("type", "").lower() for t in exploit_types)]
         exploits_generated = len(exploit_activities)
 
         if hasattr(self.app, "exploit_count"):

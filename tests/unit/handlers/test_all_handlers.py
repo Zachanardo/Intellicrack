@@ -70,13 +70,6 @@ except ImportError:
     LIEF_HANDLER_AVAILABLE = False
 
 try:
-    from intellicrack.handlers import pyelftools_handler
-    PYELFTOOLS_HANDLER_AVAILABLE = True
-except ImportError:
-    pyelftools_handler = None  # type: ignore[assignment]
-    PYELFTOOLS_HANDLER_AVAILABLE = False
-
-try:
     from intellicrack.handlers import cryptography_handler
     CRYPTOGRAPHY_HANDLER_AVAILABLE = True
 except ImportError:
@@ -458,25 +451,6 @@ class TestLiefHandler:
             pytest.skip("LIEF not available for testing")
 
 
-@pytest.mark.skipif(not PYELFTOOLS_HANDLER_AVAILABLE, reason="pyelftools_handler not available")
-class TestPyElfToolsHandler:
-    """Test pyelftools_handler.py - CRITICAL for ELF analysis."""
-
-    def test_import_pyelftools_handler(self) -> None:
-        """Test pyelftools_handler can be imported."""
-        assert pyelftools_handler is not None
-        assert hasattr(pyelftools_handler, "HAS_PYELFTOOLS")
-
-    def test_pyelftools_availability(self) -> None:
-        """Test pyelftools library availability detection."""
-        if pyelftools_handler.HAS_PYELFTOOLS:
-            from elftools.elf.elffile import ELFFile
-
-            assert ELFFile is not None
-        else:
-            pytest.skip("pyelftools not available for testing")
-
-
 @pytest.mark.skipif(not CRYPTOGRAPHY_HANDLER_AVAILABLE, reason="cryptography_handler not available")
 class TestCryptographyHandler:
     """Test cryptography_handler.py - CRITICAL for crypto operations."""
@@ -745,7 +719,6 @@ class TestAllHandlersConsistency:
             "wmi_handler": "HAS_WMI",
             "frida_handler": "HAS_FRIDA",
             "lief_handler": "HAS_LIEF",
-            "pyelftools_handler": "HAS_PYELFTOOLS",
             "cryptography_handler": "HAS_CRYPTOGRAPHY",
             "requests_handler": "HAS_REQUESTS",
             "aiohttp_handler": "HAS_AIOHTTP",

@@ -93,7 +93,8 @@ const REQUIRED_TOOLS: &[&str] = &[
     "frida",
     "frida-ps",
     "qemu-system-x86_64",
-    "capstone",
+    // Note: capstone is a library (Python package / C library), not an executable.
+    // It's imported via `import capstone` in Python - no binary to discover.
 ];
 
 /// Information about a discovered tool.
@@ -353,12 +354,18 @@ fn is_cache_valid(cache: &ToolCache) -> bool {
 /// Load custom tool paths from the Intellicrack configuration file.
 ///
 /// Reads `config/intellicrack_config.json` and extracts custom tool paths.
+/// Paths can be absolute or relative to project root.
+///
+/// Priority:
+/// 1. `tool_paths` object (preferred)
+/// 2. Root-level keys (legacy fallback)
 ///
 /// # Returns
 ///
 /// A HashMap of tool names to their configured paths.
 fn load_custom_tool_paths() -> HashMap<String, PathBuf> {
     let mut custom_paths = HashMap::new();
+    let project_root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
 
     let config_path = PathBuf::from("config").join("intellicrack_config.json");
 
@@ -384,45 +391,66 @@ fn load_custom_tool_paths() -> HashMap<String, PathBuf> {
     };
 
     let tool_mappings = [
-        ("ghidra_path", "ghidra"),
-        ("radare2_path", "radare2"),
-        ("radare2_path", "r2"),
-        ("frida_path", "frida"),
-        ("qemu_path", "qemu-system-x86_64"),
-        ("nasm_path", "nasm"),
+        ("ghidra_path", vec!["ghidra", "ghidraRun"]),
+        ("radare2_path", vec!["radare2"]),
+        ("r2_path", vec!["r2"]),
+        ("frida_path", vec!["frida", "frida-ps"]),
+        ("qemu_path", vec!["qemu-system-x86_64"]),
+        ("nasm_path", vec!["nasm"]),
     ];
 
-    for (config_key, tool_name) in &tool_mappings {
-        if let Some(path_str) = config.get(config_key).and_then(|v| v.as_str())
-            && !path_str.is_empty()
-        {
-            let path = PathBuf::from(path_str);
+    let tool_paths_obj = config.get("tool_paths");
+
+    for (config_key, tool_names) in &tool_mappings {
+        let path_str = tool_paths_obj
+            .and_then(|tp| tp.get(*config_key))
+            .and_then(|v| v.as_str())
+            .or_else(|| config.get(*config_key).and_then(|v| v.as_str()));
+
+        if let Some(path_str) = path_str {
+            if path_str.is_empty() {
+                continue;
+            }
+
+            let path = if Path::new(path_str).is_absolute() {
+                PathBuf::from(path_str)
+            } else {
+                project_root.join(path_str)
+            };
+
             if path.exists() {
-                debug!("Loaded custom path for '{}': {}", tool_name, path.display());
-                custom_paths.insert(tool_name.to_string(), path);
+                for tool_name in tool_names {
+                    debug!(
+                        "Loaded config path for '{}': {}",
+                        tool_name,
+                        path.display()
+                    );
+                    custom_paths.insert(tool_name.to_string(), path.clone());
+                }
             } else {
                 warn!(
-                    "Custom path for '{}' does not exist: {}",
-                    tool_name,
+                    "Config path for '{}' does not exist: {} (resolved: {})",
+                    config_key,
+                    path_str,
                     path.display()
                 );
             }
         }
     }
 
-    debug!(
-        "Loaded {} custom tool paths from config",
+    info!(
+        "Loaded {} tool paths from config",
         custom_paths.len()
     );
     custom_paths
 }
 
-/// Discovers a single tool by searching custom config, PATH, and common installation locations.
+/// Discovers a single tool by searching custom config, project tools, PATH, and common locations.
 ///
-/// Search strategy:
+/// Search strategy (in priority order):
 /// 1. Check config file for custom tool path (highest priority)
-/// 2. Try `which` to find tool in PATH
-/// 3. Check project's `tools/` directory
+/// 2. Check project's `tools/` directory (LOCAL TOOLS TAKE PRECEDENCE)
+/// 3. Try `which` to find tool in PATH
 /// 4. Check platform-specific common installation directories
 /// 5. Attempt to extract version information (non-fatal if fails)
 ///
@@ -438,26 +466,27 @@ fn load_custom_tool_paths() -> HashMap<String, PathBuf> {
 /// # Platform-Specific Search Paths
 ///
 /// **Windows:**
-/// - `tools/{tool}/{tool}.exe` (project tools directory)
+/// - `tools/{tool}/{tool}.exe` (project tools directory - HIGHEST PRIORITY)
 /// - `C:\Program Files\{tool}\bin\{tool}.exe`
 /// - `C:\{tool}\{tool}.exe`
 /// - `%USERPROFILE%\.{tool}\{tool}.exe`
 ///
 /// **Unix (Linux/macOS):**
-/// - `tools/{tool}/{tool}` (project tools directory)
+/// - `tools/{tool}/{tool}` (project tools directory - HIGHEST PRIORITY)
 /// - `/opt/{tool}/bin/{tool}`
 /// - `/usr/local/{tool}/bin/{tool}`
 /// - `~/.{tool}/{tool}`
 ///
 /// # Performance
 ///
-/// Typically 5-15ms per tool on cold search, <1ms if tool is in PATH or config.
+/// Typically 5-15ms per tool on cold search, <1ms if tool is in project tools or config.
 fn discover_tool_with_config(
     name: &str,
     custom_paths: &HashMap<String, PathBuf>,
 ) -> Option<ToolInfo> {
     debug!("Discovering tool: {}", name);
 
+    // Priority 1: Custom config paths (user-specified overrides)
     if let Some(custom_path) = custom_paths.get(name) {
         if custom_path.exists() {
             debug!("Found '{}' in config at: {}", name, custom_path.display());
@@ -472,6 +501,12 @@ fn discover_tool_with_config(
         }
     }
 
+    // Priority 2: Project tools directory (LOCAL TOOLS TAKE PRECEDENCE OVER SYSTEM)
+    if let Some(tool_info) = search_project_tools(name) {
+        return Some(tool_info);
+    }
+
+    // Priority 3: System PATH
     if let Ok(tool_path) = which(name) {
         debug!("Found '{}' in PATH at: {}", name, tool_path.display());
         let version = get_tool_version(&tool_path, name);
@@ -480,6 +515,7 @@ fn discover_tool_with_config(
 
     debug!("'{}' not found in PATH, checking common locations", name);
 
+    // Priority 4: Common installation locations
     let common_paths = get_common_tool_paths(name);
 
     for candidate_path in common_paths {
@@ -495,6 +531,106 @@ fn discover_tool_with_config(
     }
 
     debug!("Tool '{}' not found in any search location", name);
+    None
+}
+
+/// Searches for a tool in the project's tools/ directory.
+///
+/// This function specifically looks in the project's local tools directory,
+/// which takes precedence over system-wide installations to allow project-specific
+/// tool versions.
+///
+/// # Arguments
+///
+/// - `name`: The tool name to search for
+///
+/// # Returns
+///
+/// `Some(ToolInfo)` if found in project tools, `None` otherwise.
+fn search_project_tools(name: &str) -> Option<ToolInfo> {
+    let project_root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let tools_dir = project_root.join("tools");
+
+    if !tools_dir.exists() {
+        return None;
+    }
+
+    // Tool-specific directory mappings
+    let tool_dirs: Vec<&str> = match name {
+        "qemu-system-x86_64" | "qemu-system-i386" => vec!["qemu", "QEMU"],
+        "radare2" | "r2" => vec!["radare2", "r2"],
+        "ghidra" | "ghidraRun" => vec!["ghidra", "Ghidra"],
+        "frida" | "frida-ps" => vec!["frida", "Frida"],
+        "nasm" => vec!["NASM", "nasm"],
+        _ => vec![name],
+    };
+
+    #[cfg(target_os = "windows")]
+    let exe_name = format!("{}.exe", name);
+    #[cfg(not(target_os = "windows"))]
+    let exe_name = name.to_string();
+
+    for dir_name in tool_dirs {
+        let tool_dir = tools_dir.join(dir_name);
+        if !tool_dir.exists() {
+            continue;
+        }
+
+        // Check direct in tool directory (e.g., tools/qemu/qemu-system-x86_64.exe)
+        let direct_path = tool_dir.join(&exe_name);
+        if direct_path.exists() && direct_path.is_file() {
+            debug!(
+                "Found '{}' in project tools at: {}",
+                name,
+                direct_path.display()
+            );
+            let version = get_tool_version(&direct_path, name);
+            return Some(ToolInfo::new(direct_path, version));
+        }
+
+        // Check in bin subdirectory (e.g., tools/radare2/bin/radare2.exe)
+        let bin_path = tool_dir.join("bin").join(&exe_name);
+        if bin_path.exists() && bin_path.is_file() {
+            debug!(
+                "Found '{}' in project tools/bin at: {}",
+                name,
+                bin_path.display()
+            );
+            let version = get_tool_version(&bin_path, name);
+            return Some(ToolInfo::new(bin_path, version));
+        }
+
+        // For ghidra, also check for batch/script files
+        if name == "ghidra" || name == "ghidraRun" {
+            #[cfg(target_os = "windows")]
+            {
+                for batch_name in ["ghidraRun.bat", "ghidra.bat"] {
+                    let batch_path = tool_dir.join(batch_name);
+                    if batch_path.exists() {
+                        debug!(
+                            "Found '{}' batch file in project tools at: {}",
+                            name,
+                            batch_path.display()
+                        );
+                        return Some(ToolInfo::new(batch_path, None));
+                    }
+                }
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let script_path = tool_dir.join("ghidraRun");
+                if script_path.exists() {
+                    debug!(
+                        "Found '{}' script in project tools at: {}",
+                        name,
+                        script_path.display()
+                    );
+                    return Some(ToolInfo::new(script_path, None));
+                }
+            }
+        }
+    }
+
     None
 }
 
@@ -529,10 +665,19 @@ fn get_common_tool_paths(tool_name: &str) -> Vec<PathBuf> {
 
     let project_root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     let tools_dir = project_root.join("tools");
+    let pixi_scripts = project_root.join(".pixi").join("envs").join("default").join("Scripts");
+    let pixi_bin = project_root.join(".pixi").join("envs").join("default").join("bin");
 
     #[cfg(target_os = "windows")]
     {
         let exe_name = format!("{}.exe", tool_name);
+
+        if pixi_scripts.exists() {
+            paths.push(pixi_scripts.join(&exe_name));
+        }
+        if pixi_bin.exists() {
+            paths.push(pixi_bin.join(&exe_name));
+        }
 
         if tools_dir.exists() {
             paths.push(tools_dir.join(tool_name).join(&exe_name));
@@ -591,6 +736,10 @@ fn get_common_tool_paths(tool_name: &str) -> Vec<PathBuf> {
 
     #[cfg(not(target_os = "windows"))]
     {
+        if pixi_bin.exists() {
+            paths.push(pixi_bin.join(tool_name));
+        }
+
         if tools_dir.exists() {
             paths.push(tools_dir.join(tool_name).join(tool_name));
             paths.push(tools_dir.join(tool_name).join("bin").join(tool_name));

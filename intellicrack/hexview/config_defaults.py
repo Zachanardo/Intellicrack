@@ -24,6 +24,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
+
 HEX_VIEWER_DEFAULTS: dict[str, dict[str, Any]] = {
     "ui": {
         # Color Configuration

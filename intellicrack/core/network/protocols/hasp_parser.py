@@ -26,8 +26,6 @@ import socket
 import struct
 import time
 from dataclasses import dataclass, field
-
-from defusedxml import ElementTree as ET
 from datetime import UTC
 from enum import IntEnum
 from pathlib import Path
@@ -38,6 +36,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from defusedxml import ElementTree as ET
 
 from intellicrack.utils.logger import get_logger
 
@@ -1378,7 +1377,9 @@ class HASPSentinelParser:
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
-        encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else self._get_default_encryption_type()
+        encryption_type = (
+            request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else self._get_default_encryption_type()
+        )
 
         if encryption_type in (HASPEncryptionType.AES128, HASPEncryptionType.AES256):
             key_size = 128 if encryption_type == HASPEncryptionType.AES128 else 256
@@ -1424,7 +1425,9 @@ class HASPSentinelParser:
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
-        encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else self._get_default_encryption_type()
+        encryption_type = (
+            request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else self._get_default_encryption_type()
+        )
 
         if encryption_type in (HASPEncryptionType.AES128, HASPEncryptionType.AES256):
             key_size = 128 if encryption_type == HASPEncryptionType.AES128 else 256

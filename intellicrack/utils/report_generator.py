@@ -26,10 +26,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from defusedxml import ElementTree as ET
 
 logger = logging.getLogger(__name__)
 
-from defusedxml import ElementTree as ET
 
 try:
     from jinja2 import Environment, FileSystemLoader, Template

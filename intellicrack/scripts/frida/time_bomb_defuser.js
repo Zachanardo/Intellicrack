@@ -281,9 +281,9 @@ const TimeBombDefuser = {
         for (const module of Process.enumerateModules()) {
             const name = module.name.toLowerCase();
             if (
-                name.includes('clr.dll')
-                || name.includes('coreclr.dll')
-                || name.includes('mscorlib')
+                name.includes('clr.dll') ||
+                name.includes('coreclr.dll') ||
+                name.includes('mscorlib')
             ) {
                 this.platform.capabilities.dotnet = true;
             }
@@ -507,7 +507,7 @@ const TimeBombDefuser = {
             onLeave: retval => {
                 const elapsed = Date.now() - self.startTime;
                 const progressed = elapsed * self.config.timeProgression.rate;
-                const spoofed = (baseTickCount + progressed) & 0xFF_FF_FF_FF;
+                const spoofed = (baseTickCount + progressed) & 0xff_ff_ff_ff;
                 retval.replace(spoofed);
                 self.statistics.timeCalls++;
             },
@@ -1071,8 +1071,8 @@ const TimeBombDefuser = {
     // .NET time hooks
     installDotNetTimeHooks() {
         // Find CLR module
-        const clrModule
-            = Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
+        const clrModule =
+            Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
 
         if (!clrModule) {
             return;
@@ -1375,8 +1375,8 @@ const TimeBombDefuser = {
 
             // Add random variation
             if (this.config.timeProgression.randomVariation > 0) {
-                const variation
-                    = (Math.random() - 0.5) * this.config.timeProgression.randomVariation;
+                const variation =
+                    (Math.random() - 0.5) * this.config.timeProgression.randomVariation;
                 progression += variation;
             }
 
@@ -1414,9 +1414,9 @@ const TimeBombDefuser = {
         Process.enumerateModules().forEach(module => {
             const moduleName = module.name.toLowerCase();
             if (
-                moduleName.includes('clr.dll')
-                || moduleName.includes('coreclr.dll')
-                || moduleName.includes('mscorlib.ni.dll')
+                moduleName.includes('clr.dll') ||
+                moduleName.includes('coreclr.dll') ||
+                moduleName.includes('mscorlib.ni.dll')
             ) {
                 clrModule = module;
             }
@@ -1535,7 +1535,7 @@ const TimeBombDefuser = {
                         if (family === 2) {
                             // AF_INET
                             let port = sockaddr.add(2).readU16();
-                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8); // ntohs
+                            port = ((port & 0xff) << 8) | ((port & 0xff_00) >> 8); // ntohs
                             if (port === 123) {
                                 // NTP port
                                 send({
@@ -1780,7 +1780,7 @@ const TimeBombDefuser = {
                         if (funcName.includes('64')) {
                             args[0] = ptr(unixTime);
                         } else {
-                            args[0] = ptr(unixTime & 0xFF_FF_FF_FF);
+                            args[0] = ptr(unixTime & 0xff_ff_ff_ff);
                         }
                         this.stats.timeSpoofs++;
                     },

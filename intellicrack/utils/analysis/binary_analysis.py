@@ -37,16 +37,11 @@ from intellicrack.types.analysis import (
     AutonomousGenerationInfo,
     BasicFileInfo,
     BinaryAnalysisResult,
-    ELFAnalysisResult,
     ExportInfo,
     FridaScriptSuggestion,
     GenericAnalysisResult,
     GhidraScriptSuggestion,
     ImportInfo,
-    MachOAnalysisResult,
-    MachOHeaderInfo,
-    MachOSectionInfo,
-    MachOSegmentInfo,
     OptimizedAnalysisResult,
     PEAnalysisResult,
     PerformanceMetrics,
@@ -97,8 +92,6 @@ class ResourceDirectory(Protocol):
 
 pefile_module: ModuleType | None = None
 lief_module: ModuleType | None = None
-ELFFile_class: type[Any] | None = None
-MachO_class: type[Any] | None = None
 capstone_module: ModuleType | None = None
 
 create_performance_optimizer_func: Callable[..., Any] | None = None
@@ -136,28 +129,6 @@ except ImportError as e:
     HAS_LIEF = False
 
 try:
-    from intellicrack.handlers.pyelftools_handler import (
-        HAS_PYELFTOOLS,
-        ELFFile as _ELFFile,
-    )
-
-    ELFFile_class = _ELFFile
-    PYELFTOOLS_AVAILABLE = HAS_PYELFTOOLS
-except ImportError as e:
-    logger.exception("Import error in binary_analysis: %s", e)
-    PYELFTOOLS_AVAILABLE = False
-    HAS_PYELFTOOLS = False
-
-try:
-    from macholib.MachO import MachO as _MachO
-
-    MachO_class = _MachO
-    MACHOLIB_AVAILABLE = True
-except ImportError as e:
-    logger.exception("Import error in binary_analysis: %s", e)
-    MACHOLIB_AVAILABLE = False
-
-try:
     from intellicrack.handlers.capstone_handler import capstone as _capstone
 
     capstone_module = _capstone
@@ -167,7 +138,9 @@ except ImportError as e:
     HAS_CAPSTONE = False
 
 
-def analyze_binary_optimized(binary_path: str, detailed: bool = True, use_performance_optimizer: bool = True) -> BinaryAnalysisResult | OptimizedAnalysisResult:
+def analyze_binary_optimized(
+    binary_path: str, detailed: bool = True, use_performance_optimizer: bool = True
+) -> BinaryAnalysisResult | OptimizedAnalysisResult:
     """Optimized binary analysis with performance management for large files.
 
     Args:
@@ -282,10 +255,6 @@ def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integratio
     results: BinaryAnalysisResult
     if binary_format == "PE":
         results = analyze_pe(binary_path, detailed)
-    elif binary_format == "ELF":
-        results = analyze_elf(binary_path, detailed)
-    elif binary_format == "MACHO":
-        results = analyze_macho(binary_path, detailed)
     else:
         results = GenericAnalysisResult(
             format=binary_format,
@@ -461,12 +430,7 @@ def _get_recommended_ai_actions(analysis_results: BinaryAnalysisResult) -> list[
 
     try:
         binary_format = getattr(analysis_results, "format", "").upper()
-        if binary_format == "ELF":
-            actions.extend([
-                "Analyze ELF symbols and dynamic linking",
-                "Generate GOT (Global Offset Table) manipulation scripts",
-            ])
-        elif binary_format == "PE":
+        if binary_format == "PE":
             actions.extend((
                 "Analyze PE imports and exports for bypass opportunities",
                 "Generate IAT (Import Address Table) hook scripts",
@@ -607,39 +571,20 @@ def identify_binary_format(binary_path: str) -> str:
         binary_path: Path to the binary file.
 
     Returns:
-        String indicating the format (PE, ELF, MACHO, UNKNOWN).
+        String indicating the format (PE, CLASS, DOTNET, UNKNOWN).
 
     """
     try:
         with open(binary_path, "rb") as f:
-            # Read magic bytes
             magic = f.read(4)
 
-            # Check for PE
             if magic[:2] == b"MZ":
-                # Verify PE signature
                 f.seek(0x3C)
                 pe_offset = struct.unpack("<I", f.read(4))[0]
                 f.seek(pe_offset)
                 if f.read(4) == b"PE\x00\x00":
                     return "PE"
 
-            # Check for ELF
-            elif magic == b"\x7fELF":
-                return "ELF"
-
-            # Check for Mach-O
-            elif magic in [
-                b"\xfe\xed\xfa\xce",
-                b"\xce\xfa\xed\xfe",  # 32-bit
-                b"\xfe\xed\xfa\xcf",
-                b"\xcf\xfa\xed\xfe",  # 64-bit
-                b"\xca\xfe\xba\xbe",
-                b"\xbe\xba\xfe\xca",
-            ]:  # FAT
-                return "MACHO"
-
-            # Check for Java class
             elif magic == b"\xca\xfe\xba\xbe":
                 return "CLASS"
 
@@ -685,14 +630,16 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> PEAnalysisResult:
         for section in pe.sections:
             section_name = section.Name.decode("utf-8", errors="ignore").strip("\x00")
             entropy_val: float = section.get_entropy() if hasattr(section, "get_entropy") else 0.0
-            sections_list.append(SectionInfo(
-                name=section_name,
-                virtual_address=hex(section.VirtualAddress),
-                virtual_size=section.Misc_VirtualSize,
-                raw_size=section.SizeOfRawData,
-                characteristics=section.Characteristics,
-                entropy=entropy_val,
-            ))
+            sections_list.append(
+                SectionInfo(
+                    name=section_name,
+                    virtual_address=hex(section.VirtualAddress),
+                    virtual_size=section.Misc_VirtualSize,
+                    raw_size=section.SizeOfRawData,
+                    characteristics=section.Characteristics,
+                    entropy=entropy_val,
+                )
+            )
 
             if entropy_val > 7.0:
                 suspicious_list.append(f"High entropy section '{section_name}': {entropy_val:.2f}")
@@ -713,11 +660,13 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> PEAnalysisResult:
         if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
             for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                 export_name = exp.name.decode("utf-8", errors="ignore") if exp.name else f"Ordinal_{exp.ordinal}"
-                exports_list.append(ExportInfo(
-                    name=export_name,
-                    address=hex(pe.OPTIONAL_HEADER.ImageBase + exp.address),
-                    ordinal=exp.ordinal,
-                ))
+                exports_list.append(
+                    ExportInfo(
+                        name=export_name,
+                        address=hex(pe.OPTIONAL_HEADER.ImageBase + exp.address),
+                        ordinal=exp.ordinal,
+                    )
+                )
 
         if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
             resources_list = _analyze_pe_resources_typed(pe)
@@ -746,321 +695,6 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> PEAnalysisResult:
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error analyzing PE binary: %s", e)
         return PEAnalysisResult(error=str(e), basic_info=get_basic_file_info(binary_path))
-
-
-def analyze_elf(binary_path: str, detailed: bool = True) -> ELFAnalysisResult:
-    """Analyze an ELF (Linux) binary.
-
-    Args:
-        binary_path: Path to the binary file.
-        detailed: Whether to perform detailed analysis.
-
-    Returns:
-        ELF analysis result with sections, symbols, and libraries.
-
-    """
-    if LIEF_AVAILABLE and lief_module is not None:
-        return analyze_elf_with_lief(binary_path, detailed)
-    if PYELFTOOLS_AVAILABLE and ELFFile_class is not None:
-        return analyze_elf_with_pyelftools(binary_path, detailed)
-    return ELFAnalysisResult(
-        error="No ELF analysis library available",
-        basic_info=get_basic_file_info(binary_path),
-    )
-
-
-def analyze_elf_with_lief(binary_path: str, detailed: bool) -> ELFAnalysisResult:
-    """Analyze ELF using LIEF library.
-
-    Args:
-        binary_path: Path to the ELF binary file.
-        detailed: Whether to perform detailed analysis.
-
-    Returns:
-        Comprehensive ELF binary analysis results.
-
-    Raises:
-        ImportError: If LIEF module is not available or lief.parse is not accessible.
-
-    """
-    _ = detailed
-    if lief_module is None:
-        return ELFAnalysisResult(error="LIEF not available")
-
-    try:
-        if not hasattr(lief_module, "parse"):
-            error_msg = "lief.parse not available"
-            logger.error(error_msg)
-            raise ImportError(error_msg)
-
-        binary = lief_module.parse(binary_path)
-        if binary is None:
-            return ELFAnalysisResult(error="Failed to parse binary")
-
-        sections_list: list[SectionInfo] = []
-        symbols_list: list[SymbolInfo] = []
-        libraries_list: list[str] = []
-        suspicious_list: list[str] = []
-
-        machine_type = getattr(binary.header, "machine_type", None)
-        machine_str = str(machine_type.name) if machine_type and hasattr(machine_type, "name") else str(machine_type)
-
-        identity_class = getattr(binary.header, "identity_class", None)
-        class_str = "64-bit" if identity_class and "ELF64" in str(identity_class) else "32-bit"
-
-        file_type = getattr(binary.header, "file_type", None)
-        type_str = str(file_type.name) if file_type and hasattr(file_type, "name") else str(file_type)
-
-        entrypoint = getattr(binary, "entrypoint", 0)
-
-        for section in binary.sections:
-            section_name = getattr(section, "name", "")
-            section_type_val = getattr(section, "type", None)
-            section_type_str = str(section_type_val) if section_type_val else "unknown"
-            vaddr = getattr(section, "virtual_address", 0)
-            section_size = getattr(section, "size", 0)
-            section_flags = getattr(section, "flags", 0)
-            section_entropy: float = float(getattr(section, "entropy", 0.0))
-
-            sections_list.append(SectionInfo(
-                name=section_name,
-                type=section_type_str,
-                address=hex(vaddr) if isinstance(vaddr, int) else "0x0",
-                size=section_size,
-                flags=section_flags,
-                entropy=section_entropy,
-            ))
-
-            if section_name in [".packed", ".encrypted", ".obfuscated"]:
-                suspicious_list.append(f"Suspicious section name: {section_name}")
-
-        if hasattr(binary, "dynamic_symbols"):
-            for symbol in binary.dynamic_symbols:
-                if symbol_name := getattr(symbol, "name", ""):
-                    symbol_value = getattr(symbol, "value", 0)
-                    symbol_type = getattr(symbol, "type", None)
-                    symbols_list.append(SymbolInfo(
-                        name=symbol_name,
-                        value=hex(symbol_value) if isinstance(symbol_value, int) else "0x0",
-                        type=str(symbol_type),
-                    ))
-
-        if hasattr(binary, "libraries"):
-            for lib in binary.libraries:
-                libraries_list.append(str(lib))
-
-        return ELFAnalysisResult.model_validate({
-            "machine": machine_str,
-            "class": class_str,
-            "type": type_str,
-            "entry_point": hex(entrypoint) if isinstance(entrypoint, int) else "0x0",
-            "sections": sections_list,
-            "symbols": symbols_list,
-            "libraries": libraries_list,
-            "suspicious_indicators": suspicious_list,
-        })
-
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.exception("Error analyzing ELF with LIEF: %s", e)
-        return ELFAnalysisResult(error=str(e))
-
-
-def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> ELFAnalysisResult:
-    """Analyze ELF using pyelftools.
-
-    Args:
-        binary_path: Path to the ELF binary file.
-        detailed: Whether to perform detailed analysis.
-
-    Returns:
-        Comprehensive ELF binary analysis results.
-
-    """
-    _ = detailed
-    if ELFFile_class is None:
-        return ELFAnalysisResult(error="pyelftools not available")
-
-    try:
-        with open(binary_path, "rb") as f:
-            elf = ELFFile_class(f)
-
-            sections_list: list[SectionInfo] = []
-            suspicious_list: list[str] = []
-
-            elf_header = getattr(elf, "header", {})
-            elf_class = getattr(elf, "elfclass", 0)
-
-            if hasattr(elf, "iter_sections"):
-                for section in elf.iter_sections():
-                    section_name = getattr(section, "name", "")
-                    section_dict = dict(section) if hasattr(section, "__iter__") else {}
-                    sections_list.append(SectionInfo(
-                        name=section_name,
-                        type=str(section_dict.get("sh_type", "unknown")),
-                        address=hex(section_dict.get("sh_addr", 0)),
-                        size=section_dict.get("sh_size", 0),
-                    ))
-
-            return ELFAnalysisResult.model_validate({
-                "machine": str(elf_header.get("e_machine", "unknown")),
-                "class": str(elf_class),
-                "type": str(elf_header.get("e_type", "unknown")),
-                "entry_point": hex(elf_header.get("e_entry", 0)),
-                "sections": sections_list,
-                "suspicious_indicators": suspicious_list,
-            })
-
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.exception("Error analyzing ELF with pyelftools: %s", e)
-        return ELFAnalysisResult(error=str(e))
-
-
-def analyze_macho(binary_path: str, detailed: bool = True) -> MachOAnalysisResult:
-    """Analyze a Mach-O (macOS) binary.
-
-    Args:
-        binary_path: Path to the binary file.
-        detailed: Whether to perform detailed analysis.
-
-    Returns:
-        Mach-O analysis result with headers, segments, and libraries.
-
-    """
-    if LIEF_AVAILABLE and lief_module is not None:
-        return analyze_macho_with_lief(binary_path, detailed)
-    if MACHOLIB_AVAILABLE and MachO_class is not None:
-        return analyze_macho_with_macholib(binary_path, detailed)
-    return MachOAnalysisResult(
-        error="No Mach-O analysis library available",
-        basic_info=get_basic_file_info(binary_path),
-    )
-
-
-def analyze_macho_with_lief(binary_path: str, detailed: bool) -> MachOAnalysisResult:
-    """Analyze Mach-O using LIEF library.
-
-    Args:
-        binary_path: Path to the Mach-O binary file.
-        detailed: Whether to perform detailed analysis.
-
-    Returns:
-        Comprehensive Mach-O binary analysis results.
-
-    Raises:
-        ImportError: If LIEF module is not available or lief.parse is not accessible.
-
-    """
-    _ = detailed
-    if lief_module is None:
-        return MachOAnalysisResult(error="LIEF not available")
-
-    try:
-        if not hasattr(lief_module, "parse"):
-            error_msg = "lief.parse not available"
-            logger.error(error_msg)
-            raise ImportError(error_msg)
-
-        binary = lief_module.parse(binary_path)
-        if binary is None:
-            return MachOAnalysisResult(error="Failed to parse binary")
-
-        headers_list: list[MachOHeaderInfo] = []
-        segments_list: list[MachOSegmentInfo] = []
-        symbols_list: list[SymbolInfo] = []
-        libraries_list: list[str] = []
-
-        if header := getattr(binary, "header", None):
-            magic_val = getattr(header, "magic", 0)
-            cpu_type = getattr(header, "cpu_type", None)
-            file_type = getattr(header, "file_type", None)
-
-            headers_list.append(MachOHeaderInfo(
-                magic=hex(magic_val) if isinstance(magic_val, int) else str(magic_val),
-                cpu_type=str(cpu_type.name) if cpu_type and hasattr(cpu_type, "name") else str(cpu_type),
-                file_type=str(file_type.name) if file_type and hasattr(file_type, "name") else str(file_type),
-            ))
-
-        if hasattr(binary, "segments"):
-            for segment in binary.segments:
-                segment_name = getattr(segment, "name", "")
-                segment_vaddr = getattr(segment, "virtual_address", 0)
-                segment_vsize = getattr(segment, "virtual_size", 0)
-                section_list: list[MachOSectionInfo] = []
-
-                if hasattr(segment, "sections"):
-                    for section in segment.sections:
-                        sect_name = getattr(section, "name", "")
-                        sect_size = getattr(section, "size", 0)
-                        sect_offset = getattr(section, "offset", 0)
-
-                        section_list.append(MachOSectionInfo(
-                            name=sect_name,
-                            size=sect_size,
-                            offset=sect_offset,
-                        ))
-
-                segments_list.append(MachOSegmentInfo(
-                    name=segment_name,
-                    address=hex(segment_vaddr) if isinstance(segment_vaddr, int) else "0x0",
-                    size=segment_vsize,
-                    sections=section_list,
-                ))
-
-        return MachOAnalysisResult(
-            headers=headers_list,
-            segments=segments_list,
-            symbols=symbols_list,
-            libraries=libraries_list,
-        )
-
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.exception("Error analyzing Mach-O with LIEF: %s", e)
-        return MachOAnalysisResult(error=str(e))
-
-
-def analyze_macho_with_macholib(binary_path: str, detailed: bool) -> MachOAnalysisResult:
-    """Analyze Mach-O using macholib.
-
-    Args:
-        binary_path: Path to the Mach-O binary file.
-        detailed: Whether to perform detailed analysis.
-
-    Returns:
-        Comprehensive Mach-O binary analysis results.
-
-    """
-    _ = detailed
-    if MachO_class is None:
-        return MachOAnalysisResult(error="macholib not available")
-
-    try:
-        macho = MachO_class(binary_path)
-
-        headers_list: list[MachOHeaderInfo] = []
-        segments_list: list[MachOSegmentInfo] = []
-        libraries_list: list[str] = []
-
-        for header in macho.headers:
-            magic_attr = getattr(header, "MH_MAGIC", 0)
-            inner_header = getattr(header, "header", None)
-            cputype = getattr(inner_header, "cputype", 0) if inner_header else 0
-            filetype = getattr(inner_header, "filetype", 0) if inner_header else 0
-
-            headers_list.append(MachOHeaderInfo(
-                magic=hex(magic_attr) if isinstance(magic_attr, int) else str(magic_attr),
-                cpu_type=str(cputype),
-                file_type=str(filetype),
-            ))
-
-        return MachOAnalysisResult(
-            headers=headers_list,
-            segments=segments_list,
-            libraries=libraries_list,
-        )
-
-    except (OSError, ValueError, RuntimeError) as e:
-        logger.exception("Error analyzing Mach-O with macholib: %s", e)
-        return MachOAnalysisResult(error=str(e))
 
 
 def analyze_patterns(binary_path: str, patterns: list[bytes] | None = None) -> dict[str, Any]:
@@ -1512,12 +1146,14 @@ def _analyze_pe_resources_typed(pe: PEFile) -> list[ResourceInfo]:
         for entry in directory.entries:
             if hasattr(entry, "data"):
                 resource_type = entry.name if hasattr(entry, "name") and entry.name else f"Type_{entry.id}"
-                resources.append(ResourceInfo(
-                    type=str(resource_type),
-                    size=entry.data.struct.Size,
-                    language=str(entry.data.lang),
-                    offset=0,
-                ))
+                resources.append(
+                    ResourceInfo(
+                        type=str(resource_type),
+                        size=entry.data.struct.Size,
+                        language=str(entry.data.lang),
+                        offset=0,
+                    )
+                )
             elif hasattr(entry, "directory"):
                 walk_resources(entry.directory, level + 1)
 
@@ -1759,10 +1395,6 @@ def _optimized_basic_analysis(data: bytes, chunk_info: dict[str, Any] | None = N
         if isinstance(data, bytes) and data:
             if data.startswith(b"MZ"):
                 findings_list.append("PE executable detected")
-            elif data.startswith(b"\x7fELF"):
-                findings_list.append("ELF binary detected")
-            elif data[:4] in [b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf"]:
-                findings_list.append("Mach-O binary detected")
 
             if len(set(data[:1024])) < 20:
                 findings_list.append("Low entropy section detected (possible padding)")
@@ -1912,10 +1544,6 @@ def _optimized_section_analysis(data: bytes, chunk_info: dict[str, Any] | None =
                             findings_list.append("Valid PE header detected")
                             results["sections_detected"] = 1
 
-            elif data.startswith(b"\x7fELF"):
-                findings_list.append("ELF header detected")
-                results["sections_detected"] = 1
-
         return results
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error in binary_analysis: %s", e)
@@ -2053,14 +1681,10 @@ def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> list[
         if capstone_module is None:
             return ["Capstone not available"]
 
+        md = capstone_module.Cs(capstone_module.CS_ARCH_X86, capstone_module.CS_MODE_64)
         if binary_format == "PE":
-            md = capstone_module.Cs(capstone_module.CS_ARCH_X86, capstone_module.CS_MODE_64)
             entry_offset = _get_pe_entry_point(binary_path)
-        elif binary_format == "ELF":
-            md = capstone_module.Cs(capstone_module.CS_ARCH_X86, capstone_module.CS_MODE_64)
-            entry_offset = _get_elf_entry_point(binary_path)
         else:
-            md = capstone_module.Cs(capstone_module.CS_ARCH_X86, capstone_module.CS_MODE_64)
             entry_offset = 0x1000
 
         # Disassemble instructions
@@ -2148,28 +1772,6 @@ def _get_pe_entry_point(binary_path: str) -> int:
     return 0x1000
 
 
-def _get_elf_entry_point(binary_path: str) -> int:
-    """Get ELF entry point offset.
-
-    Args:
-        binary_path: Path to the ELF binary file
-
-    Returns:
-        Entry point offset or default 0x1000 if extraction fails.
-
-    """
-    try:
-        if PYELFTOOLS_AVAILABLE and ELFFile_class is not None:
-            with open(binary_path, "rb") as f:
-                elf = ELFFile_class(f)
-                elf_header = getattr(elf, "header", {})
-                entry = elf_header.get("e_entry", 0x1000)
-                return int(entry) if isinstance(entry, int) else 0x1000
-    except Exception as e:
-        logger.exception("Exception in binary_analysis: %s", e)
-    return 0x1000
-
-
 def disassemble_with_objdump(
     binary_path: str,
     extra_args: list[str] | None = None,
@@ -2216,8 +1818,6 @@ def disassemble_with_objdump(
 __all__ = [
     "analyze_binary",
     "analyze_binary_optimized",
-    "analyze_elf",
-    "analyze_macho",
     "analyze_patterns",
     "analyze_pe",
     "analyze_traffic",

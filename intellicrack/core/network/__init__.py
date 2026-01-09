@@ -4,7 +4,7 @@ This package contains networking components for communication protocols,
 C2 infrastructure, and network-based analysis capabilities.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -12,10 +12,6 @@ from .cloud_license_hooker import CloudLicenseResponseGenerator
 from .protocol_fingerprinter import ProtocolFingerprinter as ProtocolFingerprinterType
 from .ssl_interceptor import SSLTLSInterceptor
 from .traffic_analyzer import NetworkTrafficAnalyzer
-
-
-if TYPE_CHECKING:
-    from intellicrack.plugins.custom_modules.license_server_emulator import LicenseServerEmulator as NetworkLicenseServerEmulator
 
 
 logger.debug("Network core module loaded")
@@ -28,9 +24,6 @@ SSLInterceptor: type[Any] | None = None
 
 ProtocolFingerprinter: type[Any] | None = None
 """Protocol fingerprinter for identifying network protocol implementations."""
-
-LicenseServerEmulator: type[Any] | None = None
-"""License server emulator for generating and validating license server responses."""
 
 CloudLicenseHooker: type[Any] | None = None
 """Cloud license hooker for intercepting and modifying cloud-based license validation."""
@@ -54,14 +47,6 @@ except ImportError as e:
     ProtocolFingerprinter = None
 
 try:
-    from intellicrack.plugins.custom_modules.license_server_emulator import LicenseServerEmulator as NetworkLicenseServerEmulator
-
-    LicenseServerEmulator = NetworkLicenseServerEmulator
-except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
-    LicenseServerEmulator = None
-
-try:
     from .cloud_license_hooker import CloudLicenseResponseGenerator as CloudLicenseHooker
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
@@ -69,8 +54,11 @@ except ImportError as e:
 
 __all__ = [
     "CloudLicenseHooker",
-    "LicenseServerEmulator",
     "ProtocolFingerprinter",
     "SSLInterceptor",
-    "TrafficAnalyzer", "CloudLicenseResponseGenerator", "ProtocolFingerprinterType", "SSLTLSInterceptor", "NetworkTrafficAnalyzer",
+    "TrafficAnalyzer",
+    "CloudLicenseResponseGenerator",
+    "ProtocolFingerprinterType",
+    "SSLTLSInterceptor",
+    "NetworkTrafficAnalyzer",
 ]

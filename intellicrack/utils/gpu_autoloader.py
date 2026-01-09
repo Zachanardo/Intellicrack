@@ -488,7 +488,8 @@ class GPUAutoLoader:
 
         Blocks execution until all GPU kernel operations complete. Necessary for
         accurate timing measurements and ensuring GPU state consistency before
-        host-device synchronization points."""
+        host-device synchronization points.
+        """
         if not self.gpu_available or not self._torch:
             return
 
@@ -588,15 +589,15 @@ def detect_gpu_frameworks() -> dict[str, object]:
     """Scan the system and detect all available GPU acceleration frameworks.
 
     Probes the system for installed GPU frameworks including NVIDIA CUDA, AMD ROCm,
-    Intel XPU, DirectML, OpenCL, Vulkan, and Metal. Queries device counts, device
-    names, memory capacities, and version information for each available framework.
+    Intel XPU, DirectML, OpenCL, and Vulkan. Queries device counts, device names,
+    memory capacities, and version information for each available framework.
     Handles missing executables and import errors gracefully.
 
     Returns:
         Dictionary mapping framework names to availability flags and configuration.
             Keys include: 'cuda', 'cuda_version', 'rocm', 'rocm_version', 'opencl',
             'opencl_version', 'directml', 'intel_xpu', 'xpu_version', 'vulkan',
-            'metal', 'available_frameworks' (list), 'gpu_devices' (list),
+            'available_frameworks' (list), 'gpu_devices' (list),
             'gpu_count' (int), 'primary_framework' (str).
 
     Raises:
@@ -615,7 +616,6 @@ def detect_gpu_frameworks() -> dict[str, object]:
         "intel_xpu": False,
         "xpu_version": None,
         "vulkan": False,
-        "metal": False,
         "available_frameworks": [],
         "gpu_devices": [],
     }
@@ -769,19 +769,6 @@ def detect_gpu_frameworks() -> dict[str, object]:
                 available_frameworks.append("Vulkan")
     except Exception as e:
         logger.debug("Failed to check Vulkan availability: %s", e, exc_info=True)
-
-    # Check for Metal (macOS)
-    if sys.platform == "darwin":
-        try:
-            import torch
-
-            if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-                frameworks["metal"] = True
-                available_frameworks = frameworks["available_frameworks"]
-                if isinstance(available_frameworks, list):
-                    available_frameworks.append("Metal")
-        except (ImportError, AttributeError):
-            pass
 
     # Add summary information
     gpu_devices = frameworks["gpu_devices"]

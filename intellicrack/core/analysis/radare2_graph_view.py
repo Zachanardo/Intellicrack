@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from types import ModuleType
 from typing import Any
 
+
 r2pipe_module: ModuleType | None
 nx: ModuleType | None
 

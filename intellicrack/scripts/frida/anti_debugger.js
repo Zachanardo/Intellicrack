@@ -398,9 +398,9 @@ const antiDebugger = {
         setTimeout(() => {
             try {
                 // Get PEB address from TEB
-                const teb
-                    = Process.getCurrentThread().context.gs_base
-                    || Process.getCurrentThread().context.fs_base;
+                const teb =
+                    Process.getCurrentThread().context.gs_base ||
+                    Process.getCurrentThread().context.fs_base;
                 if (teb && !teb.isNull()) {
                     const peb = teb.add(0x60).readPointer(); // PEB offset in TEB
 
@@ -465,10 +465,10 @@ const antiDebugger = {
                             // CONTEXT structure offsets for debug registers (x64)
                             const dr0Offset = 0x90;
                             const dr1Offset = 0x98;
-                            const dr2Offset = 0xA0;
-                            const dr3Offset = 0xA8;
-                            const dr6Offset = 0xB0;
-                            const dr7Offset = 0xB8;
+                            const dr2Offset = 0xa0;
+                            const dr3Offset = 0xa8;
+                            const dr6Offset = 0xb0;
+                            const dr7Offset = 0xb8;
 
                             if (config.hardwareBreakpoints.clearDr0) {
                                 context.add(dr0Offset).writeU64(0);
@@ -526,16 +526,16 @@ const antiDebugger = {
                         const { config } = this.parent.parent;
                         if (config.hardwareBreakpoints.enabled) {
                             // Check if any debug registers are being set
-                            const dr7 = context.add(0xB8).readU64();
+                            const dr7 = context.add(0xb8).readU64();
 
                             if (dr7.toNumber() !== 0) {
                                 // Clear all debug registers to prevent hardware breakpoints
                                 context.add(0x90).writeU64(0); // DR0
                                 context.add(0x98).writeU64(0); // DR1
-                                context.add(0xA0).writeU64(0); // DR2
-                                context.add(0xA8).writeU64(0); // DR3
-                                context.add(0xB0).writeU64(0); // DR6
-                                context.add(0xB8).writeU64(0); // DR7
+                                context.add(0xa0).writeU64(0); // DR2
+                                context.add(0xa8).writeU64(0); // DR3
+                                context.add(0xb0).writeU64(0); // DR6
+                                context.add(0xb8).writeU64(0); // DR7
 
                                 send({
                                     type: 'bypass',
@@ -576,10 +576,10 @@ const antiDebugger = {
                                 if (config.hardwareBreakpoints.enabled) {
                                     context.add(0x90).writeU64(0); // DR0
                                     context.add(0x98).writeU64(0); // DR1
-                                    context.add(0xA0).writeU64(0); // DR2
-                                    context.add(0xA8).writeU64(0); // DR3
-                                    context.add(0xB0).writeU64(0); // DR6
-                                    context.add(0xB8).writeU64(0); // DR7
+                                    context.add(0xa0).writeU64(0); // DR2
+                                    context.add(0xa8).writeU64(0); // DR3
+                                    context.add(0xb0).writeU64(0); // DR6
+                                    context.add(0xb8).writeU64(0); // DR7
                                 }
                             } catch (error) {
                                 // Expected - some contexts may be read-only
@@ -626,8 +626,8 @@ const antiDebugger = {
         for (const module of modules) {
             // Skip system modules
             if (
-                module.name.toLowerCase().includes('ntdll')
-                || module.name.toLowerCase().includes('kernel32')
+                module.name.toLowerCase().includes('ntdll') ||
+                module.name.toLowerCase().includes('kernel32')
             ) {
                 continue;
             }
@@ -664,7 +664,7 @@ const antiDebugger = {
                         const originalValue = retval.toNumber();
 
                         // Provide consistent timing to prevent timing-based detection
-                        const baseTime = 0x12_34_56_78_9A_BC;
+                        const baseTime = 0x12_34_56_78_9a_bc;
                         const currentTime = baseTime + (Date.now() % 1_000_000) * 1000;
 
                         send({
@@ -674,8 +674,8 @@ const antiDebugger = {
                             spoofed: currentTime,
                         });
 
-                        this.context.eax = ptr(currentTime & 0xFF_FF_FF_FF);
-                        this.context.edx = ptr((currentTime >>> 0) & 0xFF_FF_FF_FF);
+                        this.context.eax = ptr(currentTime & 0xff_ff_ff_ff);
+                        this.context.edx = ptr((currentTime >>> 0) & 0xff_ff_ff_ff);
 
                         send({
                             type: 'bypass',
@@ -710,8 +710,8 @@ const antiDebugger = {
                         if (counterPtr && !counterPtr.isNull()) {
                             const { config, basePerformanceCounter } = this.parent.parent;
                             if (
-                                config.timingProtection.enabled
-                                && config.timingProtection.performanceCounterSpoofing
+                                config.timingProtection.enabled &&
+                                config.timingProtection.performanceCounterSpoofing
                             ) {
                                 // Provide consistent performance counter values
                                 const currentCounter = basePerformanceCounter + Date.now() * 10_000;
@@ -765,9 +765,9 @@ const antiDebugger = {
                     const { config } = this.parent.parent;
 
                     if (
-                        config.timingProtection.enabled
-                        && config.timingProtection.sleepManipulation
-                        && milliseconds > 1000
+                        config.timingProtection.enabled &&
+                        config.timingProtection.sleepManipulation &&
+                        milliseconds > 1000
                     ) {
                         args[0] = ptr(100); // Reduce to 100ms
                         send({
@@ -792,9 +792,9 @@ const antiDebugger = {
                     const { config } = this.parent.parent;
 
                     if (
-                        config.timingProtection.enabled
-                        && config.timingProtection.sleepManipulation
-                        && milliseconds > 1000
+                        config.timingProtection.enabled &&
+                        config.timingProtection.sleepManipulation &&
+                        milliseconds > 1000
                     ) {
                         args[0] = ptr(100);
                         send({
@@ -823,8 +823,8 @@ const antiDebugger = {
                     function () {
                         const { config } = this.parent;
                         if (
-                            config.timingProtection.enabled
-                            && config.timingProtection.consistentTiming
+                            config.timingProtection.enabled &&
+                            config.timingProtection.consistentTiming
                         ) {
                             return Date.now() - baseTickCount;
                         }
@@ -848,8 +848,8 @@ const antiDebugger = {
                     function () {
                         const { config } = this.parent;
                         if (
-                            config.timingProtection.enabled
-                            && config.timingProtection.consistentTiming
+                            config.timingProtection.enabled &&
+                            config.timingProtection.consistentTiming
                         ) {
                             return Date.now() - baseTickCount64;
                         }
@@ -895,9 +895,9 @@ const antiDebugger = {
                         const { config } = this.parent.parent;
 
                         if (
-                            filename
-                            && !filename.isNull()
-                            && config.processInfo.spoofParentProcess
+                            filename &&
+                            !filename.isNull() &&
+                            config.processInfo.spoofParentProcess
                         ) {
                             const spoofedPath = `C:\\Windows\\${config.processInfo.spoofProcessName}`;
                             filename.writeUtf16String(spoofedPath);
@@ -1114,8 +1114,8 @@ const antiDebugger = {
                         if (exceptionCode === 0x80_00_00_04) {
                             const { config } = this.parent.parent;
                             if (
-                                config.threadProtection.enabled
-                                && config.threadProtection.protectSingleStep
+                                config.threadProtection.enabled &&
+                                config.threadProtection.protectSingleStep
                             ) {
                                 send({
                                     type: 'bypass',
@@ -1144,8 +1144,8 @@ const antiDebugger = {
                     if (context && !context.isNull()) {
                         const { config } = this.parent.parent;
                         if (
-                            config.threadProtection.enabled
-                            && config.threadProtection.spoofTrapFlag
+                            config.threadProtection.enabled &&
+                            config.threadProtection.spoofTrapFlag
                         ) {
                             // Check for trap flag (bit 8 in EFLAGS/RFLAGS)
                             const contextFlags = context.readU32();
@@ -1362,7 +1362,7 @@ const antiDebugger = {
                             target: 'NtCreateDebugObject',
                             action: 'debug_object_creation_blocked',
                         });
-                        retval.replace(0xC0_00_00_22); // STATUS_ACCESS_DENIED
+                        retval.replace(0xc0_00_00_22); // STATUS_ACCESS_DENIED
                     }
                 },
             });
@@ -1379,7 +1379,7 @@ const antiDebugger = {
                         target: 'anti_debugger',
                         action: 'debug_active_process_blocked',
                     });
-                    retval.replace(0xC0_00_00_22); // STATUS_ACCESS_DENIED
+                    retval.replace(0xc0_00_00_22); // STATUS_ACCESS_DENIED
                 },
             });
 
@@ -1536,7 +1536,7 @@ const antiDebugger = {
 
                 onLeave(retval) {
                     if (this.blockPipe) {
-                        retval.replace(ptr(0xFF_FF_FF_FF)); // INVALID_HANDLE_VALUE
+                        retval.replace(ptr(0xff_ff_ff_ff)); // INVALID_HANDLE_VALUE
                     }
                 },
             });
@@ -1710,10 +1710,10 @@ const antiDebugger = {
                     },
                     onLeave(retval) {
                         if (
-                            retval.toInt32() === 0
-                            && this.systemInfo
-                            && !this.systemInfo.isNull()
-                            && this.infoClass === 0x9D
+                            retval.toInt32() === 0 &&
+                            this.systemInfo &&
+                            !this.systemInfo.isNull() &&
+                            this.infoClass === 0x9d
                         ) {
                             Memory.protect(this.systemInfo, this.systemInfoLength, 'rw-');
                             for (let i = 0; i < this.systemInfoLength; i++) {
@@ -1747,8 +1747,8 @@ const antiDebugger = {
                             if (args[0] && !args[0].isNull()) {
                                 let libraryName = '';
                                 try {
-                                    libraryName
-                                        = args[0].readUtf8String() || args[0].readUtf16String() || '';
+                                    libraryName =
+                                        args[0].readUtf8String() || args[0].readUtf16String() || '';
                                 } catch (error) {
                                     send({
                                         type: 'error',
@@ -1856,7 +1856,7 @@ const antiDebugger = {
                                 result: 'success',
                             });
                             if (regHandle && !regHandle.isNull()) {
-                                regHandle.writeU64(0x12_34_56_78_90_AB_CD_EF);
+                                regHandle.writeU64(0x12_34_56_78_90_ab_cd_ef);
                             }
                             BYPASS_STATS.etw_registrations_blocked++;
                             return 0; // ERROR_SUCCESS
@@ -1903,7 +1903,7 @@ const antiDebugger = {
                                 const wbemBytes = clsid.readByteArray(16);
                                 if (wbemBytes) {
                                     const wbemPattern = [
-                                        0x11, 0xF8, 0x90, 0x45, 0x3A, 0x1D, 0xD0, 0x11,
+                                        0x11, 0xf8, 0x90, 0x45, 0x3a, 0x1d, 0xd0, 0x11,
                                     ];
                                     let isWbem = true;
                                     for (let i = 0; i < 8 && i < wbemBytes.byteLength; i++) {
@@ -2056,7 +2056,7 @@ const antiDebugger = {
                         // Patch the function to return AMSI_RESULT_CLEAN immediately
                         Memory.protect(amsiScanBuffer, 16, 'rwx');
                         // MOV EAX, 0; RET (return AMSI_RESULT_CLEAN)
-                        amsiScanBuffer.writeByteArray([0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3]);
+                        amsiScanBuffer.writeByteArray([0xb8, 0x00, 0x00, 0x00, 0x00, 0xc3]);
                         send({
                             type: 'bypass',
                             target: 'AmsiScanBuffer',
@@ -2116,7 +2116,7 @@ const antiDebugger = {
                             } else if (api.func === 'NtSetInformationProcess') {
                                 const infoClass = args[1].toInt32();
                                 // ProcessUserCetAvailableOptOut = 0x7C
-                                if (infoClass === 0x7C) {
+                                if (infoClass === 0x7c) {
                                     send({
                                         type: 'bypass',
                                         target: 'NtSetInformationProcess',
@@ -2129,7 +2129,7 @@ const antiDebugger = {
                         },
                         onLeave(retval) {
                             if (this.blockCET) {
-                                retval.replace(0xC0_00_00_22); // STATUS_ACCESS_DENIED
+                                retval.replace(0xc0_00_00_22); // STATUS_ACCESS_DENIED
                                 BYPASS_STATS.cet_protections_bypassed++;
                             }
                         },
@@ -2218,9 +2218,9 @@ const antiDebugger = {
                     },
                     onLeave(retval) {
                         if (
-                            retval.toInt32() === 0
-                            && this.systemInfo
-                            && !this.systemInfo.isNull()
+                            retval.toInt32() === 0 &&
+                            this.systemInfo &&
+                            !this.systemInfo.isNull()
                         ) {
                             // SystemCodeIntegrityInformation = 0x67
                             if (this.infoClass === 0x67) {
@@ -2267,7 +2267,7 @@ const antiDebugger = {
                                 target: api.func,
                                 action: 'kernel_debug_access_denied',
                             });
-                            retval.replace(0xC0_00_00_22); // STATUS_ACCESS_DENIED
+                            retval.replace(0xc0_00_00_22); // STATUS_ACCESS_DENIED
                             BYPASS_STATS.kernel_debug_accesses_blocked++;
                         },
                     });
@@ -2311,24 +2311,24 @@ const antiDebugger = {
                     },
                     onLeave(retval) {
                         if (
-                            retval.toInt32() === 0
-                            && this.systemInfo
-                            && !this.systemInfo.isNull()
+                            retval.toInt32() === 0 &&
+                            this.systemInfo &&
+                            !this.systemInfo.isNull()
                         ) {
                             const { infoClass } = this;
 
                             // Monitor for PatchGuard-related information classes
                             const patchGuardClasses = [
-                                0x4F, // SystemModuleInformation
+                                0x4f, // SystemModuleInformation
                                 0x50, // SystemModuleInformationEx
                                 0x51, // SystemSessionCreate
-                                0x5C, // SystemWatchdogTimerHandler
-                                0x5D, // SystemWatchdogTimerInformation
+                                0x5c, // SystemWatchdogTimerHandler
+                                0x5d, // SystemWatchdogTimerInformation
                             ];
 
                             if (
-                                patchGuardClasses.includes(infoClass)
-                                && !processedInfoClasses.has(infoClass)
+                                patchGuardClasses.includes(infoClass) &&
+                                !processedInfoClasses.has(infoClass)
                             ) {
                                 processedInfoClasses.add(infoClass);
                                 send({
@@ -2561,8 +2561,8 @@ const antiDebugger = {
                                 new NativeCallback(
                                     () => {
                                         const elapsed = Date.now() - baseTime;
-                                        const modifiedTickCount
-                                            = (baseTime + elapsed * 0.8) & 0xFF_FF_FF_FF;
+                                        const modifiedTickCount =
+                                            (baseTime + elapsed * 0.8) & 0xff_ff_ff_ff;
                                         send({
                                             type: 'bypass',
                                             target: 'GetTickCount',
@@ -2623,15 +2623,15 @@ const antiDebugger = {
                     Interceptor.attach(telemetryAddr, {
                         onEnter(args) {
                             if (
-                                telemetryFuncName === 'CreateEventW'
-                                && args[2]
-                                && !args[2].isNull()
+                                telemetryFuncName === 'CreateEventW' &&
+                                args[2] &&
+                                !args[2].isNull()
                             ) {
                                 const eventName = args[2].readUtf16String();
                                 if (
-                                    eventName
-                                    && (eventName.includes('Telemetry')
-                                        || eventName.includes('Analytics'))
+                                    eventName &&
+                                    (eventName.includes('Telemetry') ||
+                                        eventName.includes('Analytics'))
                                 ) {
                                     send({
                                         type: 'bypass',
@@ -2737,46 +2737,46 @@ const antiDebugger = {
 
             for (const hook in this.hooksInstalled) {
                 if (
-                    hook.includes('IsDebugger')
-                    || hook.includes('Remote')
-                    || hook.includes('Query')
+                    hook.includes('IsDebugger') ||
+                    hook.includes('Remote') ||
+                    hook.includes('Query')
                 ) {
                     categories['Core Detection']++;
                 } else if (
-                    hook.includes('Context')
-                    || (hook.includes('Thread') && hook.includes('Debug'))
+                    hook.includes('Context') ||
+                    (hook.includes('Thread') && hook.includes('Debug'))
                 ) {
                     categories['Hardware Breakpoints']++;
                 } else if (
-                    hook.includes('RDTSC')
-                    || hook.includes('Performance')
-                    || hook.includes('Tick')
-                    || hook.includes('Sleep')
+                    hook.includes('RDTSC') ||
+                    hook.includes('Performance') ||
+                    hook.includes('Tick') ||
+                    hook.includes('Sleep')
                 ) {
                     categories['Timing Protection']++;
                 } else if (
-                    hook.includes('Process')
-                    || hook.includes('Command')
-                    || hook.includes('Module')
+                    hook.includes('Process') ||
+                    hook.includes('Command') ||
+                    hook.includes('Module')
                 ) {
                     categories['Process Information']++;
                 } else if (
-                    hook.includes('Thread')
-                    || hook.includes('Context')
-                    || hook.includes('Single')
+                    hook.includes('Thread') ||
+                    hook.includes('Context') ||
+                    hook.includes('Single')
                 ) {
                     categories['Thread Context']++;
                 } else if (hook.includes('Exception') || hook.includes('Break')) {
                     categories['Exception Handling']++;
                 } else if (
-                    hook.includes('Debug')
-                    && (hook.includes('Object') || hook.includes('Event') || hook.includes('Active'))
+                    hook.includes('Debug') &&
+                    (hook.includes('Object') || hook.includes('Event') || hook.includes('Active'))
                 ) {
                     categories['Advanced Detection']++;
                 } else if (
-                    hook.includes('Pipe')
-                    || hook.includes('Mapping')
-                    || hook.includes('Reg')
+                    hook.includes('Pipe') ||
+                    hook.includes('Mapping') ||
+                    hook.includes('Reg')
                 ) {
                     categories.Communication++;
                 } else if (hook.includes('Virtual') || hook.includes('Protection')) {

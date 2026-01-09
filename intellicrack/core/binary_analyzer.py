@@ -40,7 +40,6 @@ logger = logging.getLogger(__name__)
 MultiFormatBinaryAnalyzer: type[Any] | None = None
 BinaryInfo: type[Any] | None = None
 PEAnalyzer: type[Any] | None = None
-ELFAnalyzer: type[Any] | None = None
 
 try:
     from .analysis.multi_format_analyzer import (
@@ -62,13 +61,6 @@ try:
     PEAnalyzer = _PEAnalyzer
 except ImportError:
     logger.warning("Failed to import PEAnalyzer from ..utils.binary.pe_analysis_common, PE analysis will be disabled.")
-
-try:
-    from ..utils.binary.elf_analyzer import ELFAnalyzer as _ELFAnalyzer
-
-    ELFAnalyzer = _ELFAnalyzer
-except ImportError:
-    logger.warning("Failed to import ELFAnalyzer from ..utils.binary.elf_analyzer, ELF analysis will be disabled.")
 
 detect_file_type_impl: Callable[[str], str] | None = None
 
@@ -152,7 +144,7 @@ class BinaryAnalyzer:
     def __init__(self) -> None:
         """Initialize the binary analyzer.
 
-        Sets up the analyzer with sub-analyzers for PE, ELF, and multi-format
+        Sets up the analyzer with sub-analyzers for PE and multi-format
         analysis. Initializes analysis cache and supported file format list.
         """
         self.logger = logging.getLogger(__name__)
@@ -162,36 +154,22 @@ class BinaryAnalyzer:
         self.logger.debug("Initializing sub-analyzers.")
         self.multi_format_analyzer: Any | None = MultiFormatBinaryAnalyzer() if MultiFormatBinaryAnalyzer is not None else None
         self.pe_analyzer: Any | None = PEAnalyzer() if PEAnalyzer is not None else None
-        self.elf_analyzer: Any | None = None
-        if ELFAnalyzer is not None:
-            self.elf_analyzer = ELFAnalyzer("")
         if not self.multi_format_analyzer:
             self.logger.warning("MultiFormatBinaryAnalyzer not available. Analysis will be limited.")
         if not self.pe_analyzer:
             self.logger.warning("PEAnalyzer not available. PE file analysis will be limited.")
-        if not self.elf_analyzer:
-            self.logger.warning("ELFAnalyzer not available. ELF file analysis will be limited.")
 
         # Analysis cache
         self.analysis_cache: dict[str, dict[str, Any]] = {}
         self.logger.debug("Analysis cache initialized.")
 
-        # Supported file types
         self.supported_formats = [
             "exe",
             "dll",
             "sys",
             "scr",  # PE formats
-            "elf",
-            "so",
-            "a",  # ELF formats
-            "dylib",
-            "bundle",  # Mach-O formats
-            "apk",
-            "jar",
-            "dex",  # Android/Java formats
             "msi",
-            "com",  # Other formats
+            "com",
         ]
         self.logger.info("BinaryAnalyzer initialized with %s supported formats.", len(self.supported_formats))
 
@@ -385,8 +363,8 @@ class BinaryAnalyzer:
         """Detect file type using multiple methods.
 
         Identifies binary file format by analyzing magic bytes and file
-        extension. Supports PE, ELF, Mach-O, DEX, APK, JAR, and other formats
-        relevant to licensing protection analysis.
+        extension. Supports Windows PE formats relevant to licensing
+        protection analysis.
 
         Args:
             file_path: Path to the binary file
@@ -406,37 +384,12 @@ class BinaryAnalyzer:
                 "is_supported": file_path.suffix.lower().lstrip(".") in self.supported_formats,
             }
 
-            # Detailed magic byte analysis
             if magic_bytes.startswith(b"MZ"):
                 file_type_info["format"] = "PE"
                 file_type_info["description"] = "Windows Portable Executable"
-            elif magic_bytes.startswith(b"\x7fELF"):
-                file_type_info["format"] = "ELF"
-                file_type_info["description"] = "Linux Executable and Linkable Format"
-            elif magic_bytes[:4] in [
-                b"\xfe\xed\xfa\xce",
-                b"\xfe\xed\xfa\xcf",
-                b"\xce\xfa\xed\xfe",
-                b"\xcf\xfa\xed\xfe",
-            ]:
-                file_type_info["format"] = "Mach-O"
-                file_type_info["description"] = "macOS Mach-O executable"
-            elif magic_bytes.startswith(b"dex\n"):
-                file_type_info["format"] = "DEX"
-                file_type_info["description"] = "Android Dalvik Executable"
             elif magic_bytes.startswith(b"PK\x03\x04"):
                 file_type_info["format"] = "ZIP"
-                if file_path.suffix.lower() == ".apk":
-                    file_type_info["format"] = "APK"
-                    file_type_info["description"] = "Android Package"
-                elif file_path.suffix.lower() == ".jar":
-                    file_type_info["format"] = "JAR"
-                    file_type_info["description"] = "Java Archive"
-                else:
-                    file_type_info["description"] = "ZIP Archive"
-            elif magic_bytes.startswith(b"\xca\xfe\xba\xbe"):
-                file_type_info["format"] = "CLASS"
-                file_type_info["description"] = "Java Class File"
+                file_type_info["description"] = "ZIP Archive"
             else:
                 file_type_info["format"] = "Unknown"
                 file_type_info["description"] = "Unknown binary format"
@@ -846,9 +799,6 @@ class BinaryAnalyzer:
             if file_type == "PE":
                 self.logger.debug("Performing PE-specific protection checks.")
                 self._check_pe_protections(file_path, results, protections)
-            elif file_type == "ELF":
-                self.logger.debug("Performing ELF-specific protection checks.")
-                self._check_elf_protections(file_path, results, protections)
 
             # Generic protection checks
             self.logger.debug("Performing generic protection checks.")
@@ -910,24 +860,6 @@ class BinaryAnalyzer:
                     if func in protection_apis:
                         protections["indicators"].append(f"Protection API: {func}")
 
-    def _check_elf_protections(self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]) -> None:
-        """Check ELF-specific protections.
-
-        Analyzes ELF executables for Unix/Linux-specific protection mechanisms
-        including stack canaries, position-independent code, read-only
-        relocation tables, and other hardening techniques that may protect
-        licensing mechanisms.
-
-        Args:
-            file_path: Path to the binary file
-            results: Dictionary containing analysis results
-            protections: Dictionary to update with protection findings
-        """
-        # Check for stack canaries, RELRO, etc.
-        if "format_analysis" in results:
-            # This would need more detailed ELF analysis
-            protections["indicators"].append("ELF protection analysis requires deeper inspection")
-
     def _check_generic_protections(self, file_path: Path, results: dict[str, Any], protections: dict[str, Any]) -> None:
         """Check generic protection indicators.
 
@@ -972,22 +904,6 @@ class BinaryAnalyzer:
                     "Use PE analysis tools like PEview, CFF Explorer, or ICP Analysis",
                     "Check for digital signatures and certificate validity",
                     "Analyze imports and exports for suspicious API usage",
-                ],
-            )
-        elif file_type == "ELF":
-            recommendations.extend(
-                [
-                    "Use ELF analysis tools like readelf, objdump, or nm",
-                    "Check for stripped symbols and debug information",
-                    "Analyze dynamic dependencies and RPATH settings",
-                ],
-            )
-        elif file_type in ["APK", "DEX"]:
-            recommendations.extend(
-                [
-                    "Use Android analysis tools like JADX, dex2jar, or APKTool",
-                    "Check AndroidManifest.xml for permissions and components",
-                    "Analyze native libraries for potential security issues",
                 ],
             )
 

@@ -180,10 +180,10 @@ class HwidSpooferEnhanced {
                                 if (bstrPtr && !bstrPtr.isNull()) {
                                     const str = bstrPtr.readUtf16String();
                                     if (
-                                        str
-                                        && (str.includes('Win32_')
-                                            || str.includes('ROOT\\CIMV2')
-                                            || str.includes('SELECT * FROM'))
+                                        str &&
+                                        (str.includes('Win32_') ||
+                                            str.includes('ROOT\\CIMV2') ||
+                                            str.includes('SELECT * FROM'))
                                     ) {
                                         this.wmiQuery = str;
                                         this.spoofWmi = true;
@@ -262,10 +262,10 @@ class HwidSpooferEnhanced {
                 onEnter(args) {
                     const keyName = args[1].readUtf16String();
                     if (
-                        keyName
-                        && (keyName.includes('TPM')
-                            || keyName.includes('TBS')
-                            || keyName.includes('Platform'))
+                        keyName &&
+                        (keyName.includes('TPM') ||
+                            keyName.includes('TBS') ||
+                            keyName.includes('Platform'))
                     ) {
                         this.tpmQuery = true;
                         this.keyName = keyName;
@@ -298,7 +298,7 @@ class HwidSpooferEnhanced {
                     if (retval.toInt32() > 0 && this.buffer && !this.buffer.isNull()) {
                         // Spoof SMBIOS, ACPI, and other firmware tables
                         const spoofedData = new Uint8Array(this.bufferSize);
-                        spoofedData.fill(0xAA); // Generic pattern
+                        spoofedData.fill(0xaa); // Generic pattern
                         this.buffer.writeByteArray(spoofedData);
 
                         send({
@@ -391,18 +391,18 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        this.spoofSmbios
-                        && retval.toInt32() === 0
-                        && this.buffer
-                        && !this.buffer.isNull()
+                        this.spoofSmbios &&
+                        retval.toInt32() === 0 &&
+                        this.buffer &&
+                        !this.buffer.isNull()
                     ) {
                         // Spoof SMBIOS structure with generic hardware info
                         const smbiosHeader = new Uint8Array([
                             0x53,
-                            0x4D,
+                            0x4d,
                             0x42,
                             0x49, // "SMBI"
-                            0x4F,
+                            0x4f,
                             0x53,
                             0x00,
                             0x00, // "OS\0\0"
@@ -436,10 +436,10 @@ class HwidSpooferEnhanced {
                 onEnter(args) {
                     const valueName = args[1].readUtf16String();
                     if (
-                        valueName
-                        && (valueName.includes('Manufacturer')
-                            || valueName.includes('Product')
-                            || valueName.includes('Version'))
+                        valueName &&
+                        (valueName.includes('Manufacturer') ||
+                            valueName.includes('Product') ||
+                            valueName.includes('Version'))
                     ) {
                         this.spoofManufacturer = true;
                         this.valueName = valueName;
@@ -448,10 +448,10 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        this.spoofManufacturer
-                        && retval.toInt32() === 0
-                        && this.dataBuffer
-                        && !this.dataBuffer.isNull()
+                        this.spoofManufacturer &&
+                        retval.toInt32() === 0 &&
+                        this.dataBuffer &&
+                        !this.dataBuffer.isNull()
                     ) {
                         const spoofedValue = 'Generic Computer Inc.';
                         this.dataBuffer.writeUtf16String(spoofedValue);
@@ -545,10 +545,10 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() === 0
-                        && this.outputBuffer
-                        && !this.outputBuffer.isNull()
-                        && (this.infoLevel === 12 || this.infoLevel === 60)
+                        retval.toInt32() === 0 &&
+                        this.outputBuffer &&
+                        !this.outputBuffer.isNull() &&
+                        (this.infoLevel === 12 || this.infoLevel === 60)
                     ) {
                         const spoofedData = new Uint8Array(this.outputLength);
                         spoofedData.fill(0x42); // Generic pattern
@@ -580,7 +580,7 @@ class HwidSpooferEnhanced {
                     if (retval.toInt32() !== 0 && this.buffer && !this.buffer.isNull()) {
                         // Spoof processor cache hierarchy
                         const spoofedInfo = new Uint8Array(48); // SYSTEM_LOGICAL_PROCESSOR_INFORMATION size
-                        spoofedInfo[0] = 0xFF; // ProcessorMask
+                        spoofedInfo[0] = 0xff; // ProcessorMask
                         spoofedInfo[8] = 1; // Relationship = RelationProcessorCore
                         spoofedInfo[12] = 2; // ProcessorCore.Flags
 
@@ -704,17 +704,17 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.deviceInfoData
-                        && !this.deviceInfoData.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.deviceInfoData &&
+                        !this.deviceInfoData.isNull()
                     ) {
                         // Check if this is a GPU device and spoof its information
                         const classGuid = this.deviceInfoData.add(20); // ClassGuid offset
                         if (classGuid && !classGuid.isNull()) {
                             // Generic GPU class GUID spoofing
                             const spoofedGuid = new Uint8Array([
-                                0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xA0, 0xB0,
-                                0xC0, 0xD0, 0xE0, 0xF0, 0x00,
+                                0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0,
+                                0xc0, 0xd0, 0xe0, 0xf0, 0x00,
                             ]);
                             classGuid.writeByteArray(spoofedGuid);
 
@@ -814,9 +814,9 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.propertyBuffer
-                        && !this.propertyBuffer.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.propertyBuffer &&
+                        !this.propertyBuffer.isNull()
                     ) {
                         // Spoof USB device properties
                         const spoofedProperty = 'Generic USB Device';
@@ -864,16 +864,16 @@ class HwidSpooferEnhanced {
                     this.outputBufferSize = args[5].toInt32();
 
                     // Check for USB-related IOCTL codes
-                    if ((this.ioControlCode & 0xFF_FF_00_00) === 0x00_22_00_00) {
+                    if ((this.ioControlCode & 0xff_ff_00_00) === 0x00_22_00_00) {
                         this.usbIoctl = true;
                     }
                 },
                 onLeave(retval) {
                     if (
-                        this.usbIoctl
-                        && retval.toInt32() !== 0
-                        && this.outputBuffer
-                        && !this.outputBuffer.isNull()
+                        this.usbIoctl &&
+                        retval.toInt32() !== 0 &&
+                        this.outputBuffer &&
+                        !this.outputBuffer.isNull()
                     ) {
                         // Spoof USB device descriptors
                         const spoofedDescriptor = new Uint8Array(this.outputBufferSize);
@@ -922,9 +922,9 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.displayDevice
-                        && !this.displayDevice.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.displayDevice &&
+                        !this.displayDevice.isNull()
                     ) {
                         // Spoof display device information
                         const deviceNameOffset = 4;
@@ -1085,9 +1085,9 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() === 0
-                        && this.adapterAddresses
-                        && !this.adapterAddresses.isNull()
+                        retval.toInt32() === 0 &&
+                        this.adapterAddresses &&
+                        !this.adapterAddresses.isNull()
                     ) {
                         const addresses = this.adapterAddresses.readPointer();
                         if (addresses && !addresses.isNull()) {
@@ -1104,7 +1104,7 @@ class HwidSpooferEnhanced {
 
                             // Spoof physical address (MAC)
                             const physicalAddressPtr = addresses.add(24);
-                            const spoofedMac = new Uint8Array([0x00, 0x15, 0x5D, 0x01, 0x02, 0x03]);
+                            const spoofedMac = new Uint8Array([0x00, 0x15, 0x5d, 0x01, 0x02, 0x03]);
                             physicalAddressPtr.writeByteArray(spoofedMac);
                             addresses.add(32).writeU32(6); // PhysicalAddressLength
 
@@ -1143,7 +1143,7 @@ class HwidSpooferEnhanced {
 
                                 const macOffset = firstEntry.add(20);
                                 const spoofedMac = new Uint8Array([
-                                    0x00, 0x15, 0x5D, 0x01, 0x02, 0x03,
+                                    0x00, 0x15, 0x5d, 0x01, 0x02, 0x03,
                                 ]);
                                 macOffset.writeByteArray(spoofedMac);
 
@@ -1194,9 +1194,9 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() === 0
-                        && this.interfaceList
-                        && !this.interfaceList.isNull()
+                        retval.toInt32() === 0 &&
+                        this.interfaceList &&
+                        !this.interfaceList.isNull()
                     ) {
                         const listPtr = this.interfaceList.readPointer();
                         if (listPtr && !listPtr.isNull()) {
@@ -1217,10 +1217,10 @@ class HwidSpooferEnhanced {
                                             const originalDesc = originalDescPtr.readUtf16String();
 
                                             // Spoof wireless adapter description
-                                            const spoofedDesc
-                                                = 'Generic 802.11 Wireless LAN Adapter';
-                                            const spoofedDescPtr
-                                                = Memory.allocUtf16String(spoofedDesc);
+                                            const spoofedDesc =
+                                                'Generic 802.11 Wireless LAN Adapter';
+                                            const spoofedDescPtr =
+                                                Memory.allocUtf16String(spoofedDesc);
                                             descPtr.writePointer(spoofedDescPtr);
 
                                             this.originalDescription = originalDesc;
@@ -1239,7 +1239,7 @@ class HwidSpooferEnhanced {
 
                                 // Generic WLAN GUID
                                 const spoofedGuid = new Uint8Array([
-                                    0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0, 0x11, 0x22,
+                                    0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11, 0x22,
                                     0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
                                 ]);
                                 guidPtr.writeByteArray(spoofedGuid);
@@ -1277,9 +1277,9 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.memoryStatus
-                        && !this.memoryStatus.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.memoryStatus &&
+                        !this.memoryStatus.isNull()
                     ) {
                         // Spoof memory statistics
                         const GB = 1024 * 1024 * 1024;
@@ -1320,10 +1320,10 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.buffer
-                        && !this.buffer.isNull()
-                        && this.relationshipType === 3
+                        retval.toInt32() !== 0 &&
+                        this.buffer &&
+                        !this.buffer.isNull() &&
+                        this.relationshipType === 3
                     ) {
                         const cacheInfo = this.buffer.readPointer();
                         if (cacheInfo && !cacheInfo.isNull()) {
@@ -1390,12 +1390,12 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        retval.toInt32() !== 0
-                        && this.processorMask
-                        && !this.processorMask.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.processorMask &&
+                        !this.processorMask.isNull()
                     ) {
                         // Spoof NUMA node processor affinity
-                        this.processorMask.writeU64(0xFF); // All 8 cores on node 0
+                        this.processorMask.writeU64(0xff); // All 8 cores on node 0
 
                         send({
                             type: 'bypass',
@@ -1510,10 +1510,10 @@ class HwidSpooferEnhanced {
                 },
                 onLeave(retval) {
                     if (
-                        this.diskPerfQuery
-                        && retval.toInt32() !== 0
-                        && this.outputBuffer
-                        && !this.outputBuffer.isNull()
+                        this.diskPerfQuery &&
+                        retval.toInt32() !== 0 &&
+                        this.outputBuffer &&
+                        !this.outputBuffer.isNull()
                     ) {
                         // Spoof disk performance statistics
                         this.outputBuffer.writeU64(1000); // BytesRead
@@ -1619,8 +1619,8 @@ if (hwidSpoofer && typeof hwidSpoofer.initializeSpoofing === 'function') {
         // Set up periodic spoofing refresh
         setInterval(() => {
             if (hwidSpoofer.spoofingState) {
-                hwidSpoofer.spoofingState.refreshCount
-                    = (hwidSpoofer.spoofingState.refreshCount || 0) + 1;
+                hwidSpoofer.spoofingState.refreshCount =
+                    (hwidSpoofer.spoofingState.refreshCount || 0) + 1;
                 send({
                     type: 'status',
                     message: 'Hardware spoofing state refreshed',
@@ -1653,8 +1653,8 @@ if (hwidSpoofer && typeof hwidSpoofer.initializeSpoofing === 'function') {
         // Set up periodic spoofing refresh
         setInterval(() => {
             if (hwidSpoofer.spoofingState) {
-                hwidSpoofer.spoofingState.refreshCount
-                    = (hwidSpoofer.spoofingState.refreshCount || 0) + 1;
+                hwidSpoofer.spoofingState.refreshCount =
+                    (hwidSpoofer.spoofingState.refreshCount || 0) + 1;
                 send({
                     type: 'status',
                     message: 'Hardware spoofing state refreshed',

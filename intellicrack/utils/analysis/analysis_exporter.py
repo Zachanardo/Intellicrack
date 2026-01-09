@@ -277,7 +277,6 @@ class AnalysisExporter:
         Returns:
             None: Writes directly to the CSV writer without returning data.
         """
-
         writer.writerow(["Type", "Old_Value", "New_Value", "Severity", "Description"])
 
         for diff in result.get("differences", []):
@@ -307,7 +306,6 @@ class AnalysisExporter:
         Returns:
             None: Writes directly to the CSV writer without returning data.
         """
-
         if not result:
             return
 

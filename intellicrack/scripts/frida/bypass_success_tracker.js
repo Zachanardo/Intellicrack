@@ -665,16 +665,16 @@ const BypassSuccessTracker = {
                 bypassMethod.successRate = bypassMethod.successes / bypassMethod.attempts;
 
                 // Update average duration
-                const totalDuration
-                    = bypassMethod.avgDuration * (bypassMethod.attempts - 1) + duration;
+                const totalDuration =
+                    bypassMethod.avgDuration * (bypassMethod.attempts - 1) + duration;
                 bypassMethod.avgDuration = totalDuration / bypassMethod.attempts;
             }
         }
 
         // Update overall success rate
         if (this.statistics.overall.totalAttempts > 0) {
-            this.statistics.overall.overallSuccessRate
-                = this.statistics.overall.totalSuccesses / this.statistics.overall.totalAttempts;
+            this.statistics.overall.overallSuccessRate =
+                this.statistics.overall.totalSuccesses / this.statistics.overall.totalAttempts;
         }
 
         // Add to time series
@@ -852,9 +852,9 @@ const BypassSuccessTracker = {
 
         const categoryStats = this.statistics.byCategory.get(category);
         if (
-            categoryStats
-            && categoryStats.attempts >= this.config.thresholds.minimumAttempts
-            && categoryStats.successRate < this.config.reporting.alertThreshold
+            categoryStats &&
+            categoryStats.attempts >= this.config.thresholds.minimumAttempts &&
+            categoryStats.successRate < this.config.reporting.alertThreshold
         ) {
             this.generateAlert('low_success_rate', {
                 category,
@@ -1058,8 +1058,8 @@ const BypassSuccessTracker = {
                 );
 
                 methodData.confidenceInterval = confidenceInterval;
-                methodData.isStatisticallySignificant
-                    = methodData.attempts >= this.config.thresholds.minimumAttempts;
+                methodData.isStatisticallySignificant =
+                    methodData.attempts >= this.config.thresholds.minimumAttempts;
 
                 this.statistics.byMethod.set(methodKey, methodData);
             }
@@ -1181,8 +1181,8 @@ const BypassSuccessTracker = {
                 const stats2 = this.statistics.byCategory.get(cat2);
 
                 if (
-                    stats1.attempts >= this.config.thresholds.minimumAttempts
-                    && stats2.attempts >= this.config.thresholds.minimumAttempts
+                    stats1.attempts >= this.config.thresholds.minimumAttempts &&
+                    stats2.attempts >= this.config.thresholds.minimumAttempts
                 ) {
                     const comparison = this.performStatisticalTest(stats1, stats2);
                     comparison.category1 = cat1;
@@ -1318,8 +1318,8 @@ const BypassSuccessTracker = {
         // Analyze method effectiveness
         this.statistics.byMethod.forEach((methodStats, methodKey) => {
             if (
-                methodStats.attempts >= this.config.thresholds.minimumAttempts
-                && methodStats.successRate < this.config.thresholds.warningSuccessRate
+                methodStats.attempts >= this.config.thresholds.minimumAttempts &&
+                methodStats.successRate < this.config.thresholds.warningSuccessRate
             ) {
                 recommendations.push({
                     type: 'improve_method',
@@ -1451,13 +1451,13 @@ const BypassSuccessTracker = {
                     this.getTimeOfDay(),
                     this.getSystemLoad(),
                     methodStats.confidenceInterval
-                        ? methodStats.confidenceInterval.upper
-                          - methodStats.confidenceInterval.lower
+                        ? methodStats.confidenceInterval.upper -
+                          methodStats.confidenceInterval.lower
                         : 0,
                 ];
 
-                const label
-                    = methodStats.successRate > this.config.thresholds.minimumSuccessRate ? 1 : 0;
+                const label =
+                    methodStats.successRate > this.config.thresholds.minimumSuccessRate ? 1 : 0;
 
                 trainingData.push({
                     features,
@@ -1531,8 +1531,8 @@ const BypassSuccessTracker = {
                     }
 
                     const currentWeight = predictor.weights.get(weightKey);
-                    const newWeight
-                        = currentWeight - predictor.learningRate * error * trainSample.features[j];
+                    const newWeight =
+                        currentWeight - predictor.learningRate * error * trainSample.features[j];
                     predictor.weights.set(weightKey, newWeight);
                 }
             }
@@ -1782,10 +1782,10 @@ const BypassSuccessTracker = {
         return [...this.statistics.byCategory.entries()]
             .filter(([category, stats]) => {
                 // Use category to filter out test/debug categories and focus on real bypass attempts
-                const isRealCategory
-                    = !category.startsWith('test_')
-                    && !category.startsWith('debug_')
-                    && !category.includes('synthetic');
+                const isRealCategory =
+                    !category.startsWith('test_') &&
+                    !category.startsWith('debug_') &&
+                    !category.includes('synthetic');
                 return stats.attempts > 0 && isRealCategory;
             })
             .map(([category, stats]) => ({
@@ -2674,9 +2674,9 @@ const BypassSuccessTracker = {
             this.mlMetrics.model_accuracy = Math.min(0.95, this.mlMetrics.model_accuracy + 0.01);
             this.mlMetrics.precision = Math.min(0.92, this.mlMetrics.precision + 0.008);
             this.mlMetrics.recall = Math.min(0.89, this.mlMetrics.recall + 0.007);
-            this.mlMetrics.f1_score
-                = (2 * (this.mlMetrics.precision * this.mlMetrics.recall))
-                / (this.mlMetrics.precision + this.mlMetrics.recall);
+            this.mlMetrics.f1_score =
+                (2 * (this.mlMetrics.precision * this.mlMetrics.recall)) /
+                (this.mlMetrics.precision + this.mlMetrics.recall);
         }
     },
 };

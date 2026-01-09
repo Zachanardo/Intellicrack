@@ -102,17 +102,11 @@ class UIManager:
             TypeError: If main_window does not implement required protocol methods.
         """
         required_methods = ["setCentralWidget", "create_toolbar", "clear_output", "log_message"]
-        missing_methods = [
-            method for method in required_methods
-            if not callable(getattr(main_window, method, None))
-        ]
+        missing_methods = [method for method in required_methods if not callable(getattr(main_window, method, None))]
 
         if missing_methods:
             missing_str = ", ".join(missing_methods)
-            raise TypeError(
-                f"main_window must implement _MainWindowProtocol. "
-                f"Missing required methods: {missing_str}"
-            )
+            raise TypeError(f"main_window must implement _MainWindowProtocol. Missing required methods: {missing_str}")
 
         self.logger = logger
         self.main_window: _MainWindowProtocol = main_window

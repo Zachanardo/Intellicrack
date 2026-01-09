@@ -511,9 +511,7 @@ class DistributedWorkerThread(QThread):
 
         return entropy_map
 
-    def _extract_cracking_params(
-        self, task: DistributedTask
-    ) -> tuple[str, str, str, int]:
+    def _extract_cracking_params(self, task: DistributedTask) -> tuple[str, str, str, int]:
         """Extract and validate password cracking parameters.
 
         Args:
@@ -549,9 +547,7 @@ class DistributedWorkerThread(QThread):
 
         test_chars = string.ascii_letters + string.digits
         test_password = "".join(secrets.choice(test_chars) for _ in range(16))
-        hash_value = hashlib.sha256(
-            test_password.encode()
-        ).hexdigest()
+        hash_value = hashlib.sha256(test_password.encode()).hexdigest()
         logger.info("Generated test hash from random password for demonstration: %s...", hash_value[:16])
         return hash_value
 

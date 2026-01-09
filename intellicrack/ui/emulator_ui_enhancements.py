@@ -77,9 +77,7 @@ class EmulatorStatusWidget(QWidget):
         layout.addWidget(self.qiling_status)
         layout.addStretch()
 
-    def update_emulator_status(
-        self, emulator_type: str, *, is_running: bool, message: str
-    ) -> None:
+    def update_emulator_status(self, emulator_type: str, *, is_running: bool, message: str) -> None:
         """Update the status display for an emulator.
 
         Args:
@@ -224,9 +222,7 @@ class EmulatorRequiredDecorator:
                 feature_name = func.__name__.replace("_", " ").title()
                 if show_emulator_warning(self_arg, "QEMU", feature_name):
                     if not manager.ensure_qemu_running(binary_path):
-                        QMessageBox.critical(
-                            self_arg, "QEMU Error", "Failed to start QEMU. Check the logs for details."
-                        )
+                        QMessageBox.critical(self_arg, "QEMU Error", "Failed to start QEMU. Check the logs for details.")
                         return None
                 else:
                     return None

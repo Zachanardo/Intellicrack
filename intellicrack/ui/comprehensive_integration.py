@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-
 from intellicrack.handlers.pyqt6_handler import QMainWindow, QTabWidget, QWidget
 
 from ..utils.logger import get_logger

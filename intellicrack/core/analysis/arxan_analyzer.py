@@ -367,9 +367,7 @@ class ArxanAnalyzer:
 
         return result
 
-    def _analyze_tamper_checks(
-        self, binary_path: Path, binary_data: bytes
-    ) -> list[TamperCheckLocation]:
+    def _analyze_tamper_checks(self, binary_path: Path, binary_data: bytes) -> list[TamperCheckLocation]:
         """Analyze anti-tampering mechanisms.
 
         Scans binary data for tamper check signatures and analyzes executable
@@ -429,9 +427,7 @@ class ArxanAnalyzer:
 
         return tamper_checks
 
-    def _scan_section_for_tamper_checks(
-        self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]
-    ) -> None:
+    def _scan_section_for_tamper_checks(self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]) -> None:
         """Scan executable section for tamper check patterns.
 
         Detects inline tamper check patterns that involve memory reads followed
@@ -464,9 +460,7 @@ class ArxanAnalyzer:
                 )
                 tamper_checks.append(tamper_check)
 
-    def _analyze_control_flow(
-        self, binary_path: Path, binary_data: bytes
-    ) -> ControlFlowAnalysis:
+    def _analyze_control_flow(self, binary_path: Path, binary_data: bytes) -> ControlFlowAnalysis:
         """Analyze control flow obfuscation.
 
         Detects opaque predicates, indirect jumps, control flow flattening patterns,
@@ -535,9 +529,7 @@ class ArxanAnalyzer:
 
         return analysis
 
-    def _detect_junk_code(
-        self, section_data: bytes, section_va: int
-    ) -> list[tuple[int, int]]:
+    def _detect_junk_code(self, section_data: bytes, section_va: int) -> list[tuple[int, int]]:
         """Detect junk code blocks.
 
         Identifies filler code patterns including NOP sequences, INT3 breakpoints,
@@ -657,9 +649,7 @@ class ArxanAnalyzer:
 
         return handler_addresses
 
-    def _analyze_license_validation(
-        self, binary_path: Path, binary_data: bytes
-    ) -> list[LicenseValidationRoutine]:
+    def _analyze_license_validation(self, binary_path: Path, binary_data: bytes) -> list[LicenseValidationRoutine]:
         """Analyze license validation routines.
 
         Identifies RSA, AES, and serial number validation signatures, then correlates
@@ -763,9 +753,7 @@ class ArxanAnalyzer:
 
         return found_strings
 
-    def _analyze_integrity_checks(
-        self, binary_path: Path, binary_data: bytes
-    ) -> list[IntegrityCheckMechanism]:
+    def _analyze_integrity_checks(self, binary_path: Path, binary_data: bytes) -> list[IntegrityCheckMechanism]:
         """Analyze integrity check mechanisms.
 
         Detects CRC32 and hash-based integrity verification patterns in binary code,

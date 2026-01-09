@@ -28,6 +28,7 @@ from typing import Any
 
 from ...utils.core.import_checks import FRIDA_AVAILABLE, PSUTIL_AVAILABLE, frida, psutil
 from ...utils.logger import get_logger, log_message
+from ..process_registry import process_registry
 
 
 logger = get_logger(__name__)
@@ -89,6 +90,48 @@ class AdvancedDynamicAnalyzer:
         self.logger.debug("Dynamic analysis results: %s", analysis_results)
 
         return analysis_results
+
+    def _cleanup_spawned_process(self, proc: subprocess.Popen[bytes]) -> None:
+        """Safely terminate and clean up a spawned subprocess.
+
+        Attempts graceful termination first, then forceful kill if needed.
+        Ensures all process resources including streams are properly closed.
+
+        Args:
+            proc: The subprocess.Popen instance to clean up.
+        """
+        if proc.poll() is not None:
+            self._close_process_streams(proc)
+            return
+
+        try:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.logger.warning("Process %d did not terminate, killing", proc.pid)
+                proc.kill()
+                try:
+                    proc.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    self.logger.error("Process %d could not be killed", proc.pid)
+        except OSError as e:
+            self.logger.debug("Error terminating process %d: %s", proc.pid, e)
+        finally:
+            self._close_process_streams(proc)
+
+    def _close_process_streams(self, proc: subprocess.Popen[bytes]) -> None:
+        """Close all streams associated with a subprocess.
+
+        Args:
+            proc: The subprocess.Popen instance whose streams to close.
+        """
+        for stream in (proc.stdout, proc.stderr, proc.stdin):
+            if stream is not None:
+                try:
+                    stream.close()
+                except Exception as e:
+                    self.logger.debug("Error closing process stream: %s", e)
 
     def _subprocess_analysis(self) -> dict[str, Any]:
         """Perform standard subprocess execution analysis.
@@ -770,7 +813,6 @@ class AdvancedDynamicAnalyzer:
             self.logger.exception("Frida runtime analysis error: %s", e)
             return {"success": False, "error": str(e)}
         finally:
-            # Cleanup
             try:
                 if script is not None:
                     script.unload()
@@ -778,8 +820,12 @@ class AdvancedDynamicAnalyzer:
                     session.detach()
                 if pid is not None and frida is not None:
                     frida.kill(pid)
-            except Exception as cleanup_error:
-                self.logger.exception("Error during Frida cleanup: %s", cleanup_error)
+                    if PSUTIL_AVAILABLE and psutil is not None:
+                        with contextlib.suppress(psutil.NoSuchProcess, psutil.TimeoutExpired):
+                            proc = psutil.Process(pid)
+                            proc.wait(timeout=3)
+            except Exception:
+                self.logger.exception("Error during Frida cleanup")
 
     def _process_behavior_analysis(self) -> dict[str, Any]:
         """Analyze process behavior and resource interactions.
@@ -804,15 +850,15 @@ class AdvancedDynamicAnalyzer:
 
         self.logger.info("Starting process behavior analysis for %s", self.binary_path)
 
+        process: subprocess.Popen[bytes] | None = None
         try:
-            # Use psutil for detailed process analysis
-            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            process = subprocess.Popen(
                 [self.binary_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                stdin=subprocess.DEVNULL,
             )
 
-            # Wait a bit and collect process info
             time.sleep(2)
 
             ps_process = psutil.Process(process.pid)
@@ -834,9 +880,6 @@ class AdvancedDynamicAnalyzer:
                 "threads": ps_process.num_threads(),
             }
 
-            # Terminate process
-            process.terminate()
-
             self.logger.debug(
                 "Process behavior analysis result: PID=%s, Memory=%s, Threads=%s",
                 analysis.get("pid"),
@@ -849,6 +892,10 @@ class AdvancedDynamicAnalyzer:
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.exception("Process behavior analysis error: %s", e)
             return {"error": str(e)}
+
+        finally:
+            if process is not None:
+                self._cleanup_spawned_process(process)
 
     def scan_memory_for_keywords(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
         """Scan process memory for specific keywords.
@@ -904,12 +951,11 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
+        spawned_pid: int | None = None
+        session = None
         try:
-            # Get process to attach to
             process_name = target_process or Path(self.binary_path).name
 
-            # Find the target process
-            session = None
             device = frida.get_local_device()
             for proc in device.enumerate_processes():
                 if process_name.lower() in proc.name.lower():
@@ -917,12 +963,11 @@ class AdvancedDynamicAnalyzer:
                     break
 
             if not session:
-                # Try to spawn the process if not found
                 try:
-                    pid = frida.spawn([str(self.binary_path)])
-                    session = frida.attach(pid)
-                    frida.resume(pid)
-                    time.sleep(2)  # Allow process to initialize
+                    spawned_pid = frida.spawn([str(self.binary_path)])
+                    session = frida.attach(spawned_pid)
+                    frida.resume(spawned_pid)
+                    time.sleep(2)
                 except Exception as e:
                     self.logger.exception("Exception in dynamic_analyzer: %s", e)
                     return {
@@ -1060,6 +1105,20 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
+        finally:
+            if session is not None:
+                try:
+                    session.detach()
+                except Exception as detach_err:
+                    self.logger.debug("Error detaching Frida session: %s", detach_err)
+
+            if spawned_pid is not None:
+                try:
+                    frida.kill(spawned_pid)
+                    self.logger.debug("Killed Frida-spawned process %d", spawned_pid)
+                except Exception as kill_err:
+                    self.logger.debug("Error killing spawned process %d: %s", spawned_pid, kill_err)
+
     def _psutil_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
         """Perform real memory scanning using platform-specific memory reading.
 
@@ -1084,10 +1143,10 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
+        spawned_proc: subprocess.Popen[bytes] | None = None
         try:
             process_name = target_process or Path(self.binary_path).name
 
-            # Find target process
             target_proc = None
             for proc in psutil.process_iter(["pid", "name", "exe"]):
                 try:
@@ -1095,15 +1154,19 @@ class AdvancedDynamicAnalyzer:
                         target_proc = proc
                         break
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                    self.logger.exception("Error in dynamic_analyzer: %s", e)
+                    self.logger.debug("Process access error: %s", e)
                     continue
 
             if not target_proc:
-                # Try to start the process
                 try:
-                    proc = subprocess.Popen([str(self.binary_path)])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    spawned_proc = subprocess.Popen(
+                        [str(self.binary_path)],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        stdin=subprocess.DEVNULL,
+                    )
                     time.sleep(2)
-                    target_proc = psutil.Process(proc.pid)
+                    target_proc = psutil.Process(spawned_proc.pid)
                 except Exception as e:
                     self.logger.exception("Exception in dynamic_analyzer: %s", e)
                     return {
@@ -1119,13 +1182,11 @@ class AdvancedDynamicAnalyzer:
                 matches = self._windows_memory_scan(target_proc.pid, keywords)
             elif system == "Linux":
                 matches = self._linux_memory_scan(target_proc.pid, keywords)
-            elif system == "Darwin":  # macOS
+            elif system == "Darwin":
                 matches = self._macos_memory_scan(target_proc.pid, keywords)
             else:
-                # Fallback to generic memory scanning
                 matches = self._generic_memory_scan(target_proc, keywords)
 
-            # Get memory information
             memory_info = target_proc.memory_info()
             memory_maps: list[Any] = []
             with contextlib.suppress(AttributeError, OSError, PermissionError):
@@ -1151,6 +1212,10 @@ class AdvancedDynamicAnalyzer:
                 "error": str(e),
                 "matches": [],
             }
+
+        finally:
+            if spawned_proc is not None:
+                self._cleanup_spawned_process(spawned_proc)
 
     def _windows_memory_scan(self, pid: int, keywords: list[str]) -> list[dict[str, Any]]:
         """Perform memory scanning on Windows using ReadProcessMemory.
@@ -1838,52 +1903,62 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
         })();
         """
 
-        # Launch the process
-        logs.append("Launching process...")
-        process = subprocess.Popen([binary_path], encoding="utf-8")  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-        logs.append(f"Process started with PID {process.pid}")
+        process: subprocess.Popen[str] | None = None
+        session: Any = None
+        script: Any = None
 
-        # Attach Frida
-        logs.append("Attaching Frida...")
-        session = frida.attach(process.pid)
+        try:
+            logs.append("Launching process...")
+            process = subprocess.Popen([binary_path], encoding="utf-8")  # nosec S603
+            process_registry.register(process, f"monitor-{Path(binary_path).name}")
+            logs.append(f"Process started with PID {process.pid}")
 
-        # Create script
-        script = session.create_script(script_content)
+            logs.append("Attaching Frida...")
+            session = frida.attach(process.pid)
 
-        # Set up message handler
-        def on_message(message: Any, _data: bytes | None) -> None:  # pylint: disable=unused-argument
-            """Handle messages from a Frida script.
+            script = session.create_script(script_content)
 
-            Appends payloads from 'send' messages to the logs list.
+            def on_message(message: Any, _data: bytes | None) -> None:
+                if isinstance(message, dict) and message.get("type") == "send":
+                    payload = message.get("payload")
+                    if payload is not None:
+                        logs.append(str(payload))
 
-            Args:
-                message: Message dictionary from Frida.
-                _data: Additional binary data from Frida (unused).
+            script.on("message", on_message)
+            script.load()
 
-            Returns:
-                None: This is a callback function with no return value.
+            logs.append(f"Monitoring for {timeout / 1000} seconds...")
+            time.sleep(timeout / 1000)
 
-            """
-            if isinstance(message, dict) and message.get("type") == "send":
-                payload = message.get("payload")
-                if payload is not None:
-                    logs.append(str(payload))
+            logs.append("Detaching Frida...")
+            with contextlib.suppress(Exception):
+                session.detach()
+            session = None
 
-        script.on("message", on_message)
-        script.load()
+            logs.append("Runtime monitoring complete")
 
-        # Monitor for specified timeout
-        logs.append(f"Monitoring for {timeout / 1000} seconds...")
-        time.sleep(timeout / 1000)
-
-        # Detach and terminate
-        logs.append("Detaching Frida...")
-        session.detach()
-
-        logs.append("Terminating process...")
-        process.terminate()
-
-        logs.append("Runtime monitoring complete")
+        finally:
+            if script is not None:
+                with contextlib.suppress(Exception):
+                    script.unload()
+            if session is not None:
+                with contextlib.suppress(Exception):
+                    session.detach()
+            if process is not None:
+                pid = process.pid
+                try:
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait(timeout=3)
+                except OSError:
+                    pass
+                finally:
+                    with contextlib.suppress(Exception):
+                        process_registry.unregister(pid)
+                logs.append("Process terminated")
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error in dynamic_analyzer: %s", e)

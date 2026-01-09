@@ -1359,6 +1359,20 @@ class QEMUManager:
     def __del__(self) -> None:
         """Cleanup on destruction."""
         try:
+            # Stop QEMU process if still running
+            if self.qemu_process is not None and self.qemu_process.poll() is None:
+                try:
+                    self.qemu_process.terminate()
+                    try:
+                        self.qemu_process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        self.qemu_process.kill()
+                        self.qemu_process.wait()
+                except OSError:
+                    pass
+                finally:
+                    self.qemu_process = None
+
             # Close all SSH connections first
             with self.ssh_lock:
                 for client in self.ssh_connection_pool.values():
@@ -2770,7 +2784,7 @@ exit 0
 
                     except subprocess.TimeoutExpired as e:
                         process.kill()
-                        # Raise a more specific timeout error so callers can handle timeout cases explicitly
+                        process.wait(timeout=5)
                         raise TimeoutError("Optimization timeout (300s)") from e
                     finally:
                         if process.poll() is None:
@@ -3792,7 +3806,6 @@ exit 0
             except subprocess.TimeoutExpired as e:
                 self.logger.exception(SUBPROCESS_TIMEOUT_MSG, e)
                 self.qemu_process.kill()
-                self.qemu_process.wait()
                 self.qemu_process.wait()
 
             self.logger.info("QEMU process terminated")

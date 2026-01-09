@@ -1151,10 +1151,27 @@ class ThemidaAnalyzer:
 
             reg_patterns = ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"]
             if self.is_64bit:
-                reg_patterns = ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"]
+                reg_patterns = [
+                    "rax",
+                    "rbx",
+                    "rcx",
+                    "rdx",
+                    "rsi",
+                    "rdi",
+                    "rbp",
+                    "rsp",
+                    "r8",
+                    "r9",
+                    "r10",
+                    "r11",
+                    "r12",
+                    "r13",
+                    "r14",
+                    "r15",
+                ]
 
             for insn in md.disasm(code, entry):
-                if insn.mnemonic == "mov" and "[ebp" in insn.op_str or "[rbp" in insn.op_str:
+                if (insn.mnemonic == "mov" and "[ebp" in insn.op_str) or "[rbp" in insn.op_str:
                     for reg in reg_patterns:
                         if f"{reg}," in insn.op_str or f", {reg}" in insn.op_str:
                             offset_match = re.search(r"\[.bp([+\-])0x([0-9a-fA-F]+)\]", insn.op_str)
@@ -1194,7 +1211,7 @@ class ThemidaAnalyzer:
             code = self.binary_data[entry : entry + 100]
 
             for insn in md.disasm(code, entry):
-                if insn.mnemonic == "mov" and "esp" in insn.op_str or "rsp" in insn.op_str:
+                if (insn.mnemonic == "mov" and "esp" in insn.op_str) or "rsp" in insn.op_str:
                     if "[ebp" in insn.op_str or "[rbp" in insn.op_str:
                         offset_match = re.search(r"\[.bp([+\-])0x([0-9a-fA-F]+)\]", insn.op_str)
                         if offset_match:
@@ -1234,7 +1251,7 @@ class ThemidaAnalyzer:
 
                     md2 = Cs(CS_ARCH_X86, mode)
                     for next_insn in md2.disasm(remaining_code, next_insn_offset):
-                        if next_insn.mnemonic == "mov" and "[ebp" in next_insn.op_str or "[rbp" in next_insn.op_str:
+                        if (next_insn.mnemonic == "mov" and "[ebp" in next_insn.op_str) or "[rbp" in next_insn.op_str:
                             offset_match = re.search(r"\[.bp([+\-])0x([0-9a-fA-F]+)\]", next_insn.op_str)
                             if offset_match:
                                 sign = offset_match.group(1)
@@ -1294,7 +1311,11 @@ class ThemidaAnalyzer:
 
                             md2 = Cs(CS_ARCH_X86, mode)
                             for prev_insn in md2.disasm(check_area, search_start + check_area_start):
-                                if prev_insn.mnemonic in ["popa", "popad", "popf", "popfd", "mov"] and "esp" in prev_insn.op_str or "ebp" in prev_insn.op_str:
+                                if (
+                                    (prev_insn.mnemonic in ["popa", "popad", "popf", "popfd", "mov"]
+                                    and "esp" in prev_insn.op_str)
+                                    or "ebp" in prev_insn.op_str
+                                ):
                                     context_cleanup = True
                                     break
 
@@ -1902,9 +1923,7 @@ class ThemidaAnalyzer:
 
         return None
 
-    def _lift_anti_debug_handler(
-        self, opcode: int, handler: VMHandler, bytecode: bytes, offset: int
-    ) -> tuple[bytes, str, int] | None:
+    def _lift_anti_debug_handler(self, opcode: int, handler: VMHandler, bytecode: bytes, offset: int) -> tuple[bytes, str, int] | None:
         """Lift anti-debugging VM handlers to native code.
 
         Args:
@@ -1924,9 +1943,7 @@ class ThemidaAnalyzer:
 
         return anti_debug_mappings.get(opcode)
 
-    def _lift_arithmetic_handler(
-        self, opcode: int, handler: VMHandler, bytecode: bytes, offset: int
-    ) -> tuple[bytes, str, int] | None:
+    def _lift_arithmetic_handler(self, opcode: int, handler: VMHandler, bytecode: bytes, offset: int) -> tuple[bytes, str, int] | None:
         """Lift arithmetic VM handlers with operand extraction.
 
         Args:
@@ -1953,9 +1970,7 @@ class ThemidaAnalyzer:
 
         return arithmetic_templates.get(opcode)
 
-    def _lift_logical_handler(
-        self, opcode: int, handler: VMHandler, bytecode: bytes, offset: int
-    ) -> tuple[bytes, str, int] | None:
+    def _lift_logical_handler(self, opcode: int, handler: VMHandler, bytecode: bytes, offset: int) -> tuple[bytes, str, int] | None:
         """Lift logical operation VM handlers.
 
         Args:
@@ -1983,9 +1998,7 @@ class ThemidaAnalyzer:
 
         return logical_templates.get(opcode)
 
-    def _lift_control_flow_handler(
-        self, opcode: int, handler: VMHandler, bytecode: bytes, offset: int
-    ) -> tuple[bytes, str, int] | None:
+    def _lift_control_flow_handler(self, opcode: int, handler: VMHandler, bytecode: bytes, offset: int) -> tuple[bytes, str, int] | None:
         """Lift control flow VM handlers.
 
         Args:
@@ -2037,9 +2050,7 @@ class ThemidaAnalyzer:
 
         return None
 
-    def _lift_data_transfer_handler(
-        self, opcode: int, handler: VMHandler, bytecode: bytes, offset: int
-    ) -> tuple[bytes, str, int] | None:
+    def _lift_data_transfer_handler(self, opcode: int, handler: VMHandler, bytecode: bytes, offset: int) -> tuple[bytes, str, int] | None:
         """Lift data transfer VM handlers.
 
         Args:

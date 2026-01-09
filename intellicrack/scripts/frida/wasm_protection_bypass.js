@@ -388,7 +388,7 @@ const wasmBypass = {
             const bytes = new Uint8Array(buffer);
 
             // Check WASM magic number
-            if (bytes[0] !== 0x00 || bytes[1] !== 0x61 || bytes[2] !== 0x73 || bytes[3] !== 0x6D) {
+            if (bytes[0] !== 0x00 || bytes[1] !== 0x61 || bytes[2] !== 0x73 || bytes[3] !== 0x6d) {
                 send({
                     type: 'warning',
                     target: 'wasm_bypass',
@@ -519,7 +519,7 @@ const wasmBypass = {
         patched.set(bytes);
 
         // WASM magic number and version
-        if (bytes[0] !== 0x00 || bytes[1] !== 0x61 || bytes[2] !== 0x73 || bytes[3] !== 0x6D) {
+        if (bytes[0] !== 0x00 || bytes[1] !== 0x61 || bytes[2] !== 0x73 || bytes[3] !== 0x6d) {
             send({
                 type: 'error',
                 target: 'wasm_bypass',
@@ -547,7 +547,7 @@ const wasmBypass = {
                     break;
                 }
                 byte = bytes[pos++];
-                sectionSize |= (byte & 0x7F) << shift;
+                sectionSize |= (byte & 0x7f) << shift;
                 shift += 7;
             } while (byte && 0x80);
 
@@ -572,7 +572,7 @@ const wasmBypass = {
                         break;
                     }
                     byte = bytes[funcPos++];
-                    numFunctions |= (byte & 0x7F) << shift;
+                    numFunctions |= (byte & 0x7f) << shift;
                     shift += 7;
                 } while (byte && 0x80);
 
@@ -587,7 +587,7 @@ const wasmBypass = {
                             break;
                         }
                         byte = bytes[funcPos++];
-                        bodySize |= (byte & 0x7F) << shift;
+                        bodySize |= (byte & 0x7f) << shift;
                         shift += 7;
                     } while (byte && 0x80);
 
@@ -611,7 +611,7 @@ const wasmBypass = {
                             0x00, // No local variables
                             0x41, // i32.const
                             0x01, // value: 1
-                            0x0F, // return
+                            0x0f, // return
                         ];
 
                         // Calculate size difference
@@ -632,7 +632,7 @@ const wasmBypass = {
                         } else if (bodySize >= 3) {
                             patched[bodyStart] = 0x41; // i32.const
                             patched[bodyStart + 1] = 0x01; // value: 1
-                            patched[bodyStart + 2] = 0x0F; // return
+                            patched[bodyStart + 2] = 0x0f; // return
                             patchCount++;
                         }
                     }
@@ -653,7 +653,7 @@ const wasmBypass = {
                         break;
                     }
                     byte = bytes[exportPos++];
-                    numExports |= (byte & 0x7F) << shift;
+                    numExports |= (byte & 0x7f) << shift;
                     shift += 7;
                 } while (byte && 0x80);
 
@@ -670,7 +670,7 @@ const wasmBypass = {
                             break;
                         }
                         byte = bytes[exportPos++];
-                        nameLen |= (byte & 0x7F) << shift;
+                        nameLen |= (byte & 0x7f) << shift;
                         shift += 7;
                     } while (byte && 0x80);
 
@@ -692,7 +692,7 @@ const wasmBypass = {
                             break;
                         }
                         byte = bytes[exportPos++];
-                        index |= (byte & 0x7F) << shift;
+                        index |= (byte & 0x7f) << shift;
                         shift += 7;
                     } while (byte && 0x80);
 
@@ -792,10 +792,10 @@ const wasmBypass = {
             const lowerName = name.toLowerCase();
 
             if (
-                lowerName.includes('check')
-                || lowerName.includes('validate')
-                || lowerName.includes('verify')
-                || lowerName.includes('is')
+                lowerName.includes('check') ||
+                lowerName.includes('validate') ||
+                lowerName.includes('verify') ||
+                lowerName.includes('is')
             ) {
                 // Return true/1 for validation functions
                 send({
@@ -957,11 +957,11 @@ const wasmBypass = {
 
         // Boolean checks - ensure true
         if (
-            (lowerName.includes('is')
-                || lowerName.includes('check')
-                || lowerName.includes('validate')
-                || lowerName.includes('verify'))
-            && (result === 0 || result === false)
+            (lowerName.includes('is') ||
+                lowerName.includes('check') ||
+                lowerName.includes('validate') ||
+                lowerName.includes('verify')) &&
+            (result === 0 || result === false)
         ) {
             return 1;
         }
@@ -973,9 +973,9 @@ const wasmBypass = {
 
         // Expiry dates - return future
         if (
-            (lowerName.includes('expire') || lowerName.includes('expiry'))
-            && typeof result === 'number'
-            && result < Date.now() / 1000
+            (lowerName.includes('expire') || lowerName.includes('expiry')) &&
+            typeof result === 'number' &&
+            result < Date.now() / 1000
         ) {
             return 4_102_444_800;
         }
@@ -1545,8 +1545,8 @@ const wasmBypass = {
                         try {
                             const view = new Uint32Array(buffer);
                             for (let i = 0; i < Math.min(256, view.length); i++) {
-                                if (view[i] === 0xDE_AD_BE_EF || view[i] === 0xCA_FE_BA_BE) {
-                                    view[i] = 0x1_CE_57_ED;
+                                if (view[i] === 0xde_ad_be_ef || view[i] === 0xca_fe_ba_be) {
+                                    view[i] = 0x1_ce_57_ed;
                                     send({
                                         type: 'bypass',
                                         target: 'wasm_bypass',
@@ -1588,7 +1588,7 @@ const wasmBypass = {
                 const result = originalAtomics.load.call(this, typedArray, index);
 
                 // If result looks like license validation flag, spoof it
-                if (result === 0 || result === 0xDE_AD_BE_EF) {
+                if (result === 0 || result === 0xde_ad_be_ef) {
                     send({
                         type: 'bypass',
                         target: 'wasm_bypass',
@@ -1605,7 +1605,7 @@ const wasmBypass = {
             // Hook Atomics.store to prevent license status updates
             Atomics.store = function (typedArray, index, value) {
                 // Block attempts to set license failure status
-                if (value === 0 || value === 0xDE_AD_BE_EF || value === 0xB_AD_C0_DE) {
+                if (value === 0 || value === 0xde_ad_be_ef || value === 0xb_ad_c0_de) {
                     send({
                         type: 'bypass',
                         target: 'wasm_bypass',
@@ -1634,7 +1634,7 @@ const wasmBypass = {
         function HookedBigInt(value) {
             const result = OriginalBigInt(value);
 
-            if (result > 0xFF_FF_FF_FF_FF_FFn && result < 0xFF_FF_FF_FF_FF_FF_FF_FFn) {
+            if (result > 0xff_ff_ff_ff_ff_ffn && result < 0xff_ff_ff_ff_ff_ff_ff_ffn) {
                 send({
                     type: 'info',
                     target: 'wasm_bypass',
@@ -1660,9 +1660,9 @@ const wasmBypass = {
             function HookedGlobal(descriptor, value) {
                 let modifiedValue = value;
                 if (
-                    descriptor.value === 'i64'
-                    && typeof value === 'bigint'
-                    && (value === 0n || value < 0n)
+                    descriptor.value === 'i64' &&
+                    typeof value === 'bigint' &&
+                    (value === 0n || value < 0n)
                 ) {
                     send({
                         type: 'bypass',
@@ -1720,8 +1720,8 @@ const wasmBypass = {
                         const view = new Uint32Array(buffer);
 
                         for (let i = 0; i < Math.min(1024, view.length); i++) {
-                            if (view[i] === 0x4C_49_43_45 || view[i] === 0x4E_53_45_44) {
-                                view[i] = 0x56_41_4C_49;
+                            if (view[i] === 0x4c_49_43_45 || view[i] === 0x4e_53_45_44) {
+                                view[i] = 0x56_41_4c_49;
                                 view[i + 1] = 0x44;
                                 send({
                                     type: 'bypass',
@@ -1768,7 +1768,7 @@ const wasmBypass = {
                     });
 
                     if (value && typeof value === 'object') {
-                        modifiedValue = Array.from({ length: 16 }).fill(0x4C);
+                        modifiedValue = Array.from({ length: 16 }).fill(0x4c);
 
                         send({
                             type: 'bypass',
@@ -1801,7 +1801,7 @@ const wasmBypass = {
                             if (result && Array.isArray(result)) {
                                 const hasLicensePattern = result.some(
                                     val =>
-                                        val === 0xDE_AD_BE_EF || val === 0xCA_FE_BA_BE || val === 0
+                                        val === 0xde_ad_be_ef || val === 0xca_fe_ba_be || val === 0
                                 );
 
                                 if (hasLicensePattern) {
@@ -1814,7 +1814,7 @@ const wasmBypass = {
 
                                     // Return valid license SIMD result
                                     return Array.from({ length: result.length }).fill(
-                                        0x4C_49_43_45
+                                        0x4c_49_43_45
                                     ); // "LICE"
                                 }
                             }
@@ -1859,8 +1859,8 @@ const wasmBypass = {
         // Check for new exports in window
         for (const key in window) {
             if (
-                (key.includes('wasm') || key.includes('WASM'))
-                && !this.state.wasm_modules.has(key)
+                (key.includes('wasm') || key.includes('WASM')) &&
+                !this.state.wasm_modules.has(key)
             ) {
                 send({
                     type: 'info',
@@ -1881,8 +1881,8 @@ const wasmBypass = {
 
             for (const key in obj) {
                 if (
-                    typeof obj[key] === 'function'
-                    && (key.startsWith('_') || this.isLicenseFunction(key))
+                    typeof obj[key] === 'function' &&
+                    (key.startsWith('_') || this.isLicenseFunction(key))
                 ) {
                     hasWASMPattern = true;
                     break;
@@ -1953,8 +1953,8 @@ const wasmBypass = {
 
         function HookedEval(code, ...restArgs) {
             if (
-                typeof code === 'string'
-                && (code.includes('WebAssembly') || code.includes('wasm'))
+                typeof code === 'string' &&
+                (code.includes('WebAssembly') || code.includes('wasm'))
             ) {
                 send({
                     type: 'info',
@@ -2151,7 +2151,7 @@ const wasmBypass = {
 
             do {
                 byte = view.getUint8(offset + bytesRead);
-                value |= (byte & 0x7F) << shift;
+                value |= (byte & 0x7f) << shift;
                 shift += 7;
                 bytesRead++;
             } while (byte & 0x80);
@@ -2174,7 +2174,7 @@ const wasmBypass = {
 
                 // Zero out license validation data
                 for (let i = 0; i < size; i++) {
-                    if (view[i] >= 0x20 && view[i] <= 0x7E) {
+                    if (view[i] >= 0x20 && view[i] <= 0x7e) {
                         view[i] = 0x00;
                     }
                 }
@@ -2187,13 +2187,13 @@ const wasmBypass = {
 
             // Common WASM opcodes for license validation
             const _patterns = [
-                [0x41, 0x00, 0x0B], // i32.const 0, end (return false)
-                [0x41, 0x01, 0x0B], // i32.const 1, end (return true)
+                [0x41, 0x00, 0x0b], // i32.const 0, end (return false)
+                [0x41, 0x01, 0x0b], // i32.const 1, end (return true)
             ];
 
             for (let i = 0; i < view.length - 3; i++) {
                 // Replace "return false" with "return true"
-                if (view[i] === 0x41 && view[i + 1] === 0x00 && view[i + 2] === 0x0B) {
+                if (view[i] === 0x41 && view[i + 1] === 0x00 && view[i + 2] === 0x0b) {
                     view[i + 1] = 0x01; // Change to return true
                     send({
                         type: 'bypass',
@@ -2249,9 +2249,9 @@ const wasmBypass = {
                 const originalPostMessage = worker.postMessage;
                 worker.postMessage = function (message, transfer) {
                     if (
-                        message
-                        && typeof message === 'object'
-                        && (message.type === 'validate_license' || message.checkLicense)
+                        message &&
+                        typeof message === 'object' &&
+                        (message.type === 'validate_license' || message.checkLicense)
                     ) {
                         message.licenseValid = true;
                         message.licensed = true;
@@ -2373,10 +2373,10 @@ const wasmBypass = {
                     if (type === 'error' || type === 'unhandledrejection') {
                         const wrappedListener = event => {
                             if (
-                                event?.message
-                                && typeof event.message === 'string'
-                                && (event.message.includes('LICENSE')
-                                    || event.message.includes('license'))
+                                event?.message &&
+                                typeof event.message === 'string' &&
+                                (event.message.includes('LICENSE') ||
+                                    event.message.includes('license'))
                             ) {
                                 send({
                                     type: 'bypass',
@@ -2582,9 +2582,9 @@ const wasmBypass = {
 
         // Hook WebAssembly.Module.imports for component analysis
         if (
-            typeof WebAssembly !== 'undefined'
-            && WebAssembly.Module
-            && WebAssembly.Module.imports
+            typeof WebAssembly !== 'undefined' &&
+            WebAssembly.Module &&
+            WebAssembly.Module.imports
         ) {
             const originalImports = WebAssembly.Module.imports;
             WebAssembly.Module.imports = function (module) {
@@ -2593,8 +2593,8 @@ const wasmBypass = {
                 // Analyze component imports for license validation
                 imports.forEach(imp => {
                     if (
-                        imp.name
-                        && (imp.name.includes('license') || imp.name.includes('validate'))
+                        imp.name &&
+                        (imp.name.includes('license') || imp.name.includes('validate'))
                     ) {
                         send({
                             type: 'info',
@@ -2616,9 +2616,9 @@ const wasmBypass = {
 
         // Hook WebAssembly.Module.exports
         if (
-            typeof WebAssembly !== 'undefined'
-            && WebAssembly.Module
-            && WebAssembly.Module.exports
+            typeof WebAssembly !== 'undefined' &&
+            WebAssembly.Module &&
+            WebAssembly.Module.exports
         ) {
             const originalExports = WebAssembly.Module.exports;
             WebAssembly.Module.exports = function (module) {
@@ -2889,8 +2889,8 @@ const wasmBypass = {
                     try {
                         const view = new Uint32Array(this.buffer);
                         for (let i = 0; i < Math.min(512, view.length); i++) {
-                            if (view[i] === 0xDE_AD_BE_EF || view[i] === 0xB_AD_C0_DE) {
-                                view[i] = 0x1_CE_57_ED;
+                            if (view[i] === 0xde_ad_be_ef || view[i] === 0xb_ad_c0_de) {
+                                view[i] = 0x1_ce_57_ed;
                                 send({
                                     type: 'bypass',
                                     target: 'wasm_bypass',
@@ -3154,7 +3154,13 @@ const wasmBypass = {
                     return bypassResult;
                 }
 
-                const verifyResult = await originalVerify.call(this, algorithm, key, signature, data);
+                const verifyResult = await originalVerify.call(
+                    this,
+                    algorithm,
+                    key,
+                    signature,
+                    data
+                );
                 return verifyResult;
             };
         }

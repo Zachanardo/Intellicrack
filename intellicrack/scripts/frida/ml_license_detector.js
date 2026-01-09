@@ -416,13 +416,13 @@ const MlLicenseDetector = {
                     let prologueScore = 0;
                     for (let i = 0; i < Math.min(bytesArray.length - 1, 16); i++) {
                         // Look for common license check patterns
-                        if (bytesArray[i] === 0x83 && bytesArray[i + 1] === 0xEC) {
+                        if (bytesArray[i] === 0x83 && bytesArray[i + 1] === 0xec) {
                             // sub esp, imm
                             prologueScore += 0.1;
                         } else if (bytesArray[i] === 0x55) {
                             // push ebp
                             prologueScore += 0.05;
-                        } else if (bytesArray[i] === 0xE8) {
+                        } else if (bytesArray[i] === 0xe8) {
                             // call rel32
                             prologueScore += 0.15; // Function calls are important for license checks
                         }
@@ -546,10 +546,10 @@ const MlLicenseDetector = {
         };
 
         return (
-            features.name_score * weights.name
-            + features.api_score * weights.api
-            + features.string_score * weights.string
-            + features.behavioral_score * weights.behavioral
+            features.name_score * weights.name +
+            features.api_score * weights.api +
+            features.string_score * weights.string +
+            features.behavioral_score * weights.behavioral
         );
     },
 
@@ -910,9 +910,9 @@ const MlLicenseDetector = {
                     if (args[0] && !args[0].isNull()) {
                         const fileName = args[0].readUtf16String();
                         if (
-                            fileName.toLowerCase().includes('license')
-                            || fileName.toLowerCase().includes('key')
-                            || fileName.toLowerCase().includes('activation')
+                            fileName.toLowerCase().includes('license') ||
+                            fileName.toLowerCase().includes('key') ||
+                            fileName.toLowerCase().includes('activation')
                         ) {
                             this.parent.parent.recordApiCall('CreateFileW', {
                                 file: fileName,
@@ -1089,8 +1089,8 @@ const MlLicenseDetector = {
 
             // Update feature weights (simplified)
             const featureWeight = this.model.weights.combined || 0;
-            this.model.weights.combined
-                = featureWeight - learningRate * error * features.combined_score;
+            this.model.weights.combined =
+                featureWeight - learningRate * error * features.combined_score;
         }
     },
 
@@ -1107,8 +1107,8 @@ const MlLicenseDetector = {
                 if (result.detection && result.bypass) {
                     total++;
 
-                    const predicted
-                        = result.detection.confidence >= this.config.thresholds.medium_confidence;
+                    const predicted =
+                        result.detection.confidence >= this.config.thresholds.medium_confidence;
                     const actual = result.bypass.applied;
 
                     if (predicted === actual) {

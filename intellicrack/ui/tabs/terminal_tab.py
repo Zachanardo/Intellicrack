@@ -86,9 +86,9 @@ class TerminalTab(BaseTab):
                         widget = item.widget()
                         if widget is not None:
                             widget.deleteLater()
-                old_layout.deleteLater()
+                QWidget().setLayout(old_layout)
 
-            layout = QVBoxLayout(self)
+            layout = QVBoxLayout()
             layout.setContentsMargins(5, 5, 5, 5)
             layout.setSpacing(5)
 
@@ -111,13 +111,17 @@ class TerminalTab(BaseTab):
 
             self._update_status()
 
+            self.setLayout(layout)
             logger.info("Terminal tab content setup complete")
 
         except Exception as e:
             logger.exception("Terminal tab layout setup failed: %s", e)
-            fallback_layout = QVBoxLayout(self)
+            if self.layout():
+                QWidget().setLayout(self.layout())
+            fallback_layout = QVBoxLayout()
             error_label = QLabel(f"Terminal initialization failed: {e}")
             fallback_layout.addWidget(error_label)
+            self.setLayout(fallback_layout)
 
     def _create_toolbar(self) -> QHBoxLayout:
         """Create toolbar with terminal actions.

@@ -47,6 +47,7 @@ from intellicrack.handlers.pyqt6_handler import (
     Qt,
     QTabWidget,
     QTextEdit,
+    QThread,
     QTimer,
     QVBoxLayout,
     QWidget,
@@ -54,6 +55,39 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 
 from .base_tab import BaseTab
+
+
+class ToolDiscoveryWorker(QThread):
+    """Worker thread for tool discovery to avoid blocking the UI."""
+
+    discovery_complete = pyqtSignal(dict)
+    progress_updated = pyqtSignal(str)
+
+    def __init__(self, tool_discovery: Any) -> None:
+        """Initialize the tool discovery worker.
+
+        Args:
+            tool_discovery: The AdvancedToolDiscovery instance to use.
+        """
+        super().__init__()
+        self.tool_discovery = tool_discovery
+        self._running = True
+
+    def run(self) -> None:
+        """Run tool discovery in background thread."""
+        try:
+            self.progress_updated.emit("Discovering tools...")
+            discovered_tools = self.tool_discovery.discover_all_tools()
+            if self._running:
+                self.discovery_complete.emit(discovered_tools)
+        except Exception as e:
+            logging.getLogger(__name__).exception("Tool discovery failed: %s", e)
+            if self._running:
+                self.discovery_complete.emit({})
+
+    def stop(self) -> None:
+        """Stop the discovery process."""
+        self._running = False
 
 
 class SettingsTab(BaseTab):
@@ -726,33 +760,46 @@ class SettingsTab(BaseTab):
         return container
 
     def discover_tools(self) -> None:
-        """Discover all tools and update the UI with results."""
+        """Discover all tools and update the UI with results.
+
+        Runs tool discovery in a background thread to avoid blocking the UI.
+        """
         if not hasattr(self, "tool_discovery"):
             return
 
         self.auto_discovery_btn.setEnabled(False)
         self.auto_discovery_btn.setText(" Discovering...")
 
-        try:
-            # Run discovery in background to avoid blocking UI
-            discovered_tools = self.tool_discovery.discover_all_tools()
+        self._tool_discovery_worker = ToolDiscoveryWorker(self.tool_discovery)
+        self._tool_discovery_worker.discovery_complete.connect(self._on_tool_discovery_complete)
+        self._tool_discovery_worker.finished.connect(self._on_tool_discovery_finished)
+        self._tool_discovery_worker.start()
 
-            # Update UI with discovered tools
+    def _on_tool_discovery_complete(self, discovered_tools: dict[str, Any]) -> None:
+        """Handle tool discovery completion.
+
+        Args:
+            discovered_tools: Dictionary mapping tool names to discovery results.
+        """
+        try:
             for tool_key, widgets in self.tool_widgets.items():
                 if tool_key in discovered_tools:
                     tool_info = discovered_tools[tool_key]
                     self.update_tool_status(tool_key, tool_info)
 
-                    # Auto-populate if path is empty and tool was found
                     current_path = widgets["path_edit"].text().strip()
                     if not current_path and tool_info.get("available") and tool_info.get("path"):
                         widgets["path_edit"].setText(tool_info["path"])
-
         except Exception as e:
             self.log_message(f"Tool discovery failed: {e}", "error")
-        finally:
-            self.auto_discovery_btn.setEnabled(True)
-            self.auto_discovery_btn.setText(" Discover Tools")
+
+    def _on_tool_discovery_finished(self) -> None:
+        """Handle tool discovery worker finished signal."""
+        self.auto_discovery_btn.setEnabled(True)
+        self.auto_discovery_btn.setText(" Discover Tools")
+        if hasattr(self, "_tool_discovery_worker"):
+            self._tool_discovery_worker.deleteLater()
+            self._tool_discovery_worker = None
 
     def refresh_tool_discovery(self) -> None:
         """Refresh tool discovery."""
@@ -1636,74 +1683,57 @@ class SettingsTab(BaseTab):
         self.update_preview()
 
     def apply_animation_settings(self, enabled: bool) -> None:
-        """Apply smooth animation settings to UI elements.
+        """Apply animation settings to all application widgets.
 
         Args:
-            enabled: Boolean indicating whether smooth animations should be active.
-                    When True, injects CSS transitions (0.2s ease-in-out) into the application stylesheet.
-                    When False, disables all transitions by setting duration to 0s.
-
+            enabled: Boolean indicating whether animations should be active.
+                    When True, enables QPropertyAnimation effects on supported widgets.
+                    When False, disables animations for improved performance.
         """
         from intellicrack.handlers.pyqt6_handler import QApplication
 
         app_instance = QApplication.instance()
         if not isinstance(app_instance, QApplication):
+            self.logger.warning("No QApplication instance available for animation settings")
             return
 
-        current_stylesheet = app_instance.styleSheet()
+        app_instance.setProperty("animations_enabled", enabled)
 
-        marker_disable = "/* Disable all animations - instant transitions */"
-        marker_enable = "/* Enable smooth animations and transitions */"
+        self._apply_animation_to_widget_tree(app_instance, enabled)
 
-        has_disable = marker_disable in current_stylesheet
-        has_enable = marker_enable in current_stylesheet
+        self.logger.info("Animation settings applied: %s", "enabled" if enabled else "disabled")
 
-        if enabled:
-            if has_disable:
-                start_idx = current_stylesheet.find(marker_disable)
-                end_idx = current_stylesheet.find("}", start_idx)
-                if end_idx != -1:
-                    end_idx += 1
-                    current_stylesheet = current_stylesheet[:start_idx] + current_stylesheet[end_idx:]
+    def _apply_animation_to_widget_tree(self, app: Any, enabled: bool) -> None:
+        """Recursively apply animation settings to all top-level widgets.
 
-            if not has_enable:
-                enable_animations = """
-/* Enable smooth animations and transitions */
-QPushButton, QComboBox, QCheckBox::indicator, QRadioButton::indicator,
-QSlider::handle, QTabBar::tab {
-    transition: all 0.2s ease-in-out;
-}
+        Args:
+            app: The QApplication instance.
+            enabled: Whether animations should be enabled.
+        """
+        for widget in app.topLevelWidgets():
+            self._configure_widget_animations(widget, enabled)
 
-QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
-    transition: all 0.15s ease-in-out;
-}
-"""
+    def _configure_widget_animations(self, widget: QWidget, enabled: bool) -> None:
+        """Configure animation settings for a widget and its children.
 
-                current_stylesheet += enable_animations
+        Args:
+            widget: The widget to configure.
+            enabled: Whether animations should be enabled.
+        """
+        from intellicrack.handlers.pyqt6_handler import QPropertyAnimation
 
-            self.logger.info("Smooth animations enabled")
-        else:
-            if has_enable:
-                start_idx = current_stylesheet.find(marker_enable)
-                end_idx = current_stylesheet.find("}", start_idx)
-                if end_idx != -1:
-                    end_idx = current_stylesheet.find("}", end_idx + 1) + 1
-                    current_stylesheet = current_stylesheet[:start_idx] + current_stylesheet[end_idx:]
+        widget.setProperty("animations_enabled", enabled)
 
-            if not has_disable:
-                disable_animations = """
-/* Disable all animations - instant transitions */
-* {
-    transition-duration: 0s !important;
-    animation-duration: 0s !important;
-}
-"""
-
-                current_stylesheet += disable_animations
-
-            self.logger.info("Animations disabled")
-
-        app_instance.setStyleSheet(current_stylesheet)
+        for child in widget.children():
+            if isinstance(child, QPropertyAnimation):
+                if enabled:
+                    if child.state() == QPropertyAnimation.State.Paused:
+                        child.resume()
+                else:
+                    if child.state() == QPropertyAnimation.State.Running:
+                        child.pause()
+            elif isinstance(child, QWidget):
+                self._configure_widget_animations(child, enabled)
 
     def populate_ai_providers(self) -> None:
         """Populate AI provider dropdown with dynamically detected providers."""
@@ -1756,10 +1786,7 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
             QApplication.restoreOverrideCursor()
 
             if final_count > 0:
-                providers_list = [
-                    self.ai_provider_combo.itemText(i)
-                    for i in range(min(final_count, max_preview_count))
-                ]
+                providers_list = [self.ai_provider_combo.itemText(i) for i in range(min(final_count, max_preview_count))]
                 preview = ", ".join(providers_list)
                 if final_count > max_preview_count:
                     preview += f"... (+{final_count - max_preview_count} more)"

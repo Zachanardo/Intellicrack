@@ -26,8 +26,10 @@ from intellicrack.handlers.pyqt6_handler import (
     QSplitter,
     Qt,
     QTextEdit,
+    QThread,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 from intellicrack.utils.logger import get_logger
 from intellicrack.utils.type_safety import validate_type
@@ -43,6 +45,74 @@ if TYPE_CHECKING:
 
 
 logger = get_logger(__name__)
+
+
+class TabModelDiscoveryWorker(QThread):
+    """Worker thread for model discovery to avoid blocking the UI."""
+
+    discovery_complete = pyqtSignal(list)
+    error_occurred = pyqtSignal(str)
+
+    def __init__(self) -> None:
+        """Initialize the model discovery worker."""
+        super().__init__()
+        self._running = True
+
+    def run(self) -> None:
+        """Run model discovery in background thread."""
+        try:
+            available_models: list[str] = []
+
+            try:
+                from intellicrack.ai.model_discovery_service import get_model_discovery_service
+
+                discovery_service = get_model_discovery_service()
+                flat_models = discovery_service.get_flat_model_list(force_refresh=False)
+
+                for display_name, _model_info in flat_models:
+                    available_models.append(display_name)
+                    logger.debug("Found model: %s", display_name)
+
+            except Exception as e:
+                logger.warning("Could not load models from ModelDiscoveryService: %s", e)
+
+            try:
+                from intellicrack.ai.llm_backends import get_llm_manager
+
+                llm_manager = get_llm_manager()
+
+                api_models = llm_manager.list_models()
+                for model_id in api_models:
+                    if model_id not in available_models:
+                        available_models.append(f"Configured: {model_id}")
+
+            except Exception as e:
+                logger.warning("Could not load configured API models: %s", e)
+
+            try:
+                from intellicrack.ai.local_gguf_server import gguf_manager
+
+                local_models = gguf_manager.list_models()
+
+                for model_name, model_info in local_models.items():
+                    size_mb = model_info.get("size_mb", 0)
+                    display_name = f"Local GGUF: {model_name} ({size_mb}MB)"
+                    available_models.append(display_name)
+
+            except Exception as e:
+                logger.warning("Could not load local GGUF models: %s", e)
+
+            if self._running:
+                self.discovery_complete.emit(available_models)
+
+        except Exception as e:
+            logger.exception("Failed to load available models: %s", e)
+            if self._running:
+                self.error_occurred.emit(str(e))
+
+    def stop(self) -> None:
+        """Stop the discovery process."""
+        self._running = False
 
 
 class APIKeyConfigDialog(QDialog):
@@ -735,96 +805,52 @@ class AIAssistantTab(BaseTab):
     def load_available_models(self) -> None:
         """Load all available AI models dynamically from configured providers.
 
-        Discovers and loads AI models from multiple sources including model
-        discovery service, LLM manager, local GGUF models, and repository models.
-        Updates the model combo box and displays appropriate status messages.
-
+        Discovers and loads AI models from multiple sources in a background
+        thread to avoid blocking the UI.
         """
-        try:
-            self.model_combo.clear()
-            available_models = []
+        self.model_combo.clear()
+        self.model_combo.addItem("Loading models...")
+        self.model_combo.setEnabled(False)
 
-            try:
-                from intellicrack.ai.model_discovery_service import get_model_discovery_service
+        self._tab_model_discovery_worker = TabModelDiscoveryWorker()
+        self._tab_model_discovery_worker.discovery_complete.connect(self._on_tab_model_discovery_complete)
+        self._tab_model_discovery_worker.error_occurred.connect(self._on_tab_model_discovery_error)
+        self._tab_model_discovery_worker.finished.connect(self._on_tab_model_discovery_finished)
+        self._tab_model_discovery_worker.start()
 
-                discovery_service = get_model_discovery_service()
-                flat_models = discovery_service.get_flat_model_list(force_refresh=False)
+    def _on_tab_model_discovery_complete(self, available_models: list[str]) -> None:
+        """Handle model discovery completion.
 
-                for display_name, _model_info in flat_models:
-                    available_models.append(display_name)
-                    logger.debug("Found model: %s", display_name)
+        Args:
+            available_models: List of available model display names.
+        """
+        self.model_combo.clear()
 
-            except Exception as e:
-                logger.warning("Could not load models from ModelDiscoveryService: %s", e)
-
-            try:
-                from intellicrack.ai.llm_backends import get_llm_manager
-
-                llm_manager = get_llm_manager()
-
-                api_models = llm_manager.list_models()
-                for model_id in api_models:
-                    if model_id not in available_models:
-                        available_models.append(f"Configured: {model_id}")
-
-            except Exception as e:
-                logger.warning("Could not load configured API models: %s", e)
-
-            try:
-                from intellicrack.ai.local_gguf_server import gguf_manager
-
-                local_models = gguf_manager.list_models()
-
-                for model_name, model_info in local_models.items():
-                    size_mb = model_info.get("size_mb", 0)
-                    display_name = f"Local GGUF: {model_name} ({size_mb}MB)"
-                    available_models.append(display_name)
-
-            except Exception as e:
-                logger.warning("Could not load local GGUF models: %s", e)
-
-            try:
-                from intellicrack.config import get_config
-                from intellicrack.models.model_manager import ModelManager
-
-                config_manager = get_config()
-                config_items_view = validate_type(config_manager.items(), ItemsView)
-                config_items = list(config_items_view)
-                config_dict: dict[str, Any] = dict(config_items)
-                model_manager = ModelManager(config_dict)
-
-                for repo_name in ["huggingface", "lmstudio", "ollama"]:
-                    try:
-                        repo_models = model_manager.get_available_models(repo_name)
-                        for model_info_item in repo_models:
-                            if hasattr(model_info_item, "name"):
-                                model_name = str(model_info_item.name)
-                            elif isinstance(model_info_item, dict):
-                                name_val = model_info_item.get("name", model_info_item.get("model_id", "Unknown"))
-                                model_name = str(name_val) if name_val is not None else "Unknown"
-                            else:
-                                model_name = "Unknown"
-                            display_name = f"{repo_name.title()}: {model_name}"
-                            available_models.append(display_name)
-                    except Exception as repo_e:
-                        logger.debug("Could not load %s models: %s", repo_name, repo_e)
-
-            except Exception as e:
-                logger.warning("Could not load repository models: %s", e)
-
-            if not available_models:
-                self.model_combo.addItem("WARNING No models configured - Click 'Configure' to add")
-                self.model_combo.setEnabled(False)
-                logger.warning("No AI models found - user needs to configure models")
-            else:
-                self.model_combo.addItems(available_models)
-                self.model_combo.setEnabled(True)
-                logger.info("Loaded %d AI models dynamically", len(available_models))
-
-        except Exception as e:
-            logger.exception("Failed to load available models: %s", e)
-            self.model_combo.addItem("FAIL Error loading models - Check configuration")
+        if not available_models:
+            self.model_combo.addItem("WARNING No models configured - Click 'Configure' to add")
             self.model_combo.setEnabled(False)
+            logger.warning("No AI models found - user needs to configure models")
+        else:
+            self.model_combo.addItems(available_models)
+            self.model_combo.setEnabled(True)
+            logger.info("Loaded %d AI models dynamically", len(available_models))
+
+    def _on_tab_model_discovery_error(self, error_msg: str) -> None:
+        """Handle model discovery error.
+
+        Args:
+            error_msg: The error message.
+        """
+        logger.exception("Failed to load available models: %s", error_msg)
+        self.model_combo.clear()
+        self.model_combo.addItem("FAIL Error loading models - Check configuration")
+        self.model_combo.setEnabled(False)
+
+    def _on_tab_model_discovery_finished(self) -> None:
+        """Handle model discovery worker finished signal."""
+        if hasattr(self, "_tab_model_discovery_worker") and self._tab_model_discovery_worker is not None:
+            self._tab_model_discovery_worker.deleteLater()
+            self._tab_model_discovery_worker = None
 
     def upload_local_model(self) -> None:
         """Upload a local model file.

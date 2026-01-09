@@ -146,32 +146,15 @@ def safe_import_lief() -> Any:
 
 
 def safe_import_pyelftools() -> bool:
-    """Safely import pyelftools with fallback.
+    """Check pyelftools availability (removed - Windows-only tool).
 
     Returns:
-        bool: True if pyelftools is available, False otherwise.
+        bool: Always False as ELF support has been removed.
 
     """
     global PYELFTOOLS_AVAILABLE
-    try:
-        from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile, bytes2str
-
-        if not HAS_PYELFTOOLS:
-            error_msg = "pyelftools not available"
-            logger.error(error_msg)
-            raise ImportError(error_msg)
-
-        test_bytes = b"test"
-        test_str = bytes2str(test_bytes)
-
-        logger.debug("pyelftools available - bytes2str: %s, ELFFile: %s", test_str, ELFFile)
-
-        PYELFTOOLS_AVAILABLE = True
-        return True
-    except ImportError:
-        logger.warning("pyelftools not available - using fallback", exc_info=True)
-        PYELFTOOLS_AVAILABLE = False
-        return False
+    PYELFTOOLS_AVAILABLE = False
+    return False
 
 
 # Fallback implementations

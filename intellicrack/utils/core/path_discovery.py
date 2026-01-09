@@ -339,32 +339,30 @@ class PathDiscovery:
             Path to the tool executable or None if not found
 
         """
-        # Check cache
         cache_key = f"{tool_name}:{','.join(required_executables or [])}"
         if cache_key in self.cache:
             cached_path = self.cache[cache_key]
             if os.path.exists(cached_path):
                 return cached_path
-            # Cache is stale
             del self.cache[cache_key]
 
-        # Check config first
         if self.config_manager:
             config_path = self.config_manager.get(f"{tool_name}_path")
             if isinstance(config_path, str) and os.path.exists(config_path):
                 self.cache[cache_key] = config_path
                 return config_path
 
-        # Get tool specification
         spec = self.tool_specs.get(tool_name.lower())
         if not spec:
-            # Generic tool search
             return self._generic_tool_search(tool_name, required_executables)
 
-        # Try discovery strategies
+        executables = required_executables or spec["executables"].get(self.platform, [])
+
         strategies: list[tuple[Callable[[Any], str | None], Any]] = [
+            (self._search_config_tool_paths, tool_name),
+            (self._search_project_tools, (tool_name, executables)),
             (self._search_env_vars, spec.get("env_vars", [])),
-            (self._search_path, required_executables or spec["executables"].get(self.platform, [])),
+            (self._search_path, executables),
             (self._search_common_locations, spec),
             (self._search_registry, tool_name) if self.is_windows else (lambda _: None, None),
         ]
@@ -372,16 +370,109 @@ class PathDiscovery:
         for strategy, args in strategies:
             result = strategy(args)
             if result:
-                # Validate if validator exists
                 validator = spec.get("validation")
                 if validator is not None and callable(validator) and not validator(result):
                     continue
 
-                # Cache and return
                 self.cache[cache_key] = result
                 if self.config_manager:
                     self.config_manager.set(f"{tool_name}_path", result)
                 return result
+
+        return None
+
+    def _search_project_tools(self, args: tuple[str, list[str]]) -> str | None:
+        """Search for tool in project's tools/ directory.
+
+        Args:
+            args: Tuple of (tool_name, executables list)
+
+        Returns:
+            Path to executable if found in project tools, None otherwise.
+
+        """
+        tool_name, executables = args
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        tools_dir = project_root / "tools"
+
+        if not tools_dir.exists():
+            return None
+
+        tool_dir_mappings: dict[str, list[str]] = {
+            "qemu": ["qemu", "QEMU"],
+            "radare2": ["radare2", "r2"],
+            "ghidra": ["ghidra", "Ghidra"],
+            "frida": ["frida", "Frida"],
+            "nasm": ["NASM", "nasm"],
+            "accesschk": ["accesschk", "AccessChk", "SysinternalsSuite"],
+        }
+        tool_dirs = tool_dir_mappings.get(tool_name.lower(), [tool_name, tool_name.lower(), tool_name.upper()])
+
+        for dir_name in tool_dirs:
+            tool_dir = tools_dir / dir_name
+            if not tool_dir.exists():
+                continue
+
+            search_locations = [tool_dir, tool_dir / "bin"]
+            for search_dir in search_locations:
+                if not search_dir.exists():
+                    continue
+                for exe in executables:
+                    exe_path = search_dir / exe
+                    if exe_path.exists() and exe_path.is_file():
+                        logger.info("Found %s in project tools: %s", tool_name, exe_path)
+                        return str(exe_path)
+
+        return None
+
+    def _search_config_tool_paths(self, tool_name: str) -> str | None:
+        """Search for tool path in intellicrack_config.json tool_paths section.
+
+        Args:
+            tool_name: Name of the tool to find.
+
+        Returns:
+            Path to executable if found in config, None otherwise.
+
+        """
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        config_path = project_root / "config" / "intellicrack_config.json"
+
+        if not config_path.exists():
+            return None
+
+        try:
+            import json
+
+            with open(config_path, encoding="utf-8") as f:
+                config = json.load(f)
+
+            tool_paths = config.get("tool_paths", {})
+            config_key_mappings: dict[str, list[str]] = {
+                "ghidra": ["ghidra_path"],
+                "ghidrarun": ["ghidra_path"],
+                "radare2": ["radare2_path"],
+                "r2": ["r2_path", "radare2_path"],
+                "frida": ["frida_path"],
+                "qemu": ["qemu_path"],
+                "qemu-system-x86_64": ["qemu_path"],
+                "nasm": ["nasm_path"],
+            }
+
+            config_keys = config_key_mappings.get(tool_name.lower(), [f"{tool_name.lower()}_path"])
+
+            for config_key in config_keys:
+                path_str = tool_paths.get(config_key) or config.get(config_key)
+                if path_str and isinstance(path_str, str) and path_str.strip():
+                    path = Path(path_str)
+                    if not path.is_absolute():
+                        path = project_root / path_str
+                    if path.exists() and path.is_file():
+                        logger.info("Found %s from config: %s", tool_name, path)
+                        return str(path)
+
+        except Exception as e:
+            logger.debug("Failed to read tool path from config: %s", e)
 
         return None
 
@@ -396,12 +487,17 @@ class PathDiscovery:
             Path to the tool executable or None if not found.
 
         """
+        if config_path := self._search_config_tool_paths(tool_name):
+            return config_path
+
         if not executables:
             executables = [tool_name]
             if self.is_windows:
                 executables.extend([f"{tool_name}.exe", f"{tool_name}.bat", f"{tool_name}.cmd"])
 
-        # Search in PATH
+        if project_path := self._search_project_tools((tool_name, executables)):
+            return project_path
+
         for exe in executables:
             if path := shutil.which(exe):
                 return path

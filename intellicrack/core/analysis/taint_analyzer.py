@@ -2213,7 +2213,9 @@ class TaintAnalysisEngine:
         """
         return None
 
-    def track_performance_overhead(self, performance_tracking_config: dict[str, Any], workload_config: dict[str, Any]) -> dict[str, Any] | None:
+    def track_performance_overhead(
+        self, performance_tracking_config: dict[str, Any], workload_config: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """Track performance overhead.
 
         Args:
@@ -2317,7 +2319,14 @@ def run_taint_analysis(app: object) -> None:
                     analyze_results.append(f"License checks found: {results['summary']['license_checks_found']}")
                     analyze_results.append(f"Potential bypass points: {results['summary']['potential_bypass_points']}")
             else:
-                app.analyze_results = ["\n=== TAINT ANALYSIS RESULTS ===", f"Total taint sources: {results['summary']['total_sources']}", f"Total taint sinks: {results['summary']['total_sinks']}", f"Total taint propagation paths: {results['summary']['total_paths']}", f"License checks found: {results['summary']['license_checks_found']}", f"Potential bypass points: {results['summary']['potential_bypass_points']}"]
+                app.analyze_results = [
+                    "\n=== TAINT ANALYSIS RESULTS ===",
+                    f"Total taint sources: {results['summary']['total_sources']}",
+                    f"Total taint sinks: {results['summary']['total_sinks']}",
+                    f"Total taint propagation paths: {results['summary']['total_paths']}",
+                    f"License checks found: {results['summary']['license_checks_found']}",
+                    f"Potential bypass points: {results['summary']['potential_bypass_points']}",
+                ]
 
             # Handle report generation if PyQt6 is available
             if PYQT6_AVAILABLE:

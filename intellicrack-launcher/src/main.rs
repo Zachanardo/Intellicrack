@@ -177,10 +177,11 @@ async fn main() -> Result<()> {
     }));
 
     // Set up centralized signal handling
-    use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
+    use std::sync::atomic::{AtomicBool, Ordering};
     let shutdown_flag = Arc::new(AtomicBool::new(false));
-    if let Err(e) = intellicrack_launcher::signals::register_signal_handlers(shutdown_flag.clone()) {
+    if let Err(e) = intellicrack_launcher::signals::register_signal_handlers(shutdown_flag.clone())
+    {
         warn!("Failed to register signal handlers: {}", e);
     }
 

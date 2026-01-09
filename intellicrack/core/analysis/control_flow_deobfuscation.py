@@ -36,6 +36,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import networkx as nx
+
+from intellicrack.utils.logger import logger
+from ...utils.tools.radare2_utils import r2_session
 
 if TYPE_CHECKING:
     from intellicrack.utils.tools.radare2_utils import (
@@ -43,11 +47,8 @@ if TYPE_CHECKING:
         R2SessionPoolAdapter,
     )
 
-import networkx as nx
-
 NETWORKX_AVAILABLE = True
 
-from intellicrack.utils.logger import logger
 
 OpaquePredicateAnalyzer: type[Any] | None
 PredicateAnalysis: type[Any] | None
@@ -149,8 +150,6 @@ except ImportError:
     lief = None
     Binary = None
     Section = None
-
-from ...utils.tools.radare2_utils import r2_session
 
 
 @dataclass
@@ -433,9 +432,7 @@ class ControlFlowDeobfuscator:
             self.logger.exception("Deobfuscation failed: %s", e)
             raise
 
-    def _build_control_flow_graph(
-        self, r2: "Radare2Session | R2SessionPoolAdapter", function_address: int
-    ) -> Any:
+    def _build_control_flow_graph(self, r2: Radare2Session | R2SessionPoolAdapter, function_address: int) -> Any:
         """Build control flow graph for a function using radare2.
 
         Constructs a directed graph with basic blocks as nodes and control
@@ -506,7 +503,7 @@ class ControlFlowDeobfuscator:
 
     def _detect_dispatchers(
         self,
-        r2: "Radare2Session | R2SessionPoolAdapter",
+        r2: Radare2Session | R2SessionPoolAdapter,
         cfg: Any,
         function_address: int,
     ) -> list[DispatcherInfo]:
@@ -588,7 +585,7 @@ class ControlFlowDeobfuscator:
 
     def _identify_state_variable(
         self,
-        r2: "Radare2Session | R2SessionPoolAdapter",
+        r2: Radare2Session | R2SessionPoolAdapter,
         basic_block: BasicBlock,
         function_address: int,
     ) -> dict[str, Any]:
@@ -674,7 +671,7 @@ class ControlFlowDeobfuscator:
 
     def _extract_switch_cases(
         self,
-        r2: "Radare2Session | R2SessionPoolAdapter",
+        r2: Radare2Session | R2SessionPoolAdapter,
         basic_block: BasicBlock,
         controlled_blocks: list[int],
         function_address: int,
@@ -729,7 +726,7 @@ class ControlFlowDeobfuscator:
 
     def _unflatten_control_flow(
         self,
-        r2: "Radare2Session | R2SessionPoolAdapter",
+        r2: Radare2Session | R2SessionPoolAdapter,
         cfg: Any,
         dispatchers: list[DispatcherInfo],
         function_address: int,
@@ -774,7 +771,7 @@ class ControlFlowDeobfuscator:
 
     def _recover_original_edges(
         self,
-        r2: "Radare2Session | R2SessionPoolAdapter",
+        r2: Radare2Session | R2SessionPoolAdapter,
         cfg: Any,
         dispatcher: DispatcherInfo,
         function_address: int,
@@ -848,7 +845,7 @@ class ControlFlowDeobfuscator:
 
     def _detect_opaque_predicates(
         self,
-        r2: "Radare2Session | R2SessionPoolAdapter",
+        r2: Radare2Session | R2SessionPoolAdapter,
         cfg: Any,
         function_address: int,
     ) -> list[dict[str, Any]]:
@@ -951,7 +948,7 @@ class ControlFlowDeobfuscator:
 
     def _remove_opaque_predicates(
         self,
-        r2: "Radare2Session | R2SessionPoolAdapter",
+        r2: Radare2Session | R2SessionPoolAdapter,
         cfg: Any,
         opaque_predicates: list[dict[str, Any]],
     ) -> Any:
@@ -1152,7 +1149,7 @@ class ControlFlowDeobfuscator:
 
     def _detect_bogus_blocks(
         self,
-        r2: "Radare2Session | R2SessionPoolAdapter",
+        r2: Radare2Session | R2SessionPoolAdapter,
         cfg: Any,
         function_address: int,
     ) -> list[int]:
@@ -1232,7 +1229,7 @@ class ControlFlowDeobfuscator:
 
     def _generate_patch_information(
         self,
-        r2: "Radare2Session | R2SessionPoolAdapter",
+        r2: Radare2Session | R2SessionPoolAdapter,
         original_cfg: Any,
         deobfuscated_cfg: Any,
         dispatchers: list[DispatcherInfo],

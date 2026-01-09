@@ -30,6 +30,7 @@ from typing import Any
 
 from intellicrack.utils.logger import get_logger
 
+
 try:
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import hashes, serialization
@@ -246,9 +247,7 @@ class FlexLMEncryptionHandler:
             return
 
         try:
-            self.server_private_key = rsa.generate_private_key(
-                public_exponent=65537, key_size=2048, backend=default_backend()
-            )
+            self.server_private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
             self.server_public_key = self.server_private_key.public_key()
             self.logger.info("Generated RSA-2048 key pair for FlexLM encryption")
         except Exception:
@@ -272,9 +271,7 @@ class FlexLMEncryptionHandler:
             salt = secrets.token_bytes(16)
 
         try:
-            kdf = PBKDF2HMAC(
-                algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000, backend=default_backend()
-            )
+            kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000, backend=default_backend())
             return kdf.derive(handshake_data)
         except Exception:
             self.logger.exception("PBKDF2 key derivation failed")
@@ -412,9 +409,7 @@ class FlexLMEncryptionHandler:
             if not key:
                 return data
 
-            encrypted = key.encrypt(
-                data, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None)
-            )
+            encrypted = key.encrypt(data, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
             return encrypted
         except Exception:
             self.logger.exception("RSA encryption failed")
@@ -873,7 +868,6 @@ class FlexLMProtocolParser:
                 if received_checksum != expected_checksum:
                     self.logger.warning("Binary FlexLM checksum mismatch - possible tampering")
 
-
             is_encrypted = (flags & 0x01) != 0
 
             if is_encrypted and message_type == MessageType.ENCRYPTED:
@@ -896,7 +890,9 @@ class FlexLMProtocolParser:
                 additional_data=parsed_payload.get("additional_data", {}),
             )
 
-            self.logger.info("Parsed binary FlexLM %s request for feature '%s'", self.FLEXLM_COMMANDS.get(command, "UNKNOWN"), request.feature)
+            self.logger.info(
+                "Parsed binary FlexLM %s request for feature '%s'", self.FLEXLM_COMMANDS.get(command, "UNKNOWN"), request.feature
+            )
             return request
 
         except Exception:
@@ -1731,10 +1727,7 @@ class FlexLMProtocolParser:
             str: Generated borrow license key.
 
         """
-        data = (
-            f"{request.hostname}:{request.username}:{request.feature}:"
-            f"{feature_info['version']}:BORROW:{int(borrow_expiry)}"
-        )
+        data = f"{request.hostname}:{request.username}:{request.feature}:{feature_info['version']}:BORROW:{int(borrow_expiry)}"
 
         key = hashlib.sha256(data.encode()).hexdigest()[:32].upper()
         return f"B{key[1:]}"
@@ -1751,10 +1744,7 @@ class FlexLMProtocolParser:
             str: Generated linger license key.
 
         """
-        data = (
-            f"{request.hostname}:{request.username}:{request.feature}:"
-            f"{feature_info['version']}:LINGER:{int(linger_expiry)}"
-        )
+        data = f"{request.hostname}:{request.username}:{request.feature}:{feature_info['version']}:LINGER:{int(linger_expiry)}"
 
         key = hashlib.sha256(data.encode()).hexdigest()[:32].upper()
         return f"L{key[1:]}"

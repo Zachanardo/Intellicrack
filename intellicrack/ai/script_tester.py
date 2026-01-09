@@ -62,7 +62,13 @@ class ScriptTesterBase(ABC):
             ExecutionResult with test outcome
 
         """
-        ...
+        return ExecutionResult(
+            success=False,
+            output="",
+            error="Abstract method test_frida_script not implemented by subclass",
+            exit_code=-1,
+            runtime_ms=0,
+        )
 
     @abstractmethod
     def test_ghidra_script(
@@ -82,7 +88,13 @@ class ScriptTesterBase(ABC):
             ExecutionResult with test outcome
 
         """
-        ...
+        return ExecutionResult(
+            success=False,
+            output="",
+            error="Abstract method test_ghidra_script not implemented by subclass",
+            exit_code=-1,
+            runtime_ms=0,
+        )
 
 
 class DirectScriptTester(ScriptTesterBase):
@@ -631,16 +643,16 @@ class SandboxScriptTester(ScriptTesterBase):
         for folder in mapped_folders:
             folders_xml += f"""
     <MappedFolder>
-      <HostFolder>{folder['HostFolder']}</HostFolder>
-      <SandboxFolder>{folder['SandboxFolder']}</SandboxFolder>
-      <ReadOnly>{folder.get('ReadOnly', 'true')}</ReadOnly>
+      <HostFolder>{folder["HostFolder"]}</HostFolder>
+      <SandboxFolder>{folder["SandboxFolder"]}</SandboxFolder>
+      <ReadOnly>{folder.get("ReadOnly", "true")}</ReadOnly>
     </MappedFolder>"""
 
         wsb_content = f"""<Configuration>
-  <VGpu>{'Enable' if self.config.vgpu else 'Disable'}</VGpu>
-  <Networking>{'Enable' if self.config.networking else 'Disable'}</Networking>
-  <ClipboardRedirection>{'Enable' if self.config.clipboard_redirection else 'Disable'}</ClipboardRedirection>
-  <PrinterRedirection>{'Enable' if self.config.printer_redirection else 'Disable'}</PrinterRedirection>
+  <VGpu>{"Enable" if self.config.vgpu else "Disable"}</VGpu>
+  <Networking>{"Enable" if self.config.networking else "Disable"}</Networking>
+  <ClipboardRedirection>{"Enable" if self.config.clipboard_redirection else "Disable"}</ClipboardRedirection>
+  <PrinterRedirection>{"Enable" if self.config.printer_redirection else "Disable"}</PrinterRedirection>
   <MemoryInMB>{self.config.memory_mb}</MemoryInMB>
   <MappedFolders>{folders_xml}
   </MappedFolders>
@@ -778,8 +790,9 @@ $results | ConvertTo-Json | Out-File -FilePath "results.json" -Encoding UTF8
 
         wsb_file = self._create_wsb_file(script_path, binary_path)
 
+        sandbox_proc: subprocess.Popen[bytes] | None = None
         try:
-            subprocess.Popen(
+            sandbox_proc = subprocess.Popen(
                 ["WindowsSandbox.exe", str(wsb_file)],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -821,6 +834,17 @@ $results | ConvertTo-Json | Out-File -FilePath "results.json" -Encoding UTF8
                 exit_code=-1,
                 runtime_ms=runtime_ms,
             )
+        finally:
+            if sandbox_proc is not None and sandbox_proc.poll() is None:
+                try:
+                    sandbox_proc.terminate()
+                    try:
+                        sandbox_proc.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        sandbox_proc.kill()
+                        sandbox_proc.wait()
+                except OSError:
+                    pass
 
     def _run_frida_in_docker(
         self,
@@ -1050,8 +1074,9 @@ $results | ConvertTo-Json | Out-File -FilePath "results.json" -Encoding UTF8
 
         wsb_file = self._create_wsb_file(script_path, binary_path)
 
+        sandbox_proc: subprocess.Popen[bytes] | None = None
         try:
-            subprocess.Popen(
+            sandbox_proc = subprocess.Popen(
                 ["WindowsSandbox.exe", str(wsb_file)],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -1093,6 +1118,17 @@ $results | ConvertTo-Json | Out-File -FilePath "results.json" -Encoding UTF8
                 exit_code=-1,
                 runtime_ms=runtime_ms,
             )
+        finally:
+            if sandbox_proc is not None and sandbox_proc.poll() is None:
+                try:
+                    sandbox_proc.terminate()
+                    try:
+                        sandbox_proc.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        sandbox_proc.kill()
+                        sandbox_proc.wait()
+                except OSError:
+                    pass
 
     def _run_ghidra_in_docker(
         self,

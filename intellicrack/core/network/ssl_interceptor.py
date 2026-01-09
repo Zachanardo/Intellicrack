@@ -23,6 +23,8 @@ from intellicrack.data import CA_CERT_PATH, CA_KEY_PATH
 from intellicrack.utils.logger import logger
 from intellicrack.utils.type_safety import get_typed_item, validate_type
 
+from ..process_registry import process_registry
+
 
 """
 SSL/TLS Interception System for Encrypted License Verification
@@ -192,7 +194,7 @@ class JWTTokenModifier:
             import re
 
             patterns = [
-                rb'[A-Za-z0-9_-]{16,64}',
+                rb"[A-Za-z0-9_-]{16,64}",
                 rb'jwt[_-]?secret["\']?\s*[:=]\s*["\']?([A-Za-z0-9_-]+)',
                 rb'api[_-]?key["\']?\s*[:=]\s*["\']?([A-Za-z0-9_-]+)',
                 rb'secret[_-]?key["\']?\s*[:=]\s*["\']?([A-Za-z0-9_-]+)',
@@ -268,9 +270,9 @@ class JWTTokenModifier:
                     key_data = data["keys"][0]
 
                     if CRYPTOGRAPHY_AVAILABLE and key_data.get("kty") == "RSA":
+                        from cryptography.hazmat.backends import default_backend
                         from cryptography.hazmat.primitives import serialization
                         from cryptography.hazmat.primitives.asymmetric import rsa
-                        from cryptography.hazmat.backends import default_backend
 
                         n = int.from_bytes(base64.urlsafe_b64decode(key_data["n"] + "=="), "big")
                         e = int.from_bytes(base64.urlsafe_b64decode(key_data["e"] + "=="), "big")
@@ -328,8 +330,8 @@ class JWTTokenModifier:
         """
         modified = payload.copy()
 
-        future_date = (datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(days=3650)).isoformat()
-        future_timestamp = int((datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(days=3650)).timestamp())
+        future_date = (datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(days=3650)).isoformat()
+        future_timestamp = int((datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(days=3650)).timestamp())
 
         license_bypass_mappings = {
             "exp": future_timestamp,
@@ -381,8 +383,8 @@ class JWTTokenModifier:
             Newly signed JWT token string
 
         """
-        import hmac
         import hashlib
+        import hmac
 
         header_b64 = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip("=")
         payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
@@ -584,24 +586,23 @@ class PyOpenSSLInterceptor:
                 ca_key_data = f.read()
                 ca_key = serialization.load_pem_private_key(ca_key_data, password=None, backend=default_backend())
 
-            subject = x509.Name(
-                [
-                    x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
-                    x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, domain),
-                    x509.NameAttribute(NameOID.COMMON_NAME, domain),
-                ]
-            )
+            subject = x509.Name([
+                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
+                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                x509.NameAttribute(NameOID.ORGANIZATION_NAME, domain),
+                x509.NameAttribute(NameOID.COMMON_NAME, domain),
+            ])
 
             cert = (
-                x509.CertificateBuilder()
+                x509
+                .CertificateBuilder()
                 .subject_name(subject)
                 .issuer_name(ca_cert.subject)
                 .public_key(key.public_key())
                 .serial_number(x509.random_serial_number())
-                .not_valid_before(datetime.datetime.now(tz=datetime.timezone.utc))
-                .not_valid_after(datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(days=365))
+                .not_valid_before(datetime.datetime.now(tz=datetime.UTC))
+                .not_valid_after(datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(days=365))
                 .add_extension(
                     x509.SubjectAlternativeName([x509.DNSName(domain)]),
                     critical=False,
@@ -950,11 +951,9 @@ class PyOpenSSLInterceptor:
             while self.running:
                 try:
                     client_socket, client_address = self.server_socket.accept()
-                    client_thread = threading.Thread(
-                        target=self.handle_client, args=(client_socket, client_address), daemon=True
-                    )
+                    client_thread = threading.Thread(target=self.handle_client, args=(client_socket, client_address), daemon=True)
                     client_thread.start()
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 except OSError as e:
                     if self.running:
@@ -1315,12 +1314,13 @@ def response(flow: http.HTTPFlow) -> None:
                     "ssl_insecure=true",
                 ]
 
-                self.proxy_process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                self.proxy_process = subprocess.Popen(  # nosec S603
                     cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     universal_newlines=True,
                 )
+                process_registry.register(self.proxy_process, "mitmdump")
 
                 if self.proxy_process is not None:
                     self.logger.info("mitmproxy started with PID %s", self.proxy_process.pid)
@@ -1384,8 +1384,19 @@ def response(flow: http.HTTPFlow) -> None:
         """
         try:
             if self.proxy_process is not None:
-                self.proxy_process.terminate()
-                self.proxy_process = None
+                pid = self.proxy_process.pid
+                try:
+                    self.proxy_process.terminate()
+                    try:
+                        self.proxy_process.wait(timeout=5.0)
+                    except subprocess.TimeoutExpired:
+                        self.proxy_process.kill()
+                        self.proxy_process.wait(timeout=3.0)
+                except OSError:
+                    pass
+                finally:
+                    process_registry.unregister(pid)
+                    self.proxy_process = None
 
             if self.fallback_interceptor is not None:
                 self.fallback_interceptor.stop()
@@ -1401,9 +1412,28 @@ def response(flow: http.HTTPFlow) -> None:
             self.logger.info("SSL/TLS interceptor stopped")
             return True
 
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.exception("Error stopping SSL/TLS interceptor: %s", e)
+        except (OSError, ValueError, RuntimeError):
+            self.logger.exception("Error stopping SSL/TLS interceptor")
             return False
+
+    def __enter__(self) -> "SSLTLSInterceptor":
+        """Enter context manager."""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
+    ) -> bool:
+        """Exit context manager, ensuring cleanup."""
+        self.stop()
+        return False
+
+    def __del__(self) -> None:
+        """Destructor to ensure process cleanup."""
+        if self.proxy_process is not None and self.proxy_process.poll() is None:
+            self.stop()
 
     def _find_executable(self, executable: str) -> str | None:
         """Find the path to an executable using the path discovery system.

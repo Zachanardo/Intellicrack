@@ -793,9 +793,30 @@ class SymbolicExecutionEngine:
 
         """
         return [
-            "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp",
-            "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-            "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp",
+            "rax",
+            "rbx",
+            "rcx",
+            "rdx",
+            "rsi",
+            "rdi",
+            "rbp",
+            "rsp",
+            "r8",
+            "r9",
+            "r10",
+            "r11",
+            "r12",
+            "r13",
+            "r14",
+            "r15",
+            "eax",
+            "ebx",
+            "ecx",
+            "edx",
+            "esi",
+            "edi",
+            "ebp",
+            "esp",
         ]
 
     def _execute_instructions_symbolically(
@@ -1062,7 +1083,6 @@ class SymbolicExecutionEngine:
                 return reg
 
         return None
-
 
 
 class PatternRecognizer:

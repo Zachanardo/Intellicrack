@@ -28,14 +28,6 @@ intellicrack.utils.binary.certificate\_extractor module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.utils.binary.elf\_analyzer module
-----------------------------------------------
-
-.. automodule:: intellicrack.utils.binary.elf_analyzer
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.utils.binary.hex\_utils module
 -------------------------------------------
 

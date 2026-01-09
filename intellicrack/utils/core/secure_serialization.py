@@ -37,6 +37,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any, cast
 
+
 logger = logging.getLogger(__name__)
 
 # Security key for HMAC integrity verification

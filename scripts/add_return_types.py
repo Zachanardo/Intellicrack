@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Batch script to add -> None return type annotations to test methods.
+"""Batch script to add -> None return type annotations to test methods.
 This fixes the most common mypy --strict error: [no-untyped-def]
 """
 import re

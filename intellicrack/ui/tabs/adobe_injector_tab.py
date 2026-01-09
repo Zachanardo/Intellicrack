@@ -511,9 +511,12 @@ class AdobeInjectorTab(BaseTab):
         try:
             compile_cmd = [
                 aut2exe_path,
-                "/in", str(source_script),
-                "/out", str(output_dll),
-                "/comp", "4",
+                "/in",
+                str(source_script),
+                "/out",
+                str(output_dll),
+                "/comp",
+                "4",
                 "/nopack",
             ]
 
@@ -654,7 +657,7 @@ class AdobeInjectorTab(BaseTab):
                                 for resource_lang in resource_id.directory.entries:
                                     data_rva = resource_lang.data.struct.OffsetToData
                                     size = resource_lang.data.struct.Size
-                                    data = pe.get_memory_mapped_image()[data_rva:data_rva + size]
+                                    data = pe.get_memory_mapped_image()[data_rva : data_rva + size]
 
                                     ext = ".bin"
                                     if type_id == 3:
@@ -683,6 +686,7 @@ class AdobeInjectorTab(BaseTab):
 
                 if version_info:
                     import json
+
                     version_file = output_dir / "version_info.json"
                     with pathlib.Path(version_file).open("w", encoding="utf-8") as f:
                         json.dump(version_info, f, indent=2)
@@ -744,6 +748,7 @@ class AdobeInjectorTab(BaseTab):
 
         try:
             import lief
+
             use_lief = True
         except ImportError:
             use_lief = False

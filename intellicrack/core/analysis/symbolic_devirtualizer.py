@@ -462,9 +462,7 @@ class SymbolicDevirtualizer:
                 return False
 
             indirect_jumps: int = sum(
-                1
-                for insn in block.capstone.insns
-                if hasattr(insn, "mnemonic") and insn.mnemonic == "jmp" and "[" in insn.op_str
+                1 for insn in block.capstone.insns if hasattr(insn, "mnemonic") and insn.mnemonic == "jmp" and "[" in insn.op_str
             )
             return indirect_jumps >= 1
         except (SimEngineError, AttributeError, KeyError) as e:
@@ -859,8 +857,7 @@ class SymbolicDevirtualizer:
 
         if constraints:
             has_conditional = any(
-                hasattr(c, "op") and c.op in {"__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__"}
-                for c in constraints
+                hasattr(c, "op") and c.op in {"__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__"} for c in constraints
             )
             if has_conditional and ip_modified:
                 return HandlerSemantic.BRANCH_CONDITIONAL
@@ -1001,14 +998,32 @@ class SymbolicDevirtualizer:
         src_reg: str | None = None
 
         reg_mapping_32 = {
-            "reg_eax": "eax", "reg_ebx": "ebx", "reg_ecx": "ecx", "reg_edx": "edx",
-            "reg_esi": "esi", "reg_edi": "edi", "reg_esp": "esp", "reg_ebp": "ebp",
+            "reg_eax": "eax",
+            "reg_ebx": "ebx",
+            "reg_ecx": "ecx",
+            "reg_edx": "edx",
+            "reg_esi": "esi",
+            "reg_edi": "edi",
+            "reg_esp": "esp",
+            "reg_ebp": "ebp",
         }
         reg_mapping_64 = {
-            "reg_rax": "rax", "reg_rbx": "rbx", "reg_rcx": "rcx", "reg_rdx": "rdx",
-            "reg_rsi": "rsi", "reg_rdi": "rdi", "reg_rsp": "rsp", "reg_rbp": "rbp",
-            "reg_r8": "r8", "reg_r9": "r9", "reg_r10": "r10", "reg_r11": "r11",
-            "reg_r12": "r12", "reg_r13": "r13", "reg_r14": "r14", "reg_r15": "r15",
+            "reg_rax": "rax",
+            "reg_rbx": "rbx",
+            "reg_rcx": "rcx",
+            "reg_rdx": "rdx",
+            "reg_rsi": "rsi",
+            "reg_rdi": "rdi",
+            "reg_rsp": "rsp",
+            "reg_rbp": "rbp",
+            "reg_r8": "r8",
+            "reg_r9": "r9",
+            "reg_r10": "r10",
+            "reg_r11": "r11",
+            "reg_r12": "r12",
+            "reg_r13": "r13",
+            "reg_r14": "r14",
+            "reg_r15": "r15",
         }
 
         reg_mapping = reg_mapping_64 if self.architecture == "x64" else reg_mapping_32

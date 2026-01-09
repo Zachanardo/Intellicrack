@@ -55,8 +55,10 @@ from intellicrack.utils.log_message import log_error, log_info, log_warning
 
 try:
     import matplotlib as mpl
+
     mpl.use("Agg")
     import matplotlib.pyplot as plt
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
@@ -497,9 +499,11 @@ class NetworkTrafficAnalysisDialog(QDialog):
         try:
             if platform.system() == "Windows":
                 import ctypes
+
                 return ctypes.windll.shell32.IsUserAnAdmin() != 0
             else:
                 import os
+
                 return os.geteuid() == 0
         except (AttributeError, OSError):
             return False
@@ -901,15 +905,10 @@ class NetworkTrafficAnalysisDialog(QDialog):
                 )
             else:
                 msg.setText(
-                    "Network packet capture typically requires root privileges.\n\n"
-                    "You may encounter permission errors during capture."
+                    "Network packet capture typically requires root privileges.\n\nYou may encounter permission errors during capture."
                 )
-                msg.setInformativeText(
-                    "For best results, run with: sudo python -m intellicrack"
-                )
-            msg.setStandardButtons(
-                QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel
-            )
+                msg.setInformativeText("For best results, run with: sudo python -m intellicrack")
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
             if msg.exec() == QMessageBox.StandardButton.Cancel:
                 return
 
@@ -1517,11 +1516,13 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             qimage = QImage()
             qimage.loadFromData(image_data)
             pixmap = QPixmap.fromImage(qimage)
-            self.chart_label.setPixmap(pixmap.scaled(
-                self.chart_label.size(),
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            ))
+            self.chart_label.setPixmap(
+                pixmap.scaled(
+                    self.chart_label.size(),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
             return True
         except Exception as e:
             log_error(f"Error displaying figure: {e}")

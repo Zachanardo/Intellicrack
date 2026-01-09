@@ -1964,10 +1964,10 @@ const RealtimeProtectionDetector = {
     checkCorrelatedPatterns(categories) {
         // Anti-debug + timing patterns suggest sophisticated protection
         if (
-            categories.antiDebug
-            && categories.timing
-            && categories.antiDebug.length >= 2
-            && categories.timing.length > 0
+            categories.antiDebug &&
+            categories.timing &&
+            categories.antiDebug.length >= 2 &&
+            categories.timing.length > 0
         ) {
             this.handleDetection(
                 'correlation',
@@ -2600,9 +2600,9 @@ const RealtimeProtectionDetector = {
                 const moduleName = module.name.toLowerCase();
 
                 if (
-                    moduleName.includes('cs')
-                    || moduleName.includes('falcon')
-                    || moduleName.includes('crowdstrike')
+                    moduleName.includes('cs') ||
+                    moduleName.includes('falcon') ||
+                    moduleName.includes('crowdstrike')
                 ) {
                     send({
                         type: 'detection',
@@ -2663,11 +2663,11 @@ const RealtimeProtectionDetector = {
 
                     // Check for common hook signatures (JMP, CALL instructions)
                     if (
-                        bytes[0] === 0xE9
-                        || bytes[0] === 0xE8 // JMP/CALL rel32
-                        || (bytes[0] === 0xFF && (bytes[1] & 0xF8) === 0x20) // JMP [mem]
-                        || (bytes[0] === 0x48 && bytes[1] === 0xB8) // MOV RAX, imm64
-                        || bytes[0] === 0x6A
+                        bytes[0] === 0xe9 ||
+                        bytes[0] === 0xe8 || // JMP/CALL rel32
+                        (bytes[0] === 0xff && (bytes[1] & 0xf8) === 0x20) || // JMP [mem]
+                        (bytes[0] === 0x48 && bytes[1] === 0xb8) || // MOV RAX, imm64
+                        bytes[0] === 0x6a
                     ) {
                         // PUSH imm8
 
@@ -2701,8 +2701,8 @@ const RealtimeProtectionDetector = {
 
         // Use WMI to check registry without direct access
         try {
-            const wmiQuery
-                = 'SELECT * FROM Win32_Service WHERE Name LIKE "%CS%" OR Name LIKE "%Falcon%" OR Name LIKE "%CrowdStrike%"';
+            const wmiQuery =
+                'SELECT * FROM Win32_Service WHERE Name LIKE "%CS%" OR Name LIKE "%Falcon%" OR Name LIKE "%CrowdStrike%"';
 
             // This would require WMI access in real implementation
             send({
@@ -2748,10 +2748,10 @@ const RealtimeProtectionDetector = {
                             const port = Memory.readU16(sockaddr.add(2));
                             const addr = Memory.readU32(sockaddr.add(4));
                             const ip = [
-                                addr & 0xFF,
-                                (addr >> 8) & 0xFF,
-                                (addr >> 16) & 0xFF,
-                                (addr >> 24) & 0xFF,
+                                addr & 0xff,
+                                (addr >> 8) & 0xff,
+                                (addr >> 16) & 0xff,
+                                (addr >> 24) & 0xff,
                             ].join('.');
 
                             send({
@@ -2759,7 +2759,7 @@ const RealtimeProtectionDetector = {
                                 target: 'realtime_protection_detector',
                                 action: 'network_connection_detected',
                                 ip,
-                                port: (port >> 8) | ((port & 0xFF) << 8), // Convert from network order
+                                port: (port >> 8) | ((port & 0xff) << 8), // Convert from network order
                             });
                         }
                     } catch {
@@ -2810,9 +2810,9 @@ const RealtimeProtectionDetector = {
         const syscallNumbers = {
             NtCreateFile: 0x55,
             NtAllocateVirtualMemory: 0x18,
-            NtWriteVirtualMemory: 0x3A,
+            NtWriteVirtualMemory: 0x3a,
             NtCreateProcess: 0x54,
-            NtCreateThread: 0x4E,
+            NtCreateThread: 0x4e,
         };
 
         Object.keys(syscallNumbers).forEach(syscallName => {
@@ -2881,11 +2881,17 @@ const RealtimeProtectionDetector = {
     performManualDLLLoad: dllName => {
         try {
             const ntdll = Process.getModuleByName('ntdll.dll');
-            const ntReadFile = new NativeFunction(
-                ntdll.getExportByName('NtReadFile'),
-                'int',
-                ['pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'pointer', 'uint32', 'pointer', 'pointer']
-            );
+            const ntReadFile = new NativeFunction(ntdll.getExportByName('NtReadFile'), 'int', [
+                'pointer',
+                'pointer',
+                'pointer',
+                'pointer',
+                'pointer',
+                'pointer',
+                'uint32',
+                'pointer',
+                'pointer',
+            ]);
             const ntAllocateVirtualMemory = new NativeFunction(
                 ntdll.getExportByName('NtAllocateVirtualMemory'),
                 'int',
@@ -2904,7 +2910,7 @@ const RealtimeProtectionDetector = {
             ntReadFile(fileHandle, NULL, NULL, NULL, ioStatus, dosHeader, 64, NULL, NULL);
 
             const eMagic = Memory.readU16(dosHeader);
-            if (eMagic !== 0x5A_4D) {
+            if (eMagic !== 0x5a_4d) {
                 throw new Error('Invalid DOS signature');
             }
 
@@ -2953,7 +2959,12 @@ const RealtimeProtectionDetector = {
             Memory.copy(loadedBase, dosHeader, 64);
 
             // Process sections and resolve imports
-            RealtimeProtectionDetector.processPESections(loadedBase, peHeader, numberOfSections, fileHandle);
+            RealtimeProtectionDetector.processPESections(
+                loadedBase,
+                peHeader,
+                numberOfSections,
+                fileHandle
+            );
             RealtimeProtectionDetector.resolveImports(loadedBase, peHeader);
             RealtimeProtectionDetector.applyRelocations(loadedBase, imageBase, peHeader);
 
@@ -3168,7 +3179,7 @@ const RealtimeProtectionDetector = {
                     const func = s1Module.getExportByName(funcName);
                     if (func) {
                         // Patch function to return early
-                        const patch = [0xC3]; // RET instruction
+                        const patch = [0xc3]; // RET instruction
                         Memory.patchCode(func, 1, code => {
                             code.putBytes(patch);
                         });
@@ -3344,15 +3355,7 @@ const RealtimeProtectionDetector = {
 
                     // Perform actual file read to generate legitimate activity
                     const filePath = Memory.allocUtf8String('C:\\Windows\\System32\\kernel32.dll');
-                    const handle = createFileA(
-                        filePath,
-                        0x80_00_00_00,
-                        1,
-                        NULL,
-                        3,
-                        0x80,
-                        NULL
-                    );
+                    const handle = createFileA(filePath, 0x80_00_00_00, 1, NULL, 3, 0x80, NULL);
 
                     if (!handle.isNull() && handle.toInt32() !== -1) {
                         const buffer = Memory.alloc(4096);
@@ -3394,10 +3397,18 @@ const RealtimeProtectionDetector = {
 
                     // Perform actual registry read for legitimate activity generation
                     const HKEY_LOCAL_MACHINE = ptr(0x80_00_00_02);
-                    const subKey = Memory.allocUtf8String('SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion');
+                    const subKey = Memory.allocUtf8String(
+                        'SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion'
+                    );
                     const hKey = Memory.alloc(Process.pointerSize);
 
-                    const openResult = regOpenKeyExA(HKEY_LOCAL_MACHINE, subKey, 0, 0x2_00_19, hKey);
+                    const openResult = regOpenKeyExA(
+                        HKEY_LOCAL_MACHINE,
+                        subKey,
+                        0,
+                        0x2_00_19,
+                        hKey
+                    );
                     if (openResult === 0) {
                         const valueName = Memory.allocUtf8String('ProductName');
                         const dataType = Memory.alloc(4);
@@ -3405,7 +3416,14 @@ const RealtimeProtectionDetector = {
                         Memory.writeU32(dataSize, 256);
                         const data = Memory.alloc(256);
 
-                        regQueryValueExA(Memory.readPointer(hKey), valueName, NULL, dataType, data, dataSize);
+                        regQueryValueExA(
+                            Memory.readPointer(hKey),
+                            valueName,
+                            NULL,
+                            dataType,
+                            data,
+                            dataSize
+                        );
                         regCloseKey(Memory.readPointer(hKey));
 
                         send({
@@ -3481,12 +3499,12 @@ const RealtimeProtectionDetector = {
             if (amsiScanBuffer) {
                 // Patch AmsiScanBuffer to always return AMSI_RESULT_CLEAN
                 const patch = [
-                    0xB8,
+                    0xb8,
                     0x57,
                     0x00,
                     0x07,
                     0x80, // mov eax, 0x80070057 (E_INVALIDARG)
-                    0xC3, // ret
+                    0xc3, // ret
                 ];
 
                 Memory.patchCode(amsiScanBuffer, patch.length, code => {
@@ -3567,8 +3585,8 @@ const RealtimeProtectionDetector = {
                         // Check if this is an AMSI-related CLSID
                         const clsidBytes = Memory.readByteArray(clsid, 16);
                         const amsiCLSID = new Uint8Array([
-                            0xFB, 0xD7, 0x6D, 0xCA, 0x0F, 0x93, 0x4E, 0x12, 0x83, 0x40, 0x09, 0xB2,
-                            0x85, 0xAB, 0xEC, 0xA6,
+                            0xfb, 0xd7, 0x6d, 0xca, 0x0f, 0x93, 0x4e, 0x12, 0x83, 0x40, 0x09, 0xb2,
+                            0x85, 0xab, 0xec, 0xa6,
                         ]);
 
                         if (this.arraysEqual(new Uint8Array(clsidBytes), amsiCLSID)) {
@@ -3659,8 +3677,8 @@ const RealtimeProtectionDetector = {
                 const patch = [
                     0x48,
                     0x33,
-                    0xC0, // xor rax, rax (return 0)
-                    0xC3, // ret
+                    0xc0, // xor rax, rax (return 0)
+                    0xc3, // ret
                 ];
 
                 Memory.patchCode(etwEventWrite, patch.length, code => {
@@ -4137,7 +4155,7 @@ const RealtimeProtectionDetector = {
         const fireeyeIndicators = [
             'malware.exe',
             'sample.exe',
-            String.fromCodePoint(0x46, 0x61, 0x6B, 0x65, 0x4E, 0x65, 0x74),
+            String.fromCodePoint(0x46, 0x61, 0x6b, 0x65, 0x4e, 0x65, 0x74),
             'inetinfo.exe',
             'FireEye',
             'flare-vm',
@@ -4249,7 +4267,7 @@ const RealtimeProtectionDetector = {
     // Read CR4 register (simplified - would require kernel access)
     readCR4Register: () =>
         // This would require kernel-level access in real implementation
-        0x00_14_06_E0, // Example CR4 value with CET enabled
+        0x00_14_06_e0, // Example CR4 value with CET enabled
 
     // Check CPUID feature
     checkCPUIDFeature: (_eax, _ecx, _register, _bit) =>
@@ -4387,9 +4405,9 @@ const RealtimeProtectionDetector = {
 
                     onLeave(retval) {
                         if (
-                            retval.toInt32() !== 0
-                            && this.hProcess.equals(Process.getCurrentProcess().handle)
-                            && this.parent.parent.isIATRegion(this.baseAddress, this.size)
+                            retval.toInt32() !== 0 &&
+                            this.hProcess.equals(Process.getCurrentProcess().handle) &&
+                            this.parent.parent.isIATRegion(this.baseAddress, this.size)
                         ) {
                             const data = this.buffer.readByteArray(this.size);
 
@@ -4595,7 +4613,7 @@ const RealtimeProtectionDetector = {
     // Monitor encrypted import names
     monitorEncryptedImports() {
         // Track XOR operations that might decrypt API names
-        const _commonXORKeys = [0xAA, 0x55, 0xFF, 0x13, 0x37, 0xDE, 0xAD, 0xBE, 0xEF];
+        const _commonXORKeys = [0xaa, 0x55, 0xff, 0x13, 0x37, 0xde, 0xad, 0xbe, 0xef];
 
         // Monitor for string manipulation that results in known API names
         this.trackStringManipulation();
@@ -4803,7 +4821,7 @@ const RealtimeProtectionDetector = {
         const suspiciousRanges = [
             [0x10_00_00_00, 0x20_00_00_00], // Unusual base addresses
             [0x60_00_00_00, 0x70_00_00_00],
-            [0x90_00_00_00, 0xA0_00_00_00],
+            [0x90_00_00_00, 0xa0_00_00_00],
         ];
 
         return suspiciousRanges.some(range => addr >= range[0] && addr <= range[1]);
@@ -4861,7 +4879,7 @@ const RealtimeProtectionDetector = {
 
             for (let i = 0; i < bytes.length - 2; i++) {
                 // Check for CALL [reg] patterns (FF 1x where x is D0-D7 for registers)
-                if (bytes[i] === 0xFF) {
+                if (bytes[i] === 0xff) {
                     const modRm = bytes[i + 1];
                     // FF /2 = CALL r/m - check for register indirect calls
                     if ((modRm & 0x38) === 0x10) {
@@ -4875,12 +4893,12 @@ const RealtimeProtectionDetector = {
 
                 // Check for CALL [mem] with displacement (common in obfuscation)
                 // FF 15 xx xx xx xx = CALL [imm32]
-                if (bytes[i] === 0xFF && bytes[i + 1] === 0x15) {
+                if (bytes[i] === 0xff && bytes[i + 1] === 0x15) {
                     indirectCallCount++;
                 }
 
                 // Check for computed jump tables (JMP [reg*scale+base])
-                if (bytes[i] === 0xFF && (bytes[i + 1] & 0xC0) === 0x04) {
+                if (bytes[i] === 0xff && (bytes[i + 1] & 0xc0) === 0x04) {
                     indirectCallCount++;
                 }
             }
@@ -4909,10 +4927,13 @@ const RealtimeProtectionDetector = {
 
             for (let i = 0; i < bytes.length - 16; i++) {
                 // Pattern 1: JMP rel32 (E9 xx xx xx xx) - 5-byte relative jump
-                if (bytes[i] === 0xE9) {
+                if (bytes[i] === 0xe9) {
                     // Check if destination is outside current module (typical of hooks)
-                    const offset = bytes[i + 1] | (bytes[i + 2] << 8)
-                                   | (bytes[i + 3] << 16) | (bytes[i + 4] << 24);
+                    const offset =
+                        bytes[i + 1] |
+                        (bytes[i + 2] << 8) |
+                        (bytes[i + 3] << 16) |
+                        (bytes[i + 4] << 24);
                     const dest = i + 5 + offset;
                     if (dest < 0 || dest > moduleSize) {
                         trampolineCount++;
@@ -4920,26 +4941,36 @@ const RealtimeProtectionDetector = {
                 }
 
                 // Pattern 2: PUSH imm32; RET (68 xx xx xx xx C3) - push/ret trampoline
-                if (bytes[i] === 0x68 && bytes[i + 5] === 0xC3) {
+                if (bytes[i] === 0x68 && bytes[i + 5] === 0xc3) {
                     trampolineCount++;
                 }
 
                 // Pattern 3: MOV EAX, imm32; JMP EAX (B8 xx xx xx xx FF E0)
-                if (bytes[i] === 0xB8 && bytes[i + 5] === 0xFF && bytes[i + 6] === 0xE0) {
+                if (bytes[i] === 0xb8 && bytes[i + 5] === 0xff && bytes[i + 6] === 0xe0) {
                     trampolineCount++;
                 }
 
                 // Pattern 4: Hot-patch area (MOV EDI, EDI; PUSH EBP; MOV EBP, ESP)
                 // 8B FF 55 8B EC - Windows hot-patch prologue
-                if (bytes[i] === 0x8B && bytes[i + 1] === 0xFF
-                    && bytes[i + 2] === 0x55 && bytes[i + 3] === 0x8B && bytes[i + 4] === 0xEC // Check for short jump before it (EB xx at i-2)
-                    && i >= 2 && bytes[i - 2] === 0xEB) {
+                if (
+                    bytes[i] === 0x8b &&
+                    bytes[i + 1] === 0xff &&
+                    bytes[i + 2] === 0x55 &&
+                    bytes[i + 3] === 0x8b &&
+                    bytes[i + 4] === 0xec && // Check for short jump before it (EB xx at i-2)
+                    i >= 2 &&
+                    bytes[i - 2] === 0xeb
+                ) {
                     trampolineCount++;
                 }
 
                 // Pattern 5: INT3 padding followed by JMP (CC CC ... E9)
-                if (bytes[i] === 0xCC && bytes[i + 1] === 0xCC
-                    && bytes[i + 2] === 0xCC && bytes[i + 3] === 0xE9) {
+                if (
+                    bytes[i] === 0xcc &&
+                    bytes[i + 1] === 0xcc &&
+                    bytes[i + 2] === 0xcc &&
+                    bytes[i + 3] === 0xe9
+                ) {
                     trampolineCount++;
                 }
             }
@@ -4969,11 +5000,11 @@ const RealtimeProtectionDetector = {
                     const dosHeader = mod.base;
                     const eMagic = Memory.readU16(dosHeader);
 
-                    if (eMagic !== 0x5A_4D) {
+                    if (eMagic !== 0x5a_4d) {
                         continue;
                     }
 
-                    const eLfanew = Memory.readU32(dosHeader.add(0x3C));
+                    const eLfanew = Memory.readU32(dosHeader.add(0x3c));
                     const peHeader = dosHeader.add(eLfanew);
                     const peSignature = Memory.readU32(peHeader);
 
@@ -4984,16 +5015,16 @@ const RealtimeProtectionDetector = {
                     // Get optional header offset (PE signature + COFF header = 4 + 20 = 24)
                     const optionalHeader = peHeader.add(24);
                     const magic = Memory.readU16(optionalHeader);
-                    const is64Bit = magic === 0x2_0B;
+                    const is64Bit = magic === 0x2_0b;
 
                     // IAT directory entry offset: 96 for PE32, 112 for PE32+
-                    const iatDirOffset = is64Bit ? 112 + (12 * 8) : 96 + (12 * 8);
+                    const iatDirOffset = is64Bit ? 112 + 12 * 8 : 96 + 12 * 8;
                     const iatRva = Memory.readU32(optionalHeader.add(iatDirOffset));
                     const iatSize = Memory.readU32(optionalHeader.add(iatDirOffset + 4));
 
                     if (iatRva === 0 || iatSize === 0) {
                         // Try import directory instead (entry 1)
-                        const importDirOffset = is64Bit ? 112 + (1 * 8) : 96 + (1 * 8);
+                        const importDirOffset = is64Bit ? 112 + 1 * 8 : 96 + 1 * 8;
                         const importRva = Memory.readU32(optionalHeader.add(importDirOffset));
                         const importSize = Memory.readU32(optionalHeader.add(importDirOffset + 4));
 
@@ -5158,7 +5189,7 @@ const RealtimeProtectionDetector = {
         const bytes = new Uint8Array(data);
 
         for (const byte of bytes) {
-            hash = ((hash << 5) - hash + byte) & 0xFF_FF_FF_FF;
+            hash = ((hash << 5) - hash + byte) & 0xff_ff_ff_ff;
         }
 
         return hash.toString(16);
@@ -5336,12 +5367,12 @@ const RealtimeProtectionDetector = {
         try {
             const dosHeader = {
                 e_magic: moduleBase.readU16(),
-                e_lfanew: moduleBase.add(0x3C).readU32(),
+                e_lfanew: moduleBase.add(0x3c).readU32(),
                 isValid: false,
             };
 
             // Check for MZ signature
-            if (dosHeader.e_magic === 0x5A_4D) {
+            if (dosHeader.e_magic === 0x5a_4d) {
                 // "MZ"
                 dosHeader.isValid = true;
             }
@@ -5582,7 +5613,7 @@ const RealtimeProtectionDetector = {
             '.pe-armor',
             '.morphine',
             '.crypter',
-            String.fromCodePoint(0x2E, 0x73, 0x74, 0x75, 0x62),
+            String.fromCodePoint(0x2e, 0x73, 0x74, 0x75, 0x62),
             '.loader',
             '.inject',
         ];
@@ -5601,9 +5632,9 @@ const RealtimeProtectionDetector = {
 
         // Check for random/obfuscated names
         if (
-            randomNamePattern.test(analysis.name)
-            || shortNamePattern.test(analysis.name)
-            || numberOnlyPattern.test(analysis.name)
+            randomNamePattern.test(analysis.name) ||
+            shortNamePattern.test(analysis.name) ||
+            numberOnlyPattern.test(analysis.name)
         ) {
             analysis.suspiciousIndicators.push('obfuscated_section_name');
         }
@@ -5637,11 +5668,11 @@ const RealtimeProtectionDetector = {
     checkProtectionSignatures: analysis => {
         const protectionSignatures = {
             vmprotect: {
-                characteristics: [0x60_00_00_20, 0xE0_00_00_20, 0x40_00_00_40],
+                characteristics: [0x60_00_00_20, 0xe0_00_00_20, 0x40_00_00_40],
                 names: ['.vmp0', '.vmp1', '.vmp2'],
             },
             themida: {
-                characteristics: [0xE0_00_00_20, 0x40_00_00_40],
+                characteristics: [0xe0_00_00_20, 0x40_00_00_40],
                 names: ['.themida', '.winlicense'],
             },
             upx: {
@@ -5649,11 +5680,11 @@ const RealtimeProtectionDetector = {
                 names: ['upx0', 'upx1', 'upx2'],
             },
             aspack: {
-                characteristics: [0xE0_00_00_20],
+                characteristics: [0xe0_00_00_20],
                 names: ['.aspack', '.data'],
             },
             enigma: {
-                characteristics: [0x40_00_00_40, 0xE0_00_00_20],
+                characteristics: [0x40_00_00_40, 0xe0_00_00_20],
                 names: ['.enigma1', '.enigma2'],
             },
         };
@@ -6023,60 +6054,60 @@ const RealtimeProtectionDetector = {
         this.entryPointPatterns = {
             // VMProtect entry point patterns
             vmprotect: [
-                [0x68, null, null, null, null, 0xC3], // push addr; ret
-                [0xE8, null, null, null, null], // call rel32
-                [0x55, 0x8B, 0xEC], // push ebp; mov ebp, esp
-                [0x60, 0x9C], // pushad; pushfd
+                [0x68, null, null, null, null, 0xc3], // push addr; ret
+                [0xe8, null, null, null, null], // call rel32
+                [0x55, 0x8b, 0xec], // push ebp; mov ebp, esp
+                [0x60, 0x9c], // pushad; pushfd
             ],
 
             // Themida entry point patterns
             themida: [
-                [0xB8, null, null, null, null, 0xFF, 0xE0], // mov eax, addr; jmp eax
-                [0x68, null, null, null, null, 0x8F, 0x05], // push addr; pop dword ptr [addr]
-                [0xE9, null, null, null, null], // jmp rel32 (far jump)
+                [0xb8, null, null, null, null, 0xff, 0xe0], // mov eax, addr; jmp eax
+                [0x68, null, null, null, null, 0x8f, 0x05], // push addr; pop dword ptr [addr]
+                [0xe9, null, null, null, null], // jmp rel32 (far jump)
             ],
 
             // UPX entry point patterns
             upx: [
-                [0x60, 0xBE, null, null, null, null], // pushad; mov esi, addr
-                [0x8D, 0xBE, null, null, null, null], // lea edi, [esi+offset]
-                [0x57, 0x83, 0xCD, 0xFF], // push edi; or ebp, -1
+                [0x60, 0xbe, null, null, null, null], // pushad; mov esi, addr
+                [0x8d, 0xbe, null, null, null, null], // lea edi, [esi+offset]
+                [0x57, 0x83, 0xcd, 0xff], // push edi; or ebp, -1
             ],
 
             // Generic packer patterns
             generic_packer: [
-                [0x55, 0x89, 0xE5], // push ebp; mov ebp, esp
-                [0x83, 0xEC, null], // sub esp, byte
+                [0x55, 0x89, 0xe5], // push ebp; mov ebp, esp
+                [0x83, 0xec, null], // sub esp, byte
                 [0x53, 0x56, 0x57], // push ebx; push esi; push edi
-                [0xFC, 0xBF], // cld; mov edi, immediate
+                [0xfc, 0xbf], // cld; mov edi, immediate
             ],
 
             // Anti-debugging entry points
             anti_debug: [
-                [0x64, 0x8B, 0x05, 0x30, 0x00, 0x00, 0x00], // mov eax, fs:[30h] (PEB)
-                [0x0F, 0x31], // rdtsc
-                [0xCC], // int3 (breakpoint)
-                [0xCD, 0x2D], // int 2Dh (kernel breakpoint)
+                [0x64, 0x8b, 0x05, 0x30, 0x00, 0x00, 0x00], // mov eax, fs:[30h] (PEB)
+                [0x0f, 0x31], // rdtsc
+                [0xcc], // int3 (breakpoint)
+                [0xcd, 0x2d], // int 2Dh (kernel breakpoint)
             ],
         };
 
         // Trampoline detection patterns
         this.trampolinePatterns = [
-            [0xFF, 0x25], // jmp dword ptr [addr] (x86)
-            [0xFF, 0x15], // call dword ptr [addr]
-            [0x48, 0xFF, 0x25], // jmp qword ptr [addr] (x64)
-            [0x48, 0xFF, 0x15], // call qword ptr [addr] (x64)
-            [0xE9], // jmp rel32
-            [0xEA], // jmp far
+            [0xff, 0x25], // jmp dword ptr [addr] (x86)
+            [0xff, 0x15], // call dword ptr [addr]
+            [0x48, 0xff, 0x25], // jmp qword ptr [addr] (x64)
+            [0x48, 0xff, 0x15], // call qword ptr [addr] (x64)
+            [0xe9], // jmp rel32
+            [0xea], // jmp far
         ];
     },
 
     analyzeMainEntryPoint() {
         try {
-            const moduleBase
-                = Module.findBaseAddress(Process.getCurrentThreadId().toString())
-                || Module.findBaseAddress('main')
-                || Module.findBaseAddress(Process.enumerateModules()[0].name);
+            const moduleBase =
+                Module.findBaseAddress(Process.getCurrentThreadId().toString()) ||
+                Module.findBaseAddress('main') ||
+                Module.findBaseAddress(Process.enumerateModules()[0].name);
 
             if (!moduleBase) {
                 send({
@@ -6090,7 +6121,7 @@ const RealtimeProtectionDetector = {
 
             // Read PE header to find entry point
             const _dosHeader = moduleBase.readByteArray(64);
-            const peOffset = moduleBase.add(0x3C).readU32();
+            const peOffset = moduleBase.add(0x3c).readU32();
             const _peHeader = moduleBase.add(peOffset);
             const optionalHeaderOffset = peOffset + 24;
             const entryPointRVA = moduleBase.add(optionalHeaderOffset + 16).readU32();
@@ -6167,8 +6198,8 @@ const RealtimeProtectionDetector = {
             this.calculateObfuscationScore(analysis);
 
             if (
-                analysis.obfuscationLevel
-                > this.entryPointAnalysis.config.suspiciousPatternThreshold
+                analysis.obfuscationLevel >
+                this.entryPointAnalysis.config.suspiciousPatternThreshold
             ) {
                 this.entryPointAnalysis.obfuscatedEntries.add(identifier);
                 this.entryPointAnalysis.statistics.suspiciousEntryPoints++;
@@ -6227,15 +6258,15 @@ const RealtimeProtectionDetector = {
     extractTrampolineTarget: (address, bytes) => {
         try {
             // Handle different trampoline types
-            if (bytes[0] === 0xFF && bytes[1] === 0x25) {
+            if (bytes[0] === 0xff && bytes[1] === 0x25) {
                 // jmp dword ptr [addr]
                 const targetAddr = address.add(2).readU32();
                 return ptr(targetAddr).readPointer();
-            } else if (bytes[0] === 0xE9) {
+            } else if (bytes[0] === 0xe9) {
                 // jmp rel32
                 const offset = address.add(1).readS32();
                 return address.add(5).add(offset);
-            } else if (bytes[0] === 0x48 && bytes[1] === 0xFF && bytes[2] === 0x25) {
+            } else if (bytes[0] === 0x48 && bytes[1] === 0xff && bytes[2] === 0x25) {
                 // jmp qword ptr [addr] (x64)
                 const targetAddr = address.add(3).readU32();
                 return address.add(7).add(targetAddr).readPointer();
@@ -6486,11 +6517,11 @@ const RealtimeProtectionDetector = {
             const dosHeader = moduleBase.readByteArray(64);
             const dosSignature = dosHeader[0] + (dosHeader[1] << 8);
 
-            if (dosSignature !== 0x5A_4D) {
+            if (dosSignature !== 0x5a_4d) {
                 return; // Not a valid PE file
             }
 
-            const peOffset = moduleBase.add(0x3C).readU32();
+            const peOffset = moduleBase.add(0x3c).readU32();
             const peHeader = moduleBase.add(peOffset);
             const peSignature = peHeader.readU32();
 
@@ -6711,20 +6742,20 @@ const RealtimeProtectionDetector = {
         this.shellcodeSignatures = {
             // Common x86 shellcode patterns
             x86_patterns: [
-                [0xEB, 0xFE], // jmp $-2 (infinite loop)
+                [0xeb, 0xfe], // jmp $-2 (infinite loop)
                 [0x90, 0x90, 0x90, 0x90], // NOP sled
-                [0x31, 0xC0], // xor eax, eax
+                [0x31, 0xc0], // xor eax, eax
                 [0x50, 0x68], // push eax; push immediate
-                [0x6A, 0x00], // push 0
-                [0xB8, null, null, null, null, 0xFF, 0xD0], // mov eax, addr; call eax
+                [0x6a, 0x00], // push 0
+                [0xb8, null, null, null, null, 0xff, 0xd0], // mov eax, addr; call eax
             ],
 
             // x64 shellcode patterns
             x64_patterns: [
-                [0x48, 0x31, 0xC0], // xor rax, rax
-                [0x48, 0xB8], // mov rax, immediate64
-                [0xFF, 0xD0], // call rax
-                [0x48, 0x89, 0xE5], // mov rbp, rsp
+                [0x48, 0x31, 0xc0], // xor rax, rax
+                [0x48, 0xb8], // mov rax, immediate64
+                [0xff, 0xd0], // call rax
+                [0x48, 0x89, 0xe5], // mov rbp, rsp
                 [0x41, 0x50], // push r8
             ],
 
@@ -6741,9 +6772,9 @@ const RealtimeProtectionDetector = {
 
             // Encoder patterns
             encoder_patterns: [
-                [0xFC, 0x48, 0x83, 0xE4, 0xF0], // Metasploit encoder
-                [0xD9, 0xEE, 0xD9, 0x74, 0x24], // FPU encoder
-                [0x33, 0xC9, 0x64, 0x8B, 0x71], // PEB walking
+                [0xfc, 0x48, 0x83, 0xe4, 0xf0], // Metasploit encoder
+                [0xd9, 0xee, 0xd9, 0x74, 0x24], // FPU encoder
+                [0x33, 0xc9, 0x64, 0x8b, 0x71], // PEB walking
             ],
         };
 
@@ -6777,15 +6808,15 @@ const RealtimeProtectionDetector = {
             ],
 
             rop_gadgets: [
-                [0x58, 0xC3], // pop eax; ret
-                [0x5D, 0xC3], // pop ebp; ret
-                [0x48, 0x89, 0xE0, 0xC3], // mov rax, rsp; ret (x64)
+                [0x58, 0xc3], // pop eax; ret
+                [0x5d, 0xc3], // pop ebp; ret
+                [0x48, 0x89, 0xe0, 0xc3], // mov rax, rsp; ret (x64)
             ],
 
             stack_pivot: [
                 [0x94], // xchg eax, esp
-                [0x87, 0xE0], // xchg eax, esp (alternative)
-                [0x48, 0x89, 0xC4], // mov rsp, rax (x64)
+                [0x87, 0xe0], // xchg eax, esp (alternative)
+                [0x48, 0x89, 0xc4], // mov rsp, rax (x64)
             ],
         };
     },
@@ -6829,8 +6860,8 @@ const RealtimeProtectionDetector = {
 
             // Maintain history size limit
             if (
-                this.memoryPatterns.analysis.allocationHistory.length
-                > this.memoryPatterns.config.maxHistorySize
+                this.memoryPatterns.analysis.allocationHistory.length >
+                this.memoryPatterns.config.maxHistorySize
             ) {
                 this.memoryPatterns.analysis.allocationHistory.shift();
             }
@@ -7255,14 +7286,14 @@ const RealtimeProtectionDetector = {
         const cutoff = Date.now() - 300_000; // 5 minutes ago
 
         // Clean old allocation history
-        this.memoryPatterns.analysis.allocationHistory
-            = this.memoryPatterns.analysis.allocationHistory.filter(
+        this.memoryPatterns.analysis.allocationHistory =
+            this.memoryPatterns.analysis.allocationHistory.filter(
                 alloc => alloc.timestamp > cutoff
             );
 
         // Clean old protection changes
-        this.memoryPatterns.analysis.protectionChanges
-            = this.memoryPatterns.analysis.protectionChanges.filter(
+        this.memoryPatterns.analysis.protectionChanges =
+            this.memoryPatterns.analysis.protectionChanges.filter(
                 change => change.timestamp > cutoff
             );
     },
@@ -7676,9 +7707,9 @@ const RealtimeProtectionDetector = {
 
             // Check for very regular timing (possible automated/protection behavior)
             const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-            const variance
-                = intervals.reduce((sum, interval) => sum + (interval - avgInterval) ** 2, 0)
-                / intervals.length;
+            const variance =
+                intervals.reduce((sum, interval) => sum + (interval - avgInterval) ** 2, 0) /
+                intervals.length;
 
             // Low variance indicates very regular timing
             if (variance < 10 && avgInterval > 100 && avgInterval < 5000) {
@@ -7935,8 +7966,8 @@ const RealtimeProtectionDetector = {
 
             // Generate periodic behavioral report
             if (
-                Date.now() - this.behavioralPatterns.behaviorStatistics.analysisStartTime
-                > 120_000
+                Date.now() - this.behavioralPatterns.behaviorStatistics.analysisStartTime >
+                120_000
             ) {
                 this.generateBehavioralAnalysisReport();
             }
@@ -8024,8 +8055,8 @@ const RealtimeProtectionDetector = {
             const analysisTime = now - statistics.analysisStartTime;
             if (analysisTime > 0) {
                 const currentApiRate = statistics.totalApiCalls / (analysisTime / 1000);
-                const currentSuspiciousRate
-                    = statistics.suspiciousSequences / (analysisTime / 1000);
+                const currentSuspiciousRate =
+                    statistics.suspiciousSequences / (analysisTime / 1000);
 
                 this.behavioralPatterns.baseline.measurements.push({
                     timestamp: now,
@@ -8075,8 +8106,8 @@ const RealtimeProtectionDetector = {
 
     generateBehavioralAnalysisReport() {
         try {
-            const analysisTime
-                = Date.now() - this.behavioralPatterns.behaviorStatistics.analysisStartTime;
+            const analysisTime =
+                Date.now() - this.behavioralPatterns.behaviorStatistics.analysisStartTime;
             const statistics = this.behavioralPatterns.behaviorStatistics;
 
             const report = {
@@ -8253,10 +8284,10 @@ const RealtimeProtectionDetector = {
                     {
                         signatures: [
                             [
-                                0x56, 0x4D, 0x50, 0x72, 0x6F, 0x74, 0x65, 0x63, 0x74, 0x20, 0x33,
-                                0x2E, 0x38,
+                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20, 0x33,
+                                0x2e, 0x38,
                             ],
-                            [0x2E, 0x76, 0x6D, 0x70, 0x33],
+                            [0x2e, 0x76, 0x6d, 0x70, 0x33],
                         ],
                         strings: ['VMProtect 3.8', '.vmp3', 'VMProtect Ultimate'],
                         peCharacteristics: {
@@ -8271,8 +8302,8 @@ const RealtimeProtectionDetector = {
                     {
                         signatures: [
                             [
-                                0x56, 0x4D, 0x50, 0x72, 0x6F, 0x74, 0x65, 0x63, 0x74, 0x20, 0x33,
-                                0x2E, 0x37,
+                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20, 0x33,
+                                0x2e, 0x37,
                             ],
                         ],
                         strings: ['VMProtect 3.7', 'VMProtect Professional'],
@@ -8288,8 +8319,8 @@ const RealtimeProtectionDetector = {
                     {
                         signatures: [
                             [
-                                0x56, 0x4D, 0x50, 0x72, 0x6F, 0x74, 0x65, 0x63, 0x74, 0x20, 0x33,
-                                0x2E, 0x36,
+                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20, 0x33,
+                                0x2e, 0x36,
                             ],
                         ],
                         strings: ['VMProtect 3.6'],
@@ -8305,8 +8336,8 @@ const RealtimeProtectionDetector = {
                     {
                         signatures: [
                             [
-                                0x56, 0x4D, 0x50, 0x72, 0x6F, 0x74, 0x65, 0x63, 0x74, 0x20, 0x32,
-                                0x2E,
+                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20, 0x32,
+                                0x2e,
                             ],
                         ],
                         strings: ['VMProtect 2.', 'VMProtect SDK'],
@@ -8328,7 +8359,7 @@ const RealtimeProtectionDetector = {
                     '3.1.x',
                     {
                         signatures: [
-                            [0x54, 0x68, 0x65, 0x6D, 0x69, 0x64, 0x61, 0x20, 0x33, 0x2E, 0x31],
+                            [0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61, 0x20, 0x33, 0x2e, 0x31],
                         ],
                         strings: ['Themida 3.1', 'Oreans Technologies', 'WinLicense 3.1'],
                         peCharacteristics: {
@@ -8343,7 +8374,7 @@ const RealtimeProtectionDetector = {
                     '3.0.x',
                     {
                         signatures: [
-                            [0x54, 0x68, 0x65, 0x6D, 0x69, 0x64, 0x61, 0x20, 0x33, 0x2E, 0x30],
+                            [0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61, 0x20, 0x33, 0x2e, 0x30],
                         ],
                         strings: ['Themida 3.0', 'SecureEngine'],
                         peCharacteristics: {
@@ -8356,7 +8387,7 @@ const RealtimeProtectionDetector = {
                 [
                     '2.x',
                     {
-                        signatures: [[0x54, 0x68, 0x65, 0x6D, 0x69, 0x64, 0x61, 0x20, 0x32, 0x2E]],
+                        signatures: [[0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61, 0x20, 0x32, 0x2e]],
                         strings: ['Themida 2.', 'Themida SDK'],
                         peCharacteristics: {
                             sectionNames: ['.themida'],
@@ -8375,7 +8406,7 @@ const RealtimeProtectionDetector = {
                 [
                     '5.x',
                     {
-                        signatures: [[0x44, 0x65, 0x6E, 0x75, 0x76, 0x6F, 0x20, 0x35]],
+                        signatures: [[0x44, 0x65, 0x6e, 0x75, 0x76, 0x6f, 0x20, 0x35]],
                         strings: [
                             'Denuvo Anti-Tamper',
                             'Denuvo 5.',
@@ -8392,7 +8423,7 @@ const RealtimeProtectionDetector = {
                 [
                     '4.x',
                     {
-                        signatures: [[0x44, 0x65, 0x6E, 0x75, 0x76, 0x6F, 0x20, 0x34]],
+                        signatures: [[0x44, 0x65, 0x6e, 0x75, 0x76, 0x6f, 0x20, 0x34]],
                         strings: ['Denuvo 4.', 'Anti-Tamper Technology'],
                         peCharacteristics: {
                             vmProtection: true,
@@ -8409,7 +8440,7 @@ const RealtimeProtectionDetector = {
             [
                 'msvc_2022',
                 {
-                    signatures: [[0x4D, 0x53, 0x56, 0x43, 0x20, 0x32, 0x30, 0x32, 0x32]],
+                    signatures: [[0x4d, 0x53, 0x56, 0x43, 0x20, 0x32, 0x30, 0x32, 0x32]],
                     strings: ['Microsoft (R) C/C++ Optimizing Compiler Version 19.3', 'MSVC 2022'],
                     richHeader: true,
                     version: '14.3x',
@@ -8418,7 +8449,7 @@ const RealtimeProtectionDetector = {
             [
                 'msvc_2019',
                 {
-                    signatures: [[0x4D, 0x53, 0x56, 0x43, 0x20, 0x32, 0x30, 0x31, 0x39]],
+                    signatures: [[0x4d, 0x53, 0x56, 0x43, 0x20, 0x32, 0x30, 0x31, 0x39]],
                     strings: ['Microsoft (R) C/C++ Optimizing Compiler Version 19.2', 'MSVC 2019'],
                     richHeader: true,
                     version: '14.2x',
@@ -8427,7 +8458,7 @@ const RealtimeProtectionDetector = {
             [
                 'msvc_2017',
                 {
-                    signatures: [[0x4D, 0x53, 0x56, 0x43, 0x20, 0x32, 0x30, 0x31, 0x37]],
+                    signatures: [[0x4d, 0x53, 0x56, 0x43, 0x20, 0x32, 0x30, 0x31, 0x37]],
                     strings: ['Microsoft (R) C/C++ Optimizing Compiler Version 19.1', 'MSVC 2017'],
                     richHeader: true,
                     version: '14.1x',
@@ -8436,7 +8467,7 @@ const RealtimeProtectionDetector = {
             [
                 'gcc',
                 {
-                    signatures: [[0x47, 0x43, 0x43, 0x3A]],
+                    signatures: [[0x47, 0x43, 0x43, 0x3a]],
                     strings: ['GCC:', 'GNU C++', 'mingw'],
                     richHeader: false,
                 },
@@ -8444,7 +8475,7 @@ const RealtimeProtectionDetector = {
             [
                 'clang',
                 {
-                    signatures: [[0x63, 0x6C, 0x61, 0x6E, 0x67]],
+                    signatures: [[0x63, 0x6c, 0x61, 0x6e, 0x67]],
                     strings: ['clang version', 'LLVM'],
                     richHeader: false,
                 },
@@ -8457,7 +8488,7 @@ const RealtimeProtectionDetector = {
                 '.NET',
                 {
                     signatures: [
-                        [0x6D, 0x73, 0x63, 0x6F, 0x72, 0x65, 0x65, 0x2E, 0x64, 0x6C, 0x6C],
+                        [0x6d, 0x73, 0x63, 0x6f, 0x72, 0x65, 0x65, 0x2e, 0x64, 0x6c, 0x6c],
                     ],
                     strings: ['mscoree.dll', 'clr.dll', '.NET Framework', 'v4.0.30319'],
                     clrVersion: null,
@@ -8466,7 +8497,7 @@ const RealtimeProtectionDetector = {
             [
                 'Qt',
                 {
-                    signatures: [[0x51, 0x74, 0x35, 0x43, 0x6F, 0x72, 0x65]],
+                    signatures: [[0x51, 0x74, 0x35, 0x43, 0x6f, 0x72, 0x65]],
                     strings: ['Qt5Core', 'Qt6Core', 'QtWidgets', 'QApplication'],
                     version: null,
                 },
@@ -8474,7 +8505,7 @@ const RealtimeProtectionDetector = {
             [
                 'MFC',
                 {
-                    signatures: [[0x4D, 0x46, 0x43]],
+                    signatures: [[0x4d, 0x46, 0x43]],
                     strings: ['mfc140.dll', 'mfc142.dll', 'MFC Application'],
                     version: null,
                 },
@@ -8571,7 +8602,10 @@ const RealtimeProtectionDetector = {
                 }
 
                 let numStart = keywordPos + keyword.length;
-                while (numStart < str.length && (str[numStart] === ' ' || str[numStart] === ':' || str[numStart] === '\t')) {
+                while (
+                    numStart < str.length &&
+                    (str[numStart] === ' ' || str[numStart] === ':' || str[numStart] === '\t')
+                ) {
                     numStart++;
                 }
 
@@ -8644,10 +8678,11 @@ const RealtimeProtectionDetector = {
     extractDatePatterns(str) {
         const results = [];
         for (let i = 0; i < str.length - 9; i++) {
-            const hasYearDigits = this.isDigit(str[i])
-                && this.isDigit(str[i + 1])
-                && this.isDigit(str[i + 2])
-                && this.isDigit(str[i + 3]);
+            const hasYearDigits =
+                this.isDigit(str[i]) &&
+                this.isDigit(str[i + 1]) &&
+                this.isDigit(str[i + 2]) &&
+                this.isDigit(str[i + 3]);
 
             if (hasYearDigits) {
                 const sep = str[i + 4];
@@ -8660,12 +8695,13 @@ const RealtimeProtectionDetector = {
                     const year = Number.parseInt(str.slice(i, i + 4), 10);
                     const month = Number.parseInt(str.slice(i + 5, i + 7), 10);
                     const day = Number.parseInt(str.slice(i + 8, i + 10), 10);
-                    const isValidDate = year >= 1990
-                        && year <= 2100
-                        && month >= 1
-                        && month <= 12
-                        && day >= 1
-                        && day <= 31;
+                    const isValidDate =
+                        year >= 1990 &&
+                        year <= 2100 &&
+                        month >= 1 &&
+                        month <= 12 &&
+                        day >= 1 &&
+                        day <= 31;
 
                     if (isValidDate) {
                         results.push(str.slice(i, i + 10));
@@ -8681,7 +8717,11 @@ const RealtimeProtectionDetector = {
     },
 
     isAlphanumeric(char) {
-        return (char >= '0' && char <= '9') || (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z');
+        return (
+            (char >= '0' && char <= '9') ||
+            (char >= 'a' && char <= 'z') ||
+            (char >= 'A' && char <= 'Z')
+        );
     },
 
     checkProtectorStrings(bytes, moduleName) {
@@ -8744,11 +8784,11 @@ const RealtimeProtectionDetector = {
     readPEHeader: moduleBase => {
         try {
             const dosHeader = moduleBase.readU16();
-            if (dosHeader !== 0x5A_4D) {
+            if (dosHeader !== 0x5a_4d) {
                 return null; // Not MZ
             }
 
-            const peOffset = moduleBase.add(0x3C).readU32();
+            const peOffset = moduleBase.add(0x3c).readU32();
             const peSignature = moduleBase.add(peOffset).readU32();
 
             if (peSignature !== 0x00_00_45_50) {
@@ -8794,7 +8834,7 @@ const RealtimeProtectionDetector = {
             let architecture;
             if (peHeader.machine === 0x86_64) {
                 architecture = 'x64';
-            } else if (peHeader.machine === 0x1_4C) {
+            } else if (peHeader.machine === 0x1_4c) {
                 architecture = 'x86';
             } else {
                 architecture = 'Unknown';
@@ -8818,11 +8858,11 @@ const RealtimeProtectionDetector = {
         const sections = [];
         try {
             const dosHeader = moduleBase.readU16();
-            if (dosHeader !== 0x5A_4D) {
+            if (dosHeader !== 0x5a_4d) {
                 return sections;
             }
 
-            const peOffset = moduleBase.add(0x3C).readU32();
+            const peOffset = moduleBase.add(0x3c).readU32();
             const numberOfSections = moduleBase.add(peOffset + 4 + 2).readU16();
             const sizeOfOptionalHeader = moduleBase.add(peOffset + 4 + 16).readU16();
 
@@ -8982,7 +9022,7 @@ const RealtimeProtectionDetector = {
         try {
             // Rich header is typically located between DOS program segment and PE header
             const dosProgramEnd = 0x80; // Typical DOS segment end
-            const peOffset = moduleBase.add(0x3C).readU32();
+            const peOffset = moduleBase.add(0x3c).readU32();
 
             // Search for "Rich" signature
             const _richSignature = [0x52, 0x69, 0x63, 0x68]; // "Rich"
@@ -9011,13 +9051,13 @@ const RealtimeProtectionDetector = {
             while (offset > 0x80) {
                 const value = moduleBase.add(offset).readU32() ^ xorKey;
 
-                if (value === 0x53_6E_61_44) {
+                if (value === 0x53_6e_61_44) {
                     // "DanS" signature (start of Rich header)
                     break;
                 }
 
-                const productId = (value >> 16) & 0xFF_FF;
-                const buildNumber = value & 0xFF_FF;
+                const productId = (value >> 16) & 0xff_ff;
+                const buildNumber = value & 0xff_ff;
 
                 offset -= 8; // Move to count field
                 const count = moduleBase.add(offset).readU32() ^ xorKey;
@@ -9116,8 +9156,8 @@ const RealtimeProtectionDetector = {
 
     updateProtectorDetection(protectorName, version, method) {
         if (
-            !this.versionDetection.detectedVersions.protector
-            || this.versionDetection.detectedVersions.protector.confidence === 'low'
+            !this.versionDetection.detectedVersions.protector ||
+            this.versionDetection.detectedVersions.protector.confidence === 'low'
         ) {
             this.versionDetection.detectedVersions.protector = {
                 name: protectorName,
@@ -9261,8 +9301,8 @@ const RealtimeProtectionDetector = {
 
             // Version-specific recommendations
             if (
-                detected.protector.name === 'vmprotect'
-                && detected.protector.version.startsWith('2.')
+                detected.protector.name === 'vmprotect' &&
+                detected.protector.version.startsWith('2.')
             ) {
                 recommendations.push({
                     category: 'vulnerability',
@@ -9273,8 +9313,8 @@ const RealtimeProtectionDetector = {
             }
 
             if (
-                detected.protector.name === 'themida'
-                && detected.protector.version.startsWith('2.')
+                detected.protector.name === 'themida' &&
+                detected.protector.version.startsWith('2.')
             ) {
                 recommendations.push({
                     category: 'vulnerability',
@@ -9619,7 +9659,7 @@ const RealtimeProtectionDetector = {
                 });
 
                 return Object.keys(labelCounts).reduce((a, b) =>
-                    (labelCounts[a] > labelCounts[b] ? a : b)
+                    labelCounts[a] > labelCounts[b] ? a : b
                 );
             },
             calculateDistance: (a, b) => {
@@ -9699,9 +9739,9 @@ const RealtimeProtectionDetector = {
 
                 let lofSum = 0;
                 for (const neighbor of neighbors) {
-                    const neighborLRD
-                        = this.localReachabilityDensity.get(neighbor)
-                        || this.calculateLRD(neighbor, this.getKNeighbors(neighbor));
+                    const neighborLRD =
+                        this.localReachabilityDensity.get(neighbor) ||
+                        this.calculateLRD(neighbor, this.getKNeighbors(neighbor));
                     lofSum += neighborLRD / lrd;
                 }
 
@@ -9720,8 +9760,8 @@ const RealtimeProtectionDetector = {
                 let reachabilitySum = 0;
                 for (const neighbor of neighbors) {
                     const dist = this.euclideanDistance(point, neighbor);
-                    const kDist
-                        = this.minPtsDistance.get(neighbor) || this.calculateKDistance(neighbor);
+                    const kDist =
+                        this.minPtsDistance.get(neighbor) || this.calculateKDistance(neighbor);
                     reachabilitySum += Math.max(dist, kDist);
                 }
 
@@ -9863,9 +9903,9 @@ const RealtimeProtectionDetector = {
                 // Initialize
                 V[0] = {};
                 for (const state of states) {
-                    V[0][state]
-                        = startProbability[state]
-                        * this.getEmissionProbability(state, observations[0]);
+                    V[0][state] =
+                        startProbability[state] *
+                        this.getEmissionProbability(state, observations[0]);
                     path[state] = [state];
                 }
 
@@ -9879,10 +9919,10 @@ const RealtimeProtectionDetector = {
                         let prevState = null;
 
                         for (const prevS of states) {
-                            const prob
-                                = V[t - 1][prevS]
-                                * transitionProbability[prevS][state]
-                                * this.getEmissionProbability(state, observations[t]);
+                            const prob =
+                                V[t - 1][prevS] *
+                                transitionProbability[prevS][state] *
+                                this.getEmissionProbability(state, observations[t]);
                             if (prob > maxProb) {
                                 maxProb = prob;
                                 prevState = prevS;
@@ -9967,8 +10007,8 @@ const RealtimeProtectionDetector = {
 
                 // Update cell state
                 for (let i = 0; i < this.hiddenSize; i++) {
-                    this.cellState[i]
-                        = forgetGate[i] * this.cellState[i] + inputGate[i] * candidateValues[i];
+                    this.cellState[i] =
+                        forgetGate[i] * this.cellState[i] + inputGate[i] * candidateValues[i];
                 }
 
                 // Output gate
@@ -10766,7 +10806,8 @@ const RealtimeProtectionDetector = {
                                 });
                             }
 
-                            const libData = detector.importTableAnalysis.loadedLibraries.get(libName);
+                            const libData =
+                                detector.importTableAnalysis.loadedLibraries.get(libName);
                             libData.loadCount++;
 
                             // Check for suspicious library loading patterns
@@ -11077,7 +11118,9 @@ const RealtimeProtectionDetector = {
 
                         // Detect anti-debugging timing checks
                         if (behavioralDetector.detectTimingAntiDebug()) {
-                            behavioralDetector.behavioralPatterns.antiDebugPatterns.add('TimingCheck');
+                            behavioralDetector.behavioralPatterns.antiDebugPatterns.add(
+                                'TimingCheck'
+                            );
                         }
                     },
                 });
@@ -11116,7 +11159,7 @@ const RealtimeProtectionDetector = {
                     const infoClass = args[1].toInt32();
 
                     // ProcessDebugPort (0x07) and ProcessDebugObjectHandle (0x1E)
-                    if (infoClass === 0x07 || infoClass === 0x1E) {
+                    if (infoClass === 0x07 || infoClass === 0x1e) {
                         this.behavioralPatterns.antiDebugPatterns.add('NtQueryInformationProcess');
                         this.behavioralPatterns.advancedAntiDebug++;
                     }

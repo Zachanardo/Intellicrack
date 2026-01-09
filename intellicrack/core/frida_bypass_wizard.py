@@ -28,6 +28,7 @@ from typing import Any
 from .frida_constants import ProtectionType
 from .frida_presets import WIZARD_CONFIGS, get_preset_by_software, get_scripts_for_protection
 
+
 logger = logging.getLogger(__name__)
 
 

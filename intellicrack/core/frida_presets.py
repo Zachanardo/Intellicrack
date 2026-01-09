@@ -449,7 +449,11 @@ def get_preset_by_software(software_name: str) -> dict[str, Any]:
         Falls back to "Minimal Bypass" preset if no match found.
 
     Example:
-        >>> preset = get_preset_by_software("photoshop")
+        >>> preset = (
+        ...     get_preset_by_software(
+        ...         "photoshop"
+        ...     )
+        ... )
         >>> print(preset["description"])
         'Comprehensive bypass for Adobe CC applications'
 
@@ -485,7 +489,9 @@ def get_wizard_config(mode: str = "balanced") -> dict[str, Any]:
         Falls back to "balanced" mode if mode not found.
 
     Example:
-        >>> config = get_wizard_config("aggressive")
+        >>> config = get_wizard_config(
+        ...     "aggressive"
+        ... )
         >>> print(config["max_scripts"])
         10
 
@@ -511,7 +517,9 @@ def get_scripts_for_protection(protection_type: str) -> list[str]:
         Returns empty list if protection type is not recognized.
 
     Example:
-        >>> scripts = get_scripts_for_protection("LICENSE")
+        >>> scripts = get_scripts_for_protection(
+        ...     "LICENSE"
+        ... )
         >>> print(scripts)
         ['cloud_licensing_bypass', 'registry_monitor']
 
@@ -551,8 +559,14 @@ class FridaPresets:
 
         Example:
             >>> presets = FridaPresets.get_all_presets()
-            >>> office_preset = presets["Microsoft Office 365"]
-            >>> print(office_preset["description"])
+            >>> office_preset = presets[
+            ...     "Microsoft Office 365"
+            ... ]
+            >>> print(
+            ...     office_preset[
+            ...         "description"
+            ...     ]
+            ... )
             'Bypass for Microsoft Office licensing and activation'
 
         """
@@ -569,7 +583,11 @@ class FridaPresets:
             Preset configuration dictionary or None if not found.
 
         Example:
-            >>> preset = FridaPresets.get_preset("Autodesk Products")
+            >>> preset = (
+            ...     FridaPresets.get_preset(
+            ...         "Autodesk Products"
+            ...     )
+            ... )
             >>> if preset:
             ...     print(preset["target"])
             'Autodesk software suite'
@@ -595,7 +613,9 @@ class FridaPresets:
             Falls back to "Minimal Bypass" preset if no match found.
 
         Example:
-            >>> preset = FridaPresets.get_preset_by_software("photoshop")
+            >>> preset = FridaPresets.get_preset_by_software(
+            ...     "photoshop"
+            ... )
             >>> print(preset["description"])
             'Comprehensive bypass for Adobe CC applications'
 
@@ -612,7 +632,11 @@ class FridaPresets:
 
         Example:
             >>> configs = FridaPresets.get_wizard_configs()
-            >>> print(configs["aggressive"]["name"])
+            >>> print(
+            ...     configs["aggressive"][
+            ...         "name"
+            ...     ]
+            ... )
             'Aggressive Mode'
 
         """
@@ -636,7 +660,9 @@ class FridaPresets:
             Falls back to "balanced" mode if mode not found.
 
         Example:
-            >>> config = FridaPresets.get_wizard_config("aggressive")
+            >>> config = FridaPresets.get_wizard_config(
+            ...     "aggressive"
+            ... )
             >>> print(config["max_scripts"])
             10
 
@@ -653,7 +679,9 @@ class FridaPresets:
 
         Example:
             >>> templates = FridaPresets.get_quick_templates()
-            >>> trial_reset = templates["trial_reset"]
+            >>> trial_reset = templates[
+            ...     "trial_reset"
+            ... ]
             >>> print(trial_reset["scripts"])
             ['time_bomb_defuser', 'registry_monitor']
 
@@ -671,8 +699,14 @@ class FridaPresets:
             Template configuration or None if not found.
 
         Example:
-            >>> template = FridaPresets.get_quick_template("trial_reset")
-            >>> print(template["options"]["reset_trial"])
+            >>> template = FridaPresets.get_quick_template(
+            ...     "trial_reset"
+            ... )
+            >>> print(
+            ...     template["options"][
+            ...         "reset_trial"
+            ...     ]
+            ... )
             True
 
         """
@@ -697,7 +731,9 @@ class FridaPresets:
             Returns empty list if protection type is not recognized.
 
         Example:
-            >>> scripts = FridaPresets.get_scripts_for_protection("LICENSE")
+            >>> scripts = FridaPresets.get_scripts_for_protection(
+            ...     "LICENSE"
+            ... )
             >>> print(scripts)
             ['cloud_licensing_bypass', 'registry_monitor']
 

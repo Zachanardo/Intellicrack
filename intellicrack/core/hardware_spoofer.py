@@ -116,6 +116,7 @@ class HardwareFingerPrintSpoofer:
         if not self._wmi_initialized and platform.system() == "Windows":
             try:
                 import pythoncom
+
                 pythoncom.CoInitialize()
                 self._wmi_client = wmi.WMI()
                 self._wmi_initialized = True

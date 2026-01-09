@@ -1540,8 +1540,7 @@ class IntelligentCorrelator:
         fuzzy_results = self._correlate_fuzzy(items)
         ml_results = (
             self._correlate_ml(items)
-            if self.ml_correlator.classifier is not None
-            and hasattr(self.ml_correlator.classifier, "estimators_")
+            if self.ml_correlator.classifier is not None and hasattr(self.ml_correlator.classifier, "estimators_")
             else []
         )
         pattern_results = self._correlate_pattern(items)

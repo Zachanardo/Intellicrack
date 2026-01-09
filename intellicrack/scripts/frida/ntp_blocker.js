@@ -245,8 +245,8 @@ const NtpBlocker = {
 
                         // Check for systemd-timesyncd
                         if (
-                            pathname.includes('systemd-timesyncd')
-                            || pathname.includes('timedatectl')
+                            pathname.includes('systemd-timesyncd') ||
+                            pathname.includes('timedatectl')
                         ) {
                             shouldBlock = true;
                             send({
@@ -296,10 +296,10 @@ const NtpBlocker = {
                     const method = args[3] ? args[3].readUtf8String() : null;
 
                     if (
-                        destination
-                        && (destination.includes('timesyncd')
-                            || destination.includes('chrony')
-                            || destination.includes('timedated'))
+                        destination &&
+                        (destination.includes('timesyncd') ||
+                            destination.includes('chrony') ||
+                            destination.includes('timedated'))
                     ) {
                         send({
                             type: 'bypass',
@@ -327,11 +327,11 @@ const NtpBlocker = {
                 onEnter(args) {
                     const pathname = args[0].readUtf8String();
                     if (
-                        pathname
-                        && (pathname.includes('systemd-timesyncd.service')
-                            || pathname.includes('chronyd.service')
-                            || pathname.includes('ntp.service')
-                            || pathname.includes('ntpd.service'))
+                        pathname &&
+                        (pathname.includes('systemd-timesyncd.service') ||
+                            pathname.includes('chronyd.service') ||
+                            pathname.includes('ntp.service') ||
+                            pathname.includes('ntpd.service'))
                     ) {
                         send({
                             type: 'bypass',
@@ -369,11 +369,11 @@ const NtpBlocker = {
                     if (retval.toInt32() > 0 && this.buf) {
                         const data = this.buf.readUtf8String(retval.toInt32());
                         if (
-                            data
-                            && (data.includes('$GPRMC')
-                                || data.includes('$GPGGA')
-                                || data.includes('$GPZDA')
-                                || data.includes('$GNGGA'))
+                            data &&
+                            (data.includes('$GPRMC') ||
+                                data.includes('$GPGGA') ||
+                                data.includes('$GPZDA') ||
+                                data.includes('$GNGGA'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -403,11 +403,11 @@ const NtpBlocker = {
                 onEnter(args) {
                     const pathname = args[1].readUtf8String();
                     if (
-                        pathname
-                        && (pathname.includes('/dev/ttyUSB')
-                            || pathname.includes('/dev/ttyACM')
-                            || pathname.includes('/dev/gps')
-                            || pathname.includes('/dev/pps'))
+                        pathname &&
+                        (pathname.includes('/dev/ttyUSB') ||
+                            pathname.includes('/dev/ttyACM') ||
+                            pathname.includes('/dev/gps') ||
+                            pathname.includes('/dev/pps'))
                     ) {
                         send({
                             type: 'bypass',
@@ -469,8 +469,8 @@ const NtpBlocker = {
 
                     // PTP uses raw sockets or UDP
                     if (
-                        (type === 3 && protocol === 0x88_F7) // SOCK_RAW with PTP ethertype
-                        || (type === 2 && domain === 2)
+                        (type === 3 && protocol === 0x88_f7) || // SOCK_RAW with PTP ethertype
+                        (type === 2 && domain === 2)
                     ) {
                         // SOCK_DGRAM AF_INET
                         this.checkPTP = true;
@@ -499,7 +499,7 @@ const NtpBlocker = {
                         if (sa_family === 2) {
                             // AF_INET
                             let port = addr.add(2).readU16();
-                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
+                            port = ((port & 0xff) << 8) | ((port & 0xff_00) >> 8);
 
                             if (ptpPorts.has(port)) {
                                 send({
@@ -529,11 +529,11 @@ const NtpBlocker = {
                 onEnter(args) {
                     const file = args[0].readUtf8String();
                     if (
-                        file
-                        && (file.includes('ptp4l')
-                            || file.includes('phc2sys')
-                            || file.includes('pmc')
-                            || file.includes('ptpd'))
+                        file &&
+                        (file.includes('ptp4l') ||
+                            file.includes('phc2sys') ||
+                            file.includes('pmc') ||
+                            file.includes('ptpd'))
                     ) {
                         send({
                             type: 'bypass',
@@ -562,16 +562,16 @@ const NtpBlocker = {
                     const request = args[1].toInt32();
 
                     // PTP clock ioctl commands
-                    const PTP_CLOCK_GETCAPS = 0x80_50_3D_01;
-                    const PTP_SYS_OFFSET = 0x43_40_3D_05;
-                    const PTP_PIN_GETFUNC = 0xC0_60_3D_06;
-                    const PTP_PIN_SETFUNC = 0x40_60_3D_07;
+                    const PTP_CLOCK_GETCAPS = 0x80_50_3d_01;
+                    const PTP_SYS_OFFSET = 0x43_40_3d_05;
+                    const PTP_PIN_GETFUNC = 0xc0_60_3d_06;
+                    const PTP_PIN_SETFUNC = 0x40_60_3d_07;
 
                     if (
-                        request === PTP_CLOCK_GETCAPS
-                        || request === PTP_SYS_OFFSET
-                        || request === PTP_PIN_GETFUNC
-                        || request === PTP_PIN_SETFUNC
+                        request === PTP_CLOCK_GETCAPS ||
+                        request === PTP_SYS_OFFSET ||
+                        request === PTP_PIN_GETFUNC ||
+                        request === PTP_PIN_SETFUNC
                     ) {
                         send({
                             type: 'bypass',
@@ -627,8 +627,8 @@ const NtpBlocker = {
                             // Check for time API requests in HTTP headers
                             for (const endpoint of cloudTimeEndpoints) {
                                 if (
-                                    data.includes(endpoint)
-                                    || (data.includes('time') && data.includes('GET'))
+                                    data.includes(endpoint) ||
+                                    (data.includes('time') && data.includes('GET'))
                                 ) {
                                     send({
                                         type: 'bypass',
@@ -638,8 +638,8 @@ const NtpBlocker = {
                                     });
 
                                     // Replace with blocked response
-                                    const blocked
-                                        = 'GET /blocked HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n';
+                                    const blocked =
+                                        'GET /blocked HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n';
                                     Memory.writeUtf8String(buf, blocked);
                                     args[2] = ptr(blocked.length);
 
@@ -664,10 +664,10 @@ const NtpBlocker = {
 
                         // Check for curl/wget with time endpoints
                         if (
-                            (command.includes('curl') || command.includes('wget'))
-                            && (command.includes('time')
-                                || command.includes('ntp')
-                                || command.includes('worldclock'))
+                            (command.includes('curl') || command.includes('wget')) &&
+                            (command.includes('time') ||
+                                command.includes('ntp') ||
+                                command.includes('worldclock'))
                         ) {
                             blocked = true;
                         }
@@ -770,11 +770,11 @@ const NtpBlocker = {
                 onEnter(args) {
                     const pathname = args[0].readUtf8String();
                     if (
-                        pathname
-                        && (pathname.includes('/dev/rtc')
-                            || pathname.includes('/dev/rtc0')
-                            || pathname.includes('/dev/misc/rtc')
-                            || pathname.includes('/sys/class/rtc'))
+                        pathname &&
+                        (pathname.includes('/dev/rtc') ||
+                            pathname.includes('/dev/rtc0') ||
+                            pathname.includes('/dev/misc/rtc') ||
+                            pathname.includes('/sys/class/rtc'))
                     ) {
                         send({
                             type: 'bypass',
@@ -940,10 +940,10 @@ const NtpBlocker = {
 
                         // Check for VM tools
                         if (
-                            appName.includes('vmtoolsd')
-                            || cmdLine.includes('timesync')
-                            || appName.includes('VBoxService')
-                            || cmdLine.includes('--timesync')
+                            appName.includes('vmtoolsd') ||
+                            cmdLine.includes('timesync') ||
+                            appName.includes('VBoxService') ||
+                            cmdLine.includes('--timesync')
                         ) {
                             send({
                                 type: 'bypass',
@@ -1208,9 +1208,9 @@ const NtpBlocker = {
 
                     // Time synchronization RPC programs
                     if (
-                        prog === 100_001 // RSTATPROG
-                        || prog === 100_028 // YPXFRD
-                        || host.includes('time')
+                        prog === 100_001 || // RSTATPROG
+                        prog === 100_028 || // YPXFRD
+                        host.includes('time')
                     ) {
                         send({
                             type: 'bypass',
@@ -1243,10 +1243,10 @@ const NtpBlocker = {
 
                     // Check for master-slave time sync patterns
                     if (
-                        hostname
-                        && (hostname.includes('master')
-                            || hostname.includes('timekeeper')
-                            || hostname.includes('coordinator'))
+                        hostname &&
+                        (hostname.includes('master') ||
+                            hostname.includes('timekeeper') ||
+                            hostname.includes('coordinator'))
                     ) {
                         send({
                             type: 'bypass',
@@ -1275,8 +1275,8 @@ const NtpBlocker = {
 
                     // Common keys for time sync IPC
                     if (
-                        key === 0x54_49_4D_45 // 'TIME'
-                        || key === 0x43_4C_4F_43
+                        key === 0x54_49_4d_45 || // 'TIME'
+                        key === 0x43_4c_4f_43
                     ) {
                         // 'CLOC'
                         send({
@@ -1305,10 +1305,10 @@ const NtpBlocker = {
                     const name = args[0].readUtf8String();
 
                     if (
-                        name
-                        && (name.includes('timestamp')
-                            || name.includes('lamport')
-                            || name.includes('vector_clock'))
+                        name &&
+                        (name.includes('timestamp') ||
+                            name.includes('lamport') ||
+                            name.includes('vector_clock'))
                     ) {
                         send({
                             type: 'bypass',
@@ -1402,7 +1402,7 @@ const NtpBlocker = {
                             try {
                                 // Replace RDTSC with XOR EAX,EAX; XOR EDX,EDX
                                 Memory.protect(address, 2, 'rwx');
-                                address.writeByteArray([0x31, 0xC0, 0x31, 0xD2]); // xor eax,eax; xor edx,edx
+                                address.writeByteArray([0x31, 0xc0, 0x31, 0xd2]); // xor eax,eax; xor edx,edx
 
                                 send({
                                     type: 'bypass',
@@ -1670,11 +1670,11 @@ const NtpBlocker = {
                         if (sa_family === 2) {
                             // AF_INET
                             let port = addr.add(2).readU16();
-                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8); // ntohs
+                            port = ((port & 0xff) << 8) | ((port & 0xff_00) >> 8); // ntohs
 
                             const ip = addr.add(4).readU32();
-                            const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${(ip >> 16) & 0xFF}.${
-                                (ip >> 24) & 0xFF
+                            const ipStr = `${ip & 0xff}.${(ip >> 8) & 0xff}.${(ip >> 16) & 0xff}.${
+                                (ip >> 24) & 0xff
                             }`;
 
                             if (self.isNTPPort(port) || self.isBlockedIP(ipStr)) {
@@ -1692,7 +1692,7 @@ const NtpBlocker = {
                         } else if (sa_family === 10) {
                             // AF_INET6
                             let port = addr.add(2).readU16();
-                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
+                            port = ((port & 0xff) << 8) | ((port & 0xff_00) >> 8);
 
                             if (self.isNTPPort(port)) {
                                 send({
@@ -1743,7 +1743,7 @@ const NtpBlocker = {
                             if (sa_family === 2) {
                                 // AF_INET
                                 let port = addr.add(2).readU16();
-                                port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
+                                port = ((port & 0xff) << 8) | ((port & 0xff_00) >> 8);
 
                                 if (self.isNTPPort(port)) {
                                     send({
@@ -1785,11 +1785,11 @@ const NtpBlocker = {
                         if (sa_family === 2) {
                             // AF_INET
                             let port = addr.add(2).readU16();
-                            port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
+                            port = ((port & 0xff) << 8) | ((port & 0xff_00) >> 8);
 
                             const ip = addr.add(4).readU32();
-                            const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${(ip >> 16) & 0xFF}.${
-                                (ip >> 24) & 0xFF
+                            const ipStr = `${ip & 0xff}.${(ip >> 8) & 0xff}.${(ip >> 16) & 0xff}.${
+                                (ip >> 24) & 0xff
                             }`;
 
                             if (self.isNTPPort(port) || self.isBlockedIP(ipStr)) {
@@ -1854,7 +1854,7 @@ const NtpBlocker = {
                             if (sa_family === 2) {
                                 // AF_INET
                                 let port = addr.add(2).readU16();
-                                port = ((port & 0xFF) << 8) | ((port & 0xFF_00) >> 8);
+                                port = ((port & 0xff) << 8) | ((port & 0xff_00) >> 8);
 
                                 if (self.isNTPPort(port)) {
                                     send({
@@ -2057,8 +2057,8 @@ const NtpBlocker = {
                     const cmdLine = args[1] ? args[1].readUtf16String() : '';
 
                     if (
-                        appName.toLowerCase().includes('w32tm.exe')
-                        || cmdLine.toLowerCase().includes('w32tm')
+                        appName.toLowerCase().includes('w32tm.exe') ||
+                        cmdLine.toLowerCase().includes('w32tm')
                     ) {
                         send({
                             type: 'bypass',
@@ -2105,9 +2105,9 @@ const NtpBlocker = {
 
                         // Check if it's time-related
                         if (
-                            valueName
-                            && (valueName.toLowerCase().includes('time')
-                                || valueName.toLowerCase().includes('ntp'))
+                            valueName &&
+                            (valueName.toLowerCase().includes('time') ||
+                                valueName.toLowerCase().includes('ntp'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -2144,8 +2144,8 @@ const NtpBlocker = {
             }
             for (let i = 0; i < label.length; i++) {
                 const c = label.codePointAt(i);
-                const isAlphaNum = (c >= 0x30 && c <= 0x39) || (c >= 0x61 && c <= 0x7A);
-                const isHyphen = c === 0x2D;
+                const isAlphaNum = (c >= 0x30 && c <= 0x39) || (c >= 0x61 && c <= 0x7a);
+                const isHyphen = c === 0x2d;
                 if (!isAlphaNum && !isHyphen) {
                     return false;
                 }
@@ -2235,9 +2235,9 @@ const NtpBlocker = {
         for (const keyword of keywords) {
             for (const label of labels) {
                 if (
-                    label === keyword
-                    || label.startsWith(`${keyword}-`)
-                    || label.endsWith(`-${keyword}`)
+                    label === keyword ||
+                    label.startsWith(`${keyword}-`) ||
+                    label.endsWith(`-${keyword}`)
                 ) {
                     return true;
                 }
@@ -2351,8 +2351,8 @@ const NtpBlocker = {
                     onEnter: args => {
                         const msg = args[0].readUtf16String();
                         if (
-                            msg?.toLowerCase().includes('time')
-                            && (msg.includes('sync') || msg.includes('server'))
+                            msg?.toLowerCase().includes('time') &&
+                            (msg.includes('sync') || msg.includes('server'))
                         ) {
                             send({
                                 type: 'info',
@@ -2506,8 +2506,8 @@ const NtpBlocker = {
                     onEnter(args) {
                         const propertyName = args[1].readUtf16String();
                         if (
-                            propertyName
-                            && (propertyName.includes('TIME') || propertyName.includes('TIMESTAMP'))
+                            propertyName &&
+                            (propertyName.includes('TIME') || propertyName.includes('TIMESTAMP'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -2683,9 +2683,9 @@ const NtpBlocker = {
                             if (sa_family === 2) {
                                 // AF_INET
                                 const ip = addr.add(4).readU32();
-                                const ipStr = `${ip & 0xFF}.${(ip >> 8) & 0xFF}.${
-                                    (ip >> 16) & 0xFF
-                                }.${(ip >> 24) & 0xFF}`;
+                                const ipStr = `${ip & 0xff}.${(ip >> 8) & 0xff}.${
+                                    (ip >> 16) & 0xff
+                                }.${(ip >> 24) & 0xff}`;
 
                                 // Check if it's a metadata endpoint
                                 for (const metadataEndpoint of metadataEndpoints) {
@@ -2778,12 +2778,12 @@ const NtpBlocker = {
                         if (buf && len >= 20) {
                             // Check for STUN message (first 2 bits are 00)
                             const messageType = buf.readU16();
-                            if ((messageType & 0xC0_00) === 0) {
+                            if ((messageType & 0xc0_00) === 0) {
                                 // Check magic cookie (0x2112A442)
                                 const magicCookie = buf.add(4).readU32();
                                 if (
-                                    magicCookie === 0x21_12_A4_42
-                                    || magicCookie === 0x42_A4_12_21
+                                    magicCookie === 0x21_12_a4_42 ||
+                                    magicCookie === 0x42_a4_12_21
                                 ) {
                                     send({
                                         type: 'bypass',
@@ -2818,10 +2818,10 @@ const NtpBlocker = {
                         // Check for timestamp patterns in data
                         const content = data.readUtf8String(Math.min(size, 100));
                         if (
-                            content
-                            && (content.includes('timestamp')
-                                || content.includes('time')
-                                || content.includes('clock'))
+                            content &&
+                            (content.includes('timestamp') ||
+                                content.includes('time') ||
+                                content.includes('clock'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -3710,9 +3710,9 @@ const NtpBlocker = {
                 onEnter: args => {
                     const header = args[1].readUtf8String();
                     if (
-                        header
-                        && (header.includes('X-Akamai-Request-Time')
-                            || header.includes('X-Edge-Request-Time'))
+                        header &&
+                        (header.includes('X-Akamai-Request-Time') ||
+                            header.includes('X-Edge-Request-Time'))
                     ) {
                         args[1] = Memory.allocUtf8String('X-Blocked-Header');
                         send({
@@ -3776,7 +3776,7 @@ const NtpBlocker = {
         if (redisSetWithExpire) {
             Interceptor.attach(redisSetWithExpire, {
                 onEnter: args => {
-                    args[2] = ptr(0x7F_FF_FF_FF);
+                    args[2] = ptr(0x7f_ff_ff_ff);
                     send({
                         type: 'bypass',
                         target: 'ntp_blocker',
@@ -4043,8 +4043,8 @@ const NtpBlocker = {
             Interceptor.attach(lorawan_process_mac_commands, {
                 onEnter: args => {
                     const cmd = args[0].readU8();
-                    if (cmd === 0x0D) {
-                        args[0] = ptr(0xFF);
+                    if (cmd === 0x0d) {
+                        args[0] = ptr(0xff);
                         send({
                             type: 'bypass',
                             target: 'ntp_blocker',
@@ -4108,7 +4108,7 @@ const NtpBlocker = {
                 onEnter: args => {
                     const cmd = args[1].readU32();
                     if (cmd === 0x00_00_00_10) {
-                        args[1] = ptr(0xFF_FF_FF_FF);
+                        args[1] = ptr(0xff_ff_ff_ff);
                         send({
                             type: 'bypass',
                             target: 'ntp_blocker',
@@ -4412,7 +4412,7 @@ const NtpBlocker = {
                 onEnter: args => {
                     const sr = args[1];
                     if (sr) {
-                        sr.add(8).writeU32(0x83_AA_7E_80);
+                        sr.add(8).writeU32(0x83_aa_7e_80);
                         sr.add(12).writeU32(0);
                         send({
                             type: 'bypass',
