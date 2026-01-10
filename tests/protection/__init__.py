@@ -1,1 +1,0 @@
-"""Protection module tests."""

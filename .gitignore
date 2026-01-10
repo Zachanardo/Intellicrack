@@ -44,8 +44,6 @@ pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/
-coverage_html_report/
-htmlcov_mitigation/
 .tox/
 .nox/
 .coverage
@@ -72,11 +70,6 @@ instance/
 
 # Scrapy stuff
 .scrapy
-
-# Sphinx documentation
-docs/_build/
-docs/_static/
-docs/_templates/
 
 # PyBuilder
 .pybuilder/
@@ -136,40 +129,16 @@ dmypy.json
 cython_debug/
 
 # ==============================================================================
-# ENVIRONMENT ACTIVATION
-# ==============================================================================
-# Direnv
-.direnv/
-.envrc.local
-
-# Activation helpers
-activate_intellicrack.bat
-activate.sh
-activate.ps1
-
-# ==============================================================================
-# UV PACKAGE MANAGER
-# ==============================================================================
-# UV cache
-.uv/
-uv-cache/
-
-# ==============================================================================
 # VIRTUAL ENVIRONMENTS (ALL VARIATIONS)
 # ==============================================================================
 venv*/
 .venv/
 .venv*/
-.venv_windows/
-.venv_wsl/
 virtualenv/
 virtualenv*/
 env/
-env*/
 .env/
-.env*/
 ENV/
-ENV*/
 pythonenv*/
 pyenv*/
 .pyenv*/
@@ -179,24 +148,14 @@ pyenv*/
 conda-env/
 
 # ==============================================================================
+# UV PACKAGE MANAGER
+# ==============================================================================
+.uv/
+uv-cache/
+
+# ==============================================================================
 # INTELLICRACK SPECIFIC
 # ==============================================================================
-# Configuration files and directories
-config/
-intellicrack_config.json
-security.ini
-
-# Runtime data directories
-intellicrack/data/data/
-intellicrack/data/data/plugin_cache/
-intellicrack/data/data/visualizations/
-intellicrack/data/data/reports/
-
-# Cache directories
-plugin_cache/
-.intellicrack_cache/
-.analysis_cache/
-
 # Generated files
 *.patched
 *.backup
@@ -213,15 +172,6 @@ plugin_cache/
 *.joblib
 *.pkl
 *.pickle
-advanced_licensing_model.joblib
-advanced_licensing_metadata.json
-model_training_data/
-ml_training_cache/
-model_cache/
-
-# Binary files for testing
-test_binaries/
-sample_binaries/
 
 # Capture files
 *.pcap
@@ -229,57 +179,17 @@ sample_binaries/
 *.cap
 
 # Signature files
-signatures/
 *.signature
 *.yara
 *.rules
 
-# Plugin development
-plugins/dev/
-plugins/test/
-
-# Prevent incorrect script directories in plugins (scripts belong in intellicrack/scripts/)
-intellicrack/plugins/frida_scripts/
-intellicrack/plugins/ghidra_scripts/
-
-# Prevent unnecessary subdirectories in intellicrack/scripts/
-intellicrack/scripts/setup/
-intellicrack/scripts/versions/
-
 # ==============================================================================
 # LOGS AND OUTPUT FILES
 # ==============================================================================
-# All log files
 *.log
 logs/
-logs/*
 output/
-output*.log
-*_output.log
-*_test.log
 *.log.*
-
-# Specific log files
-intellicrack_error.log
-launch_output.log
-launch_test.log
-final_test.log
-quick_output.log
-test_output.log
-diagnostic_output.log
-diagnostic_output*.log
-debug_output_wsl.txt
-LAUNCH_SUCCESS.log
-
-# ==============================================================================
-# DEVELOPMENT AND TESTING
-# ==============================================================================
-# Development directories with many Python files
-dev/
-dev/**
-tools/
-tools/**
-CLI Coding/
 
 # ==============================================================================
 # SECURITY AND SECRETS
@@ -300,10 +210,6 @@ credentials/
 .env.*
 !.env.example
 *.env
-
-# Security scan results
-security_scan_results.json
-security_scan_results_*.json
 
 # ==============================================================================
 # AI/LLM TOOLS AND CONFIGS
@@ -336,6 +242,11 @@ conversation_history/
 .zen*/
 .zen_venv/
 .mcp.json
+
+# AI configuration files
+gemini_cli_config.json
+GEMINI.md
+QWEN.md
 
 # ==============================================================================
 # EDITORS AND IDEs
@@ -405,9 +316,6 @@ mypy.ini
 # ==============================================================================
 # TOOLS AND BINARIES
 # ==============================================================================
-# Legacy tools
-tools/icp_engine/
-tools/icp_engine/**
 # Ghidra installation
 tools/ghidra/
 tools/ghidra_*.zip
@@ -427,29 +335,8 @@ tools/qemu-w64-setup-*.exe
 Qt*.dll
 vcruntime*.dll
 
-# Exception: Allow shortcut in root
-!Intellicrack.lnk
-
-# Compiled Frida scripts
-frida_compiled/
-
-# IDA Pro
-ida/
-
-# ==============================================================================
-# DOCUMENTATION
-# ==============================================================================
-# Documentation build
-docs/build/
-docs/api/
-docs/verification/
-docs/CLAUDE.md
-
-# Project docs temporary files
-project-docs/*AUDIT*
-project-docs/*MOCK*
-project-docs/*TODO*
-project-docs/SPECIFIC_*
+# Java tools
+*.jar
 
 # ==============================================================================
 # PACKAGE MANAGERS AND DEPENDENCIES
@@ -460,59 +347,35 @@ package-lock.json
 yarn.lock
 .yarn/
 
-# Python package files
-Pipfile
-
 # UV package manager
 uv.lock
-
-# Requirements (using structure in requirements/ directory)
-!requirements.txt
-requirements/base.txt
-requirements/core.txt
-requirements/dev.txt
-requirements/optional.txt
-requirements/requirements_working.txt
-requirements/test.txt
 
 # ==============================================================================
 # TEMPORARY AND CACHE FILES
 # ==============================================================================
-# Temporary files
 temp/
 temp_venv/
 cache/
 .cache/
-
-# Local dependency clones
-python-fx-local/
-mitmproxy-local/
 
 # Backup files
 backups/
 backup/
 *.backup/
 
-# Archive files (except in specific directories)
+# Archive files
 *.zip
 *.tar
 *.tar.gz
 *.rar
 *.7z
-!plugins/*.zip
-!examples/*.zip
 
 # ==============================================================================
 # PROFILING AND PERFORMANCE
 # ==============================================================================
-# Profiling data
 *.prof
 *.lprof
 .benchmarks/
-
-# Performance testing
-performance_*.json
-benchmark_*.json
 
 # ==============================================================================
 # DATABASE FILES
@@ -520,7 +383,6 @@ benchmark_*.json
 *.db
 *.sqlite
 *.sqlite3
-data/*.db
 
 # ==============================================================================
 # SPECIFIC FILES TO IGNORE
@@ -530,30 +392,6 @@ data/*.db
 *.jpg
 *.jpeg
 *.gif
-!docs/**/*.png
-!docs/**/*.jpg
-!docs/**/*.jpeg
-!docs/**/*.gif
-
-# Specific helper files
-launch_working.py
-diagnose_launch.py
-verify_fixes.py
-install_helper.py
-siphash24_replacement.py
-Install_Dependencies.ps1
-install_dependencies.bat
-run_vulture_windows.py
-check_deps.py
-installed_packages.txt
-run_tests_standalone.py
-test_imports.py
-
-# WSL specific files
-*_wsl.*
-run_*_wsl.sh
-run_intellicrack_wsl.sh
-ClaudeCodeWSL.ps1
 
 # Docker and containerization
 .docker/
@@ -562,93 +400,47 @@ docker-compose.override.yml
 # Git artifacts
 *.orig
 *.rej
-.git/hooks/
-.git/info/
-.git/logs/
-.git/refs/
 
 # JSON results and reports
 *_integration_test_report*.json
 *_scan_results*.json
 
 # ==============================================================================
-# ROOT DIRECTORY FILES AND TEMPORARY FILES
+# ROOT DIRECTORY FILES
 # ==============================================================================
-# Runtime-generated files that should never be in root (use intellicrack/data/ paths)
-/exploitation.log
-/exploitation_logs.db
-/license_server.db
-/protection_knowledge_base.json
-/type_info.json
-
-# Temporary analysis files from mock/stub scanning
-mock_objects.txt
-placeholder_todos.txt
-simulated_data.txt
-tests_mock_usage.txt
-
-# Project analysis and TODO files
-*_TODO.md
-*TODO.md
-ORPHANED_FILES.md
-
-# Roo directories (project analysis tool)
-.roo/
-.roo/**
-
 # Exclude PowerShell scripts in root
 /*.ps1
 
 # Exclude batch files except essential ones
 /*.bat
-!RUN_INTELLICRACK.bat
-!LAUNCH_TESTING_SOFTWARE.bat
 !REMOVE_NUL.bat
 
-# Temporary test files
-run_production_tests.bat
-launch_fast.bat
-
-# Additional root files to ignore
-launch_intellicrack.py
-pyrightconfig.json
-.markdownlint.json
-eslint.config.js
-pytest.ini
+# Lock files
 *.lock
 !requirements.lock
 !pixi.lock
-config_cleanup_report.txt
-test_font_loading.py
 
 # Linting and testing reports
 bandit-report.json
-build_log.txt
-build_output.txt
-sphinx_output.txt
 rollout-*.json
 .aider*
 
-# Test reports in various formats
-tests/reports/*.xml
-tests/reports/*.json
-tests/reports/*.html
-tests/reports/Violations_*.xml
+# ==============================================================================
+# LARGE FILES
+# ==============================================================================
+# Large memory dumps
+*.dump
+*.mem
 
-# ==============================================================================
-# LARGE QEMU IMAGES
-# ==============================================================================
-# Ignore large VM/emulation images
-intellicrack/assets/qemu_images/*.iso
-intellicrack/assets/qemu_images/*.img
-intellicrack/assets/qemu_images/*.qcow2
-intellicrack/assets/qemu_images/*.vmdk
-intellicrack/assets/qemu_images/*.vdi
-intellicrack/assets/qemu_images/*.vhd
-intellicrack/assets/qemu_images/*.vhdx
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# ==============================================================================
+# RUST BUILD ARTIFACTS
+# ==============================================================================
+intellicrack-launcher/target/
+target/
 
 # ==============================================================================
 # REMOVED TEMPLATE DIRECTORIES - DO NOT RECREATE
@@ -657,41 +449,3 @@ intellicrack/assets/qemu_images/*.vhdx
 # Templates were constraining AI functionality - removed in favor of dynamic generation
 intellicrack/ai/templates/
 intellicrack/utils/templates/
-mcp.json
-
-# ==============================================================================
-# NEW ADDITIONS - RUST AND DEVELOPMENT FILES
-# ==============================================================================
-# Rust target directory and build artifacts
-intellicrack-launcher/target/
-target/
-
-# Java tools
-*.jar
-checkstyle.jar
-
-# Large memory dumps and validation files
-*.dump
-*.mem
-tests/validation_system/forensic_evidence/
-tests/validation_system/certified_ground_truth/
-tests/validation_system/reports/
-tests/validation_system/tests/
-
-# AI configuration files
-gemini_cli_config.json
-GEMINI.md
-QWEN.md
-
-# Project upgrade documentation (temporary)
-intellicrack_16_point_upgrade.md
-
-# Large phase documentation (keep essential ones)
-docs/phase_documentation/
-
-# Additional helper files
-privilege_escalation_helpers.py
-
-# Secret keys and authentication
-.secret_key
-*.secret

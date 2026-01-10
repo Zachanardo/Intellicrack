@@ -1,1 +1,0 @@
-"""UI unit tests package."""
