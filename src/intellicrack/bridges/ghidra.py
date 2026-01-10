@@ -590,6 +590,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             ToolError: If operation fails.
         """
         if self._bridge is None:
+            _logger.warning("Ghidra bridge not available for get_functions")
             return []
 
         try:
@@ -646,6 +647,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             ToolError: If operation fails.
         """
         if self._bridge is None:
+            _logger.warning("Ghidra bridge not available for get_function")
             return None
 
         try:
@@ -775,6 +777,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             ToolError: If disassembly fails.
         """
         if self._bridge is None:
+            _logger.warning("Ghidra bridge not available for disassemble")
             return []
 
         try:
@@ -828,6 +831,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             ToolError: If operation fails.
         """
         if self._bridge is None:
+            _logger.warning("Ghidra bridge not available for get_xrefs_to")
             return []
 
         try:
@@ -873,6 +877,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             ToolError: If operation fails.
         """
         if self._bridge is None:
+            _logger.warning("Ghidra bridge not available for get_xrefs_from")
             return []
 
         try:
@@ -918,6 +923,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             ToolError: If search fails.
         """
         if self._bridge is None:
+            _logger.warning("Ghidra bridge not available for search_strings")
             return []
 
         try:
@@ -965,6 +971,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             ToolError: If search fails.
         """
         if self._bridge is None:
+            _logger.warning("Ghidra bridge not available for search_bytes")
             return []
 
         hex_pattern = " ".join(f"{b:02x}" for b in pattern)
@@ -1080,6 +1087,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             ToolError: If operation fails.
         """
         if self._bridge is None:
+            _logger.warning("Ghidra bridge not available for get_imports")
             return []
 
         try:
@@ -1121,6 +1129,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             ToolError: If operation fails.
         """
         if self._bridge is None:
+            _logger.warning("Ghidra bridge not available for get_exports")
             return []
 
         try:

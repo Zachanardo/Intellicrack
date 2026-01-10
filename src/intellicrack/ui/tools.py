@@ -15,8 +15,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPlainTextEdit,
-    QPushButton,
-    QSizePolicy,
     QSplitter,
     QTabWidget,
     QVBoxLayout,
@@ -24,10 +22,6 @@ from PyQt6.QtWidgets import (
 )
 
 from .highlighter import (
-    AssemblySyntaxHighlighter,
-    CSyntaxHighlighter,
-    JavaScriptSyntaxHighlighter,
-    PythonSyntaxHighlighter,
     get_highlighter_for_language,
 )
 

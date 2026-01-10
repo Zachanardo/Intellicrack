@@ -50,7 +50,7 @@ This tool is developed for **defensive security research** to help software deve
 
 ```text
 intellicrack/
-├── intellicrack/          # Main package source code
+├── src/intellicrack/      # Main package source code
 │   ├── ai/               # AI and ML components
 │   ├── core/             # Core functionality
 │   ├── hexview/          # Hex viewer implementation

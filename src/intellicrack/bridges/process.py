@@ -897,6 +897,12 @@ class ProcessBridge(ToolBridgeBase):
         )
 
         if snapshot == -1:
+            error_code = ctypes.get_last_error()
+            _logger.warning(
+                "Failed to create module snapshot for PID %d: error %d",
+                target_pid,
+                error_code,
+            )
             return []
 
         modules: list[ModuleInfo] = []
@@ -954,6 +960,11 @@ class ProcessBridge(ToolBridgeBase):
         )
 
         if snapshot == -1:
+            error_code = ctypes.get_last_error()
+            _logger.warning(
+                "Failed to create thread snapshot: error %d",
+                error_code,
+            )
             return []
 
         threads: list[ThreadInfo] = []

@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Fri, Jan 09, 2026 06:20:58 PM
+Generated: Sat, Jan 10, 2026 02:38:16 PM
 Directory: D:\Intellicrack\src
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -19,6 +19,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
     │   ├── installer.py
     │   ├── process.py
     │   ├── radare2.py
+    │   ├── schemas.py
     │   └── x64dbg.py
     ├── core/
     │   ├── __init__.py
@@ -36,6 +37,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
     │   ├── __init__.py
     │   ├── anthropic.py
     │   ├── base.py
+    │   ├── discovery.py
     │   ├── google.py
     │   ├── ollama.py
     │   ├── openai.py
@@ -51,8 +53,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
     │   │   ├── icons/
     │   │   └── styles/
     │   ├── __init__.py
+    │   ├── app.py
     │   ├── chat.py
     │   ├── highlighter.py
+    │   ├── provider_config.py
+    │   ├── sandbox_config.py
+    │   ├── session_manager.py
+    │   ├── tool_config.py
     │   └── tools.py
     ├── __init__.py
     ├── __main__.py

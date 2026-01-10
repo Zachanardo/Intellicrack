@@ -806,6 +806,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             List of section info.
         """
         if self._r2 is None:
+            _logger.warning("radare2 session not available for _get_sections_internal")
             return []
 
         sections = await self._cmd_json("iSj")
@@ -832,6 +833,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             List of import info.
         """
         if self._r2 is None:
+            _logger.warning("radare2 session not available for _get_imports_internal")
             return []
 
         imports = await self._cmd_json("iij")
@@ -856,6 +858,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             List of export info.
         """
         if self._r2 is None:
+            _logger.warning("radare2 session not available for _get_exports_internal")
             return []
 
         exports = await self._cmd_json("iEj")
@@ -1011,6 +1014,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             Parsed JSON as list of dicts.
         """
         if self._r2 is None:
+            _logger.warning("radare2 session not available for _cmd_json")
             return []
 
         result = await asyncio.to_thread(self._r2.cmd, command)

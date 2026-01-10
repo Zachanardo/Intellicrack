@@ -495,3 +495,6 @@ def create_google_tool_schema(
         function_declarations.append(func_decl)
 
     return function_declarations
+
+
+LLMProvider = LLMProviderBase

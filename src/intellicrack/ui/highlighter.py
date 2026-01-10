@@ -9,7 +9,13 @@ from __future__ import annotations
 from typing import ClassVar
 
 from PyQt6.QtCore import QRegularExpression
-from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
+from PyQt6.QtGui import (
+    QColor,
+    QFont,
+    QSyntaxHighlighter,
+    QTextCharFormat,
+    QTextDocument,
+)
 
 
 class HighlightRule:
@@ -20,7 +26,7 @@ class HighlightRule:
         format: Text format to apply.
     """
 
-    __slots__ = ("pattern", "format")
+    __slots__ = ("format", "pattern")
 
     def __init__(self, pattern: str, text_format: QTextCharFormat) -> None:
         """Initialize a highlight rule.
@@ -60,21 +66,21 @@ class CSyntaxHighlighter(QSyntaxHighlighter):
         "undefined", "undefined1", "undefined2", "undefined4", "undefined8",
     )
 
-    def __init__(self, parent: object = None) -> None:
+    def __init__(self, parent: QTextDocument | None = None) -> None:
         """Initialize the C syntax highlighter.
 
         Args:
             parent: Parent QTextDocument or None.
         """
-        super().__init__(parent)  # type: ignore[arg-type]
+        super().__init__(parent)
         self._rules: list[HighlightRule] = []
         self._multi_line_comment_format = QTextCharFormat()
         self._comment_start = QRegularExpression(r"/\*")
         self._comment_end = QRegularExpression(r"\*/")
         self._setup_rules()
 
+    @staticmethod
     def _create_format(
-        self,
         color: str,
         bold: bool = False,
         italic: bool = False,
@@ -99,43 +105,43 @@ class CSyntaxHighlighter(QSyntaxHighlighter):
 
     def _setup_rules(self) -> None:
         """Set up all highlighting rules."""
-        keyword_format = self._create_format("#569CD6", bold=True)
+        keyword_format = CSyntaxHighlighter._create_format("#569CD6", bold=True)
         for keyword in self.KEYWORDS:
             pattern = rf"\b{keyword}\b"
             self._rules.append(HighlightRule(pattern, keyword_format))
 
-        type_format = self._create_format("#4EC9B0")
+        type_format = CSyntaxHighlighter._create_format("#4EC9B0")
         for type_name in self.TYPES:
             pattern = rf"\b{type_name}\b"
             self._rules.append(HighlightRule(pattern, type_format))
 
-        string_format = self._create_format("#CE9178")
+        string_format = CSyntaxHighlighter._create_format("#CE9178")
         self._rules.append(HighlightRule(r'"[^"\\]*(\\.[^"\\]*)*"', string_format))
         self._rules.append(HighlightRule(r"'[^'\\]*(\\.[^'\\]*)*'", string_format))
 
-        number_format = self._create_format("#B5CEA8")
+        number_format = CSyntaxHighlighter._create_format("#B5CEA8")
         self._rules.append(HighlightRule(r"\b0x[0-9A-Fa-f]+\b", number_format))
         self._rules.append(HighlightRule(r"\b0b[01]+\b", number_format))
         self._rules.append(HighlightRule(r"\b\d+\.?\d*[fFlL]?\b", number_format))
 
-        function_format = self._create_format("#DCDCAA")
+        function_format = CSyntaxHighlighter._create_format("#DCDCAA")
         self._rules.append(
             HighlightRule(r"\b[A-Za-z_][A-Za-z0-9_]*(?=\s*\()", function_format)
         )
 
-        comment_format = self._create_format("#6A9955", italic=True)
+        comment_format = CSyntaxHighlighter._create_format("#6A9955", italic=True)
         self._rules.append(HighlightRule(r"//[^\n]*", comment_format))
         self._multi_line_comment_format = comment_format
 
-        preprocessor_format = self._create_format("#C586C0")
+        preprocessor_format = CSyntaxHighlighter._create_format("#C586C0")
         self._rules.append(HighlightRule(r"#\s*\w+", preprocessor_format))
 
-        operator_format = self._create_format("#D4D4D4")
+        operator_format = CSyntaxHighlighter._create_format("#D4D4D4")
         self._rules.append(
             HighlightRule(r"[+\-*/%&|^~<>=!]+", operator_format)
         )
 
-    def highlightBlock(self, text: str) -> None:
+    def highlightBlock(self, text: str) -> None:  # noqa: N802
         """Apply highlighting to a block of text.
 
         Args:
@@ -222,18 +228,18 @@ class AssemblySyntaxHighlighter(QSyntaxHighlighter):
         "byte", "word", "dword", "qword", "ptr", "offset",
     )
 
-    def __init__(self, parent: object = None) -> None:
+    def __init__(self, parent: QTextDocument | None = None) -> None:
         """Initialize the assembly syntax highlighter.
 
         Args:
             parent: Parent QTextDocument or None.
         """
-        super().__init__(parent)  # type: ignore[arg-type]
+        super().__init__(parent)
         self._rules: list[HighlightRule] = []
         self._setup_rules()
 
+    @staticmethod
     def _create_format(
-        self,
         color: str,
         bold: bool = False,
         italic: bool = False,
@@ -258,39 +264,39 @@ class AssemblySyntaxHighlighter(QSyntaxHighlighter):
 
     def _setup_rules(self) -> None:
         """Set up assembly highlighting rules."""
-        instr_format = self._create_format("#569CD6", bold=True)
+        instr_format = AssemblySyntaxHighlighter._create_format("#569CD6", bold=True)
         for instr in self.INSTRUCTIONS:
             pattern = rf"\b{instr}\b"
             self._rules.append(HighlightRule(pattern, instr_format))
 
-        reg_format = self._create_format("#9CDCFE")
+        reg_format = AssemblySyntaxHighlighter._create_format("#9CDCFE")
         for reg in self.REGISTERS:
             pattern = rf"\b{reg}\b"
             self._rules.append(HighlightRule(pattern, reg_format))
 
-        mem_format = self._create_format("#4EC9B0")
+        mem_format = AssemblySyntaxHighlighter._create_format("#4EC9B0")
         for mem_kw in self.MEMORY_KEYWORDS:
             pattern = rf"\b{mem_kw}\b"
             self._rules.append(HighlightRule(pattern, mem_format))
 
-        addr_format = self._create_format("#B5CEA8")
+        addr_format = AssemblySyntaxHighlighter._create_format("#B5CEA8")
         self._rules.append(HighlightRule(r"\b0x[0-9A-Fa-f]+\b", addr_format))
         self._rules.append(HighlightRule(r"\b[0-9A-Fa-f]+h\b", addr_format))
 
-        number_format = self._create_format("#B5CEA8")
+        number_format = AssemblySyntaxHighlighter._create_format("#B5CEA8")
         self._rules.append(HighlightRule(r"\b\d+\b", number_format))
 
-        label_format = self._create_format("#DCDCAA")
+        label_format = AssemblySyntaxHighlighter._create_format("#DCDCAA")
         self._rules.append(HighlightRule(r"^[A-Za-z_][A-Za-z0-9_]*:", label_format))
 
-        comment_format = self._create_format("#6A9955", italic=True)
+        comment_format = AssemblySyntaxHighlighter._create_format("#6A9955", italic=True)
         self._rules.append(HighlightRule(r";.*$", comment_format))
 
-        string_format = self._create_format("#CE9178")
+        string_format = AssemblySyntaxHighlighter._create_format("#CE9178")
         self._rules.append(HighlightRule(r'"[^"]*"', string_format))
         self._rules.append(HighlightRule(r"'[^']*'", string_format))
 
-    def highlightBlock(self, text: str) -> None:
+    def highlightBlock(self, text: str) -> None:  # noqa: N802
         """Apply highlighting to a block of text.
 
         Args:
@@ -334,19 +340,19 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
         "str", "sum", "super", "tuple", "type", "vars", "zip",
     )
 
-    def __init__(self, parent: object = None) -> None:
+    def __init__(self, parent: QTextDocument | None = None) -> None:
         """Initialize the Python syntax highlighter.
 
         Args:
             parent: Parent QTextDocument or None.
         """
-        super().__init__(parent)  # type: ignore[arg-type]
+        super().__init__(parent)
         self._rules: list[HighlightRule] = []
         self._triple_quote_format = QTextCharFormat()
         self._setup_rules()
 
+    @staticmethod
     def _create_format(
-        self,
         color: str,
         bold: bool = False,
         italic: bool = False,
@@ -371,17 +377,17 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
 
     def _setup_rules(self) -> None:
         """Set up Python highlighting rules."""
-        keyword_format = self._create_format("#569CD6", bold=True)
+        keyword_format = PythonSyntaxHighlighter._create_format("#569CD6", bold=True)
         for keyword in self.KEYWORDS:
             pattern = rf"\b{keyword}\b"
             self._rules.append(HighlightRule(pattern, keyword_format))
 
-        builtin_format = self._create_format("#4EC9B0")
+        builtin_format = PythonSyntaxHighlighter._create_format("#4EC9B0")
         for builtin in self.BUILTINS:
             pattern = rf"\b{builtin}\b"
             self._rules.append(HighlightRule(pattern, builtin_format))
 
-        function_format = self._create_format("#DCDCAA")
+        function_format = PythonSyntaxHighlighter._create_format("#DCDCAA")
         self._rules.append(
             HighlightRule(r"\bdef\s+([A-Za-z_][A-Za-z0-9_]*)", function_format)
         )
@@ -389,28 +395,28 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
             HighlightRule(r"\bclass\s+([A-Za-z_][A-Za-z0-9_]*)", function_format)
         )
 
-        string_format = self._create_format("#CE9178")
+        string_format = PythonSyntaxHighlighter._create_format("#CE9178")
         self._rules.append(HighlightRule(r'"[^"\\]*(\\.[^"\\]*)*"', string_format))
         self._rules.append(HighlightRule(r"'[^'\\]*(\\.[^'\\]*)*'", string_format))
         self._triple_quote_format = string_format
 
-        number_format = self._create_format("#B5CEA8")
+        number_format = PythonSyntaxHighlighter._create_format("#B5CEA8")
         self._rules.append(HighlightRule(r"\b0x[0-9A-Fa-f]+\b", number_format))
         self._rules.append(HighlightRule(r"\b0b[01]+\b", number_format))
         self._rules.append(HighlightRule(r"\b0o[0-7]+\b", number_format))
         self._rules.append(HighlightRule(r"\b\d+\.?\d*\b", number_format))
 
-        comment_format = self._create_format("#6A9955", italic=True)
+        comment_format = PythonSyntaxHighlighter._create_format("#6A9955", italic=True)
         self._rules.append(HighlightRule(r"#[^\n]*", comment_format))
 
-        decorator_format = self._create_format("#C586C0")
+        decorator_format = PythonSyntaxHighlighter._create_format("#C586C0")
         self._rules.append(HighlightRule(r"@[A-Za-z_][A-Za-z0-9_]*", decorator_format))
 
-        self_format = self._create_format("#9CDCFE")
+        self_format = PythonSyntaxHighlighter._create_format("#9CDCFE")
         self._rules.append(HighlightRule(r"\bself\b", self_format))
         self._rules.append(HighlightRule(r"\bcls\b", self_format))
 
-    def highlightBlock(self, text: str) -> None:
+    def highlightBlock(self, text: str) -> None:  # noqa: N802
         """Apply highlighting to a block of text.
 
         Args:
@@ -450,21 +456,21 @@ class JavaScriptSyntaxHighlighter(QSyntaxHighlighter):
         "send", "recv", "console", "rpc", "Script", "Kernel", "Socket",
     )
 
-    def __init__(self, parent: object = None) -> None:
+    def __init__(self, parent: QTextDocument | None = None) -> None:
         """Initialize the JavaScript syntax highlighter.
 
         Args:
             parent: Parent QTextDocument or None.
         """
-        super().__init__(parent)  # type: ignore[arg-type]
+        super().__init__(parent)
         self._rules: list[HighlightRule] = []
         self._multi_line_comment_format = QTextCharFormat()
         self._comment_start = QRegularExpression(r"/\*")
         self._comment_end = QRegularExpression(r"\*/")
         self._setup_rules()
 
+    @staticmethod
     def _create_format(
-        self,
         color: str,
         bold: bool = False,
         italic: bool = False,
@@ -489,35 +495,39 @@ class JavaScriptSyntaxHighlighter(QSyntaxHighlighter):
 
     def _setup_rules(self) -> None:
         """Set up JavaScript highlighting rules."""
-        keyword_format = self._create_format("#569CD6", bold=True)
+        keyword_format = JavaScriptSyntaxHighlighter._create_format(
+            "#569CD6", bold=True
+        )
         for keyword in self.KEYWORDS:
             pattern = rf"\b{keyword}\b"
             self._rules.append(HighlightRule(pattern, keyword_format))
 
-        frida_format = self._create_format("#4EC9B0", bold=True)
+        frida_format = JavaScriptSyntaxHighlighter._create_format("#4EC9B0", bold=True)
         for frida_global in self.FRIDA_GLOBALS:
             pattern = rf"\b{frida_global}\b"
             self._rules.append(HighlightRule(pattern, frida_format))
 
-        function_format = self._create_format("#DCDCAA")
+        function_format = JavaScriptSyntaxHighlighter._create_format("#DCDCAA")
         self._rules.append(
             HighlightRule(r"\b[A-Za-z_][A-Za-z0-9_]*(?=\s*\()", function_format)
         )
 
-        string_format = self._create_format("#CE9178")
+        string_format = JavaScriptSyntaxHighlighter._create_format("#CE9178")
         self._rules.append(HighlightRule(r'"[^"\\]*(\\.[^"\\]*)*"', string_format))
         self._rules.append(HighlightRule(r"'[^'\\]*(\\.[^'\\]*)*'", string_format))
         self._rules.append(HighlightRule(r"`[^`\\]*(\\.[^`\\]*)*`", string_format))
 
-        number_format = self._create_format("#B5CEA8")
+        number_format = JavaScriptSyntaxHighlighter._create_format("#B5CEA8")
         self._rules.append(HighlightRule(r"\b0x[0-9A-Fa-f]+\b", number_format))
         self._rules.append(HighlightRule(r"\b\d+\.?\d*\b", number_format))
 
-        comment_format = self._create_format("#6A9955", italic=True)
+        comment_format = JavaScriptSyntaxHighlighter._create_format(
+            "#6A9955", italic=True
+        )
         self._rules.append(HighlightRule(r"//[^\n]*", comment_format))
         self._multi_line_comment_format = comment_format
 
-    def highlightBlock(self, text: str) -> None:
+    def highlightBlock(self, text: str) -> None:  # noqa: N802
         """Apply highlighting to a block of text.
 
         Args:
@@ -561,7 +571,7 @@ class JavaScriptSyntaxHighlighter(QSyntaxHighlighter):
 
 def get_highlighter_for_language(
     language: str,
-    parent: object = None,
+    parent: QTextDocument | None = None,
 ) -> QSyntaxHighlighter | None:
     """Get the appropriate syntax highlighter for a language.
 
@@ -574,13 +584,12 @@ def get_highlighter_for_language(
     """
     language_lower = language.lower()
 
-    if language_lower in ("c", "cpp", "c++", "decompiled"):
+    if language_lower in {"c", "cpp", "c++", "decompiled"}:
         return CSyntaxHighlighter(parent)
-    elif language_lower in ("asm", "assembly", "disassembly", "x86", "x64"):
+    if language_lower in {"asm", "assembly", "disassembly", "x86", "x64"}:
         return AssemblySyntaxHighlighter(parent)
-    elif language_lower in ("python", "py"):
+    if language_lower in {"python", "py"}:
         return PythonSyntaxHighlighter(parent)
-    elif language_lower in ("javascript", "js", "frida"):
+    if language_lower in {"javascript", "js", "frida"}:
         return JavaScriptSyntaxHighlighter(parent)
-    else:
-        return None
+    return None

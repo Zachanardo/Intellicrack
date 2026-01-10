@@ -22,6 +22,7 @@ from .base import (
     create_google_tool_schema,
     create_openai_tool_schema,
 )
+from .discovery import DiscoveryCache, DiscoveryEvent, DiscoveryFilter, ModelDiscovery
 from .google import GoogleProvider
 from .ollama import OllamaProvider
 from .openai import OpenAIProvider
@@ -47,6 +48,11 @@ __all__: list[str] = [
     "create_anthropic_tool_schema",
     "create_openai_tool_schema",
     "create_google_tool_schema",
+    # Discovery
+    "DiscoveryCache",
+    "DiscoveryEvent",
+    "DiscoveryFilter",
+    "ModelDiscovery",
     # Provider implementations
     "AnthropicProvider",
     "OpenAIProvider",

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Intellicrack"
-version = "0.1.0"
+version = "2.0.0"
 authors = [{ name = "Zachary Flint", email = "zach.flint2@gmail.com" }]
 description = "Intellicrack: AI-powered reverse engineering orchestration platform"
 readme = "README.md"
@@ -46,12 +46,15 @@ Documentation = "https://intellicrack.readthedocs.io"
 intellicrack = "intellicrack.main:main"
 
 [project.gui-scripts]
-intellicrack-gui = "intellicrack.ui.app:main"
+intellicrack-gui = "intellicrack.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["intellicrack"]
 include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["intellicrack", "intellicrack.*"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
@@ -103,7 +106,7 @@ ensure_newline_before_comments = true
 
 [tool.mypy]
 python_version = "3.13"
-mypy_path = "."
+mypy_path = [".", "stubs"]
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -152,7 +155,7 @@ ignore_missing_imports = true
 ignore_errors = true
 
 [tool.pyright]
-include = ["intellicrack", "tests"]
+include = ["src/intellicrack", "tests"]
 exclude = [
     "**/__pycache__",
     "**/node_modules",
@@ -305,7 +308,7 @@ exclude_dirs = ["tests", "docs", "tools", ".git", ".github", ".pixi", "node_modu
 skips = ["B101", "B601"]
 
 [tool.coverage.run]
-source = ["intellicrack"]
+source = ["src/intellicrack"]
 omit = ["*/.git/*", "*/.pixi/*", "*/tests/*", "*/docs/*", "*/__pycache__/*", "*/tools/*", "*/node_modules/*", "*/CLI Coding/*", "*/Screenshots/*"]
 branch = true
 

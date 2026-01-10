@@ -25,8 +25,8 @@ wintrust.dll         - Required dependency for Adobe patching (374 KB)
 
 Adobe Injector is integrated into Intellicrack via:
 - **Location:** Tools Tab → Adobe Injector sub-tab
-- **Integration Module:** `intellicrack/core/adobe_injector_integration.py`
-- **UI Tab:** `intellicrack/ui/tabs/adobe_injector_tab.py`
+- **Integration Module:** `src/intellicrack/core/adobe_injector_integration.py`
+- **UI Tab:** `src/intellicrack/ui/tabs/adobe_injector_tab.py`
 
 ## Features
 

@@ -32,7 +32,7 @@ install-qemu:
 
 # Clean all build artifacts (Python, test caches)
 clean:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; $removed = 0; function Write-Step { param($msg) Write-Host "$e[36m[CLEAN]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; function Write-Skip { param($msg) Write-Host "  $e[33m[SKIP]$e[0m $msg" }; Write-Host "`n$e[1;36m=== Cleaning Project Artifacts ===$e[0m`n"; Write-Step "Cleaning Python bytecode (intellicrack, tests)..."; try { pixi run pyclean intellicrack tests 2>&1 | Out-Null; if ($LASTEXITCODE -eq 0) { Write-Success "Python bytecode cleaned"; $removed++ } else { Write-Fail "pyclean failed" } } catch { Write-Skip "Python cleanup skipped: $_" }; Write-Step "Checking for MagicMock artifact directory..."; $magicMockPath = Join-Path (Get-Location) "MagicMock"; if ((Test-Path $magicMockPath) -and (Get-Item $magicMockPath).PSIsContainer -and (Test-Path (Join-Path $magicMockPath "mock"))) { Remove-Item -Recurse -Force $magicMockPath -ErrorAction Stop; Write-Success "MagicMock directory removed"; $removed++ } else { Write-Skip "MagicMock not found or not matching expected structure" }; Write-Step "Cleaning test artifacts..."; if (Test-Path ".pytest_cache") { Remove-Item -Recurse -Force .pytest_cache -ErrorAction SilentlyContinue; $removed++ }; if (Test-Path "coverage_html_report") { Remove-Item -Recurse -Force coverage_html_report -ErrorAction SilentlyContinue; $removed++ }; if (Test-Path ".coverage") { Remove-Item -Force .coverage -ErrorAction SilentlyContinue; $removed++ }; if (Test-Path ".mypy_cache") { Remove-Item -Recurse -Force .mypy_cache -ErrorAction SilentlyContinue; $removed++ }; if (Test-Path ".ruff_cache") { Remove-Item -Recurse -Force .ruff_cache -ErrorAction SilentlyContinue; $removed++ }; Write-Success "Test artifacts cleaned"; Write-Host "`n$e[1;32m=== Cleanup Complete ($removed items) ===$e[0m`n"
+    @$ErrorActionPreference = 'Stop'; $e = [char]27; $removed = 0; function Write-Step { param($msg) Write-Host "$e[36m[CLEAN]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; function Write-Skip { param($msg) Write-Host "  $e[33m[SKIP]$e[0m $msg" }; Write-Host "`n$e[1;36m=== Cleaning Project Artifacts ===$e[0m`n"; Write-Step "Cleaning Python bytecode (intellicrack, tests)..."; try { pixi run pyclean src/intellicrack tests 2>&1 | Out-Null; if ($LASTEXITCODE -eq 0) { Write-Success "Python bytecode cleaned"; $removed++ } else { Write-Fail "pyclean failed" } } catch { Write-Skip "Python cleanup skipped: $_" }; Write-Step "Checking for MagicMock artifact directory..."; $magicMockPath = Join-Path (Get-Location) "MagicMock"; if ((Test-Path $magicMockPath) -and (Get-Item $magicMockPath).PSIsContainer -and (Test-Path (Join-Path $magicMockPath "mock"))) { Remove-Item -Recurse -Force $magicMockPath -ErrorAction Stop; Write-Success "MagicMock directory removed"; $removed++ } else { Write-Skip "MagicMock not found or not matching expected structure" }; Write-Step "Cleaning test artifacts..."; if (Test-Path ".pytest_cache") { Remove-Item -Recurse -Force .pytest_cache -ErrorAction SilentlyContinue; $removed++ }; if (Test-Path "coverage_html_report") { Remove-Item -Recurse -Force coverage_html_report -ErrorAction SilentlyContinue; $removed++ }; if (Test-Path ".coverage") { Remove-Item -Force .coverage -ErrorAction SilentlyContinue; $removed++ }; if (Test-Path ".mypy_cache") { Remove-Item -Recurse -Force .mypy_cache -ErrorAction SilentlyContinue; $removed++ }; if (Test-Path ".ruff_cache") { Remove-Item -Recurse -Force .ruff_cache -ErrorAction SilentlyContinue; $removed++ }; Write-Success "Test artifacts cleaned"; Write-Host "`n$e[1;32m=== Cleanup Complete ($removed items) ===$e[0m`n"
 
 # ==================== SANDBOX ====================
 
@@ -126,35 +126,35 @@ test-verify-real:
 
 # Lint code with ruff
 lint:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[LINT]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Ruff Linter ===$e[0m`n"; Write-Step "Checking code style..."; try { pixi run ruff check intellicrack/ 2>&1 | ForEach-Object { Write-Host "  $_" }; $checkCode = $LASTEXITCODE } catch { $checkCode = 1 }; Write-Step "Checking formatting..."; try { pixi run ruff format --check intellicrack/ 2>&1 | ForEach-Object { Write-Host "  $_" }; $formatCode = $LASTEXITCODE } catch { $formatCode = 1 }; if ($checkCode -ne 0 -or $formatCode -ne 0) { Write-Fail "Linting issues found"; exit 1 }; Write-Success "All lint checks passed"; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Lint Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[LINT]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Running Ruff Linter ===$e[0m`n"; Write-Step "Checking code style..."; try { pixi run ruff check src/intellicrack/ 2>&1 | ForEach-Object { Write-Host "  $_" }; $checkCode = $LASTEXITCODE } catch { $checkCode = 1 }; Write-Step "Checking formatting..."; try { pixi run ruff format --check src/intellicrack/ 2>&1 | ForEach-Object { Write-Host "  $_" }; $formatCode = $LASTEXITCODE } catch { $formatCode = 1 }; if ($checkCode -ne 0 -or $formatCode -ne 0) { Write-Fail "Linting issues found"; exit 1 }; Write-Success "All lint checks passed"; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Lint Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
 
 # Fix linting issues automatically
 lint-fix:
-    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[LINT-FIX]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Fixing Lint Issues ===$e[0m`n"; Write-Step "Fixing code style issues..."; try { pixi run ruff check --fix intellicrack/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "ruff check --fix failed" } } catch { Write-Fail "Style fix failed: $_"; exit 1 }; Write-Step "Formatting code..."; try { pixi run ruff format intellicrack/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "ruff format failed" } } catch { Write-Fail "Format failed: $_"; exit 1 }; Write-Success "Lint issues fixed"; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Lint Fix Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
+    @$ErrorActionPreference = 'Stop'; $e = [char]27; function Write-Step { param($msg) Write-Host "$e[36m[LINT-FIX]$e[0m $msg" }; function Write-Success { param($msg) Write-Host "  $e[32m[OK]$e[0m $msg" }; function Write-Fail { param($msg) Write-Host "  $e[31m[FAIL]$e[0m $msg" }; $startTime = Get-Date; Write-Host "`n$e[1;36m=== Fixing Lint Issues ===$e[0m`n"; Write-Step "Fixing code style issues..."; try { pixi run ruff check --fix src/intellicrack/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "ruff check --fix failed" } } catch { Write-Fail "Style fix failed: $_"; exit 1 }; Write-Step "Formatting code..."; try { pixi run ruff format src/intellicrack/ 2>&1 | ForEach-Object { Write-Host "  $_" }; if ($LASTEXITCODE -ne 0) { throw "ruff format failed" } } catch { Write-Fail "Format failed: $_"; exit 1 }; Write-Success "Lint issues fixed"; $elapsed = ((Get-Date) - $startTime).TotalSeconds; Write-Host "`n$e[1;32m=== Lint Fix Complete ===$e[0m $e[90m($("{0:N1}" -f $elapsed)s)$e[0m`n"
 
 # Detect dead code with vulture and output sorted findings
 vulture:
     @echo "[Vulture] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run vulture intellicrack/ tests/ --min-confidence 60 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py vulture --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run vulture src/intellicrack/ tests/ --min-confidence 60 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py vulture --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Upgrade Python syntax to newer versions
 pyupgrade:
-    @Get-ChildItem -Path .\intellicrack\ -Recurse -Include "*.py" | ForEach-Object { pixi run pyupgrade --py312-plus $_.FullName }
+    @Get-ChildItem -Path .\src\intellicrack\ -Recurse -Include "*.py" | ForEach-Object { pixi run pyupgrade --py312-plus $_.FullName }
     @Get-ChildItem -Path .\tests\ -Recurse -Include "*.py" | ForEach-Object { pixi run pyupgrade --py312-plus $_.FullName }
 
 # Apply AI-powered code suggestions (auto-fix enabled)
 sourcery:
-    @pixi run sourcery review --fix --verbose intellicrack
+    @pixi run sourcery review --fix --verbose src/intellicrack
     @pixi run sourcery review --fix --verbose tests
 
 # Check docstring validity with darglint and output sorted findings
 darglint:
     @echo "[Darglint] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run darglint intellicrack 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py darglint --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run darglint src/intellicrack 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py darglint --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Check code line statistics with pygount
 pygount:
-    @pixi run pygount intellicrack --format=summary
+    @pixi run pygount src/intellicrack --format=summary
     @pixi run pygount tests --format=summary
 
 # Check Python packaging best practices with pyroma
@@ -169,7 +169,7 @@ dead:
 # Run type checking with ty and output sorted findings
 ty:
     @echo "[Ty Type] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run ty check intellicrack tests --output-format concise 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py ty $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run ty check src/intellicrack tests --output-format concise 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py ty $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Run type checking with pyright and output sorted findings
 pyright:
@@ -179,62 +179,62 @@ pyright:
 # Run type checking with mypy and output sorted findings
 mypy:
     @echo "[Mypy] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run mypy intellicrack tests 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py mypy --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run mypy src/intellicrack tests 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py mypy --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Security linting with bandit and output sorted findings
 bandit:
     @echo "[Bandit Security] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run bandit -r intellicrack/ tests/ -c pyproject.toml 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py bandit --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run bandit -r src/intellicrack/ tests/ -c pyproject.toml 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py bandit --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Run flake8 style linting and output sorted findings
 flake8:
     @echo "[Flake8] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run flake8 intellicrack tests --statistics 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py flake8 --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run flake8 src/intellicrack tests --statistics 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py flake8 --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Run wemake-python-styleguide (strictest linter) and output sorted findings
 wemake:
     @echo "[Wemake Styleguide] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run flake8 intellicrack tests --select=WPS,C9 --max-complexity 10 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py wemake --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run flake8 src/intellicrack tests --select=WPS,C9 --max-complexity 10 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py wemake --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Run mccabe complexity checker and output sorted findings
 mccabe:
     @echo "[McCabe Complexity] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run flake8 intellicrack tests --select=C901 --max-complexity 10 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py mccabe --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run flake8 src/intellicrack tests --select=C901 --max-complexity 10 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py mccabe --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Run pydocstyle docstring checker and output sorted findings
 pydocstyle:
     @echo "[Pydocstyle] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run pydocstyle intellicrack tests 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py pydocstyle --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run pydocstyle src/intellicrack tests 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py pydocstyle --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Run radon cyclomatic complexity analysis and output sorted findings
 radon:
     @echo "[Radon Complexity] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run radon cc intellicrack tests -s -a 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py radon --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run radon cc src/intellicrack tests -s -a 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py radon --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Run xenon complexity threshold checker and output sorted findings
 xenon:
     @echo "[Xenon Complexity] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run xenon intellicrack tests -b B -m C -a C 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py xenon --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run xenon src/intellicrack tests -b B -m C -a C 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py xenon --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Run ruff linter and output sorted findings (uses native JSON output for speed)
 ruff:
     @echo "[Ruff Linter] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run ruff check intellicrack/ tests/ --output-format=json -o $tmpFile 2>&1 | Out-Null; pixi run python scripts/process_lint_json.py ruff $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run ruff check src/intellicrack/ tests/ --output-format=json -o $tmpFile 2>&1 | Out-Null; pixi run python scripts/process_lint_json.py ruff $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Run ruff format to format Python code
 ruff-fmt:
     @echo "[Ruff Format] Running..."
-    @pixi run ruff format intellicrack/ tests/ 2>&1 | Out-Null; Write-Host "[RUFF FMT] Done"
+    @pixi run ruff format src/intellicrack/ tests/ 2>&1 | Out-Null; Write-Host "[RUFF FMT] Done"
 
 # Detect uncalled functions with uncalled and output sorted findings
 uncalled:
     @echo "[Uncalled] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run uncalled --how both intellicrack tests 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py uncalled --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run uncalled --how both src/intellicrack tests 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py uncalled --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # Detect dead code with deadcode and output sorted findings
 deadcode:
     @echo "[Deadcode] Running..."
-    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run deadcode intellicrack tests 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py deadcode --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
+    @('txt','json','xml') | ForEach-Object { if (!(Test-Path "reports/$_")) { New-Item -ItemType Directory -Path "reports/$_" -Force | Out-Null } }; $tmpFile = [System.IO.Path]::GetTempFileName(); try { pixi run deadcode src/intellicrack tests 2>&1 | Out-File -FilePath $tmpFile -Encoding utf8; pixi run python scripts/process_lint_json.py deadcode --text $tmpFile } finally { Remove-Item $tmpFile -Force -ErrorAction SilentlyContinue }
 
 # ==================== OTHER LINTING ====================
 

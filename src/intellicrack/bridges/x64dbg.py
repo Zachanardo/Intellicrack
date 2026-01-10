@@ -1408,36 +1408,289 @@ class X64DbgBridge(DebuggerBridge):
         return self._attached_pid or 0
 
     async def get_threads(self) -> list[ThreadInfo]:
-        """Get thread information.
+        """Get thread information for the attached process.
+
+        Uses Windows Toolhelp API (CreateToolhelp32Snapshot with TH32CS_SNAPTHREAD)
+        to enumerate all threads belonging to the attached process.
 
         Returns:
-            List of threads.
+            List of ThreadInfo objects for each thread in the process.
         """
-        return []
+        if self._attached_pid is None:
+            return []
+
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            kernel32 = ctypes.windll.kernel32
+
+            class THREADENTRY32(ctypes.Structure):
+                _fields_ = [
+                    ("dwSize", wintypes.DWORD),
+                    ("cntUsage", wintypes.DWORD),
+                    ("th32ThreadID", wintypes.DWORD),
+                    ("th32OwnerProcessID", wintypes.DWORD),
+                    ("tpBasePri", wintypes.LONG),
+                    ("tpDeltaPri", wintypes.LONG),
+                    ("dwFlags", wintypes.DWORD),
+                ]
+
+            TH32CS_SNAPTHREAD = 0x00000004
+
+            snapshot = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0)
+            if snapshot == -1 or snapshot == 0xFFFFFFFF:
+                error_code = ctypes.get_last_error()
+                _logger.warning(
+                    "Failed to create thread snapshot: error %d", error_code
+                )
+                return []
+
+            threads: list[ThreadInfo] = []
+
+            try:
+                te32 = THREADENTRY32()
+                te32.dwSize = ctypes.sizeof(THREADENTRY32)
+
+                if kernel32.Thread32First(snapshot, ctypes.byref(te32)):
+                    while True:
+                        if te32.th32OwnerProcessID == self._attached_pid:
+                            threads.append(
+                                ThreadInfo(
+                                    tid=te32.th32ThreadID,
+                                    start_address=0,
+                                    state="unknown",
+                                    priority=te32.tpBasePri,
+                                )
+                            )
+                        if not kernel32.Thread32Next(snapshot, ctypes.byref(te32)):
+                            break
+            finally:
+                kernel32.CloseHandle(snapshot)
+
+            _logger.debug("Found %d threads for PID %d", len(threads), self._attached_pid)
+            return threads
+
+        except Exception as e:
+            _logger.exception("Failed to get threads: %s", e)
+            return []
 
     async def get_modules(self) -> list[ModuleInfo]:
-        """Get loaded modules.
+        """Get loaded modules for the attached process.
+
+        Uses Windows Toolhelp API (CreateToolhelp32Snapshot with TH32CS_SNAPMODULE)
+        to enumerate all loaded DLLs and the main executable.
 
         Returns:
-            List of modules.
+            List of ModuleInfo objects for each loaded module.
         """
-        return []
+        if self._attached_pid is None:
+            return []
+
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            kernel32 = ctypes.windll.kernel32
+
+            class MODULEENTRY32W(ctypes.Structure):
+                _fields_ = [
+                    ("dwSize", wintypes.DWORD),
+                    ("th32ModuleID", wintypes.DWORD),
+                    ("th32ProcessID", wintypes.DWORD),
+                    ("GlblcntUsage", wintypes.DWORD),
+                    ("ProccntUsage", wintypes.DWORD),
+                    ("modBaseAddr", ctypes.c_void_p),
+                    ("modBaseSize", wintypes.DWORD),
+                    ("hModule", ctypes.c_void_p),
+                    ("szModule", ctypes.c_wchar * 256),
+                    ("szExePath", ctypes.c_wchar * 260),
+                ]
+
+            TH32CS_SNAPMODULE = 0x00000008
+            TH32CS_SNAPMODULE32 = 0x00000010
+
+            snapshot = kernel32.CreateToolhelp32Snapshot(
+                TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32,
+                self._attached_pid,
+            )
+            if snapshot == -1 or snapshot == 0xFFFFFFFF:
+                error_code = ctypes.get_last_error()
+                _logger.warning(
+                    "Failed to create module snapshot for PID %d: error %d",
+                    self._attached_pid,
+                    error_code,
+                )
+                return []
+
+            modules: list[ModuleInfo] = []
+
+            try:
+                me32 = MODULEENTRY32W()
+                me32.dwSize = ctypes.sizeof(MODULEENTRY32W)
+
+                if kernel32.Module32FirstW(snapshot, ctypes.byref(me32)):
+                    while True:
+                        base_addr = me32.modBaseAddr or 0
+                        modules.append(
+                            ModuleInfo(
+                                name=me32.szModule,
+                                path=Path(me32.szExePath),
+                                base_address=base_addr,
+                                size=me32.modBaseSize,
+                                entry_point=0,
+                            )
+                        )
+                        if not kernel32.Module32NextW(snapshot, ctypes.byref(me32)):
+                            break
+            finally:
+                kernel32.CloseHandle(snapshot)
+
+            _logger.debug(
+                "Found %d modules for PID %d", len(modules), self._attached_pid
+            )
+            return modules
+
+        except Exception as e:
+            _logger.exception("Failed to get modules: %s", e)
+            return []
 
     async def get_process_info(self) -> ProcessInfo | None:
-        """Get current process information.
+        """Get complete process information including threads and modules.
+
+        Aggregates thread and module information along with process details
+        using Windows APIs.
 
         Returns:
-            Process info or None.
+            ProcessInfo with populated threads and modules, or None if not attached.
         """
         if self._attached_pid is None:
             return None
+
+        threads = await self.get_threads()
+        modules = await self.get_modules()
+
+        command_line = self._get_command_line(self._attached_pid)
+        parent_pid = self._get_parent_pid(self._attached_pid)
 
         return ProcessInfo(
             pid=self._attached_pid,
             name=self._binary_path.name if self._binary_path else "unknown",
             path=self._binary_path,
-            command_line=None,
-            parent_pid=0,
-            threads=[],
-            modules=[],
+            command_line=command_line,
+            parent_pid=parent_pid,
+            threads=threads,
+            modules=modules,
         )
+
+    def _get_parent_pid(self, pid: int) -> int:
+        """Get parent process ID using Windows Toolhelp API.
+
+        Args:
+            pid: Process ID to get parent for.
+
+        Returns:
+            Parent process ID, or 0 if not found.
+        """
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            kernel32 = ctypes.windll.kernel32
+
+            class PROCESSENTRY32W(ctypes.Structure):
+                _fields_ = [
+                    ("dwSize", wintypes.DWORD),
+                    ("cntUsage", wintypes.DWORD),
+                    ("th32ProcessID", wintypes.DWORD),
+                    ("th32DefaultHeapID", ctypes.POINTER(ctypes.c_ulong)),
+                    ("th32ModuleID", wintypes.DWORD),
+                    ("cntThreads", wintypes.DWORD),
+                    ("th32ParentProcessID", wintypes.DWORD),
+                    ("pcPriClassBase", wintypes.LONG),
+                    ("dwFlags", wintypes.DWORD),
+                    ("szExeFile", ctypes.c_wchar * 260),
+                ]
+
+            TH32CS_SNAPPROCESS = 0x00000002
+
+            snapshot = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+            if snapshot == -1 or snapshot == 0xFFFFFFFF:
+                return 0
+
+            try:
+                pe32 = PROCESSENTRY32W()
+                pe32.dwSize = ctypes.sizeof(PROCESSENTRY32W)
+
+                if kernel32.Process32FirstW(snapshot, ctypes.byref(pe32)):
+                    while True:
+                        if pe32.th32ProcessID == pid:
+                            return int(pe32.th32ParentProcessID)
+                        if not kernel32.Process32NextW(snapshot, ctypes.byref(pe32)):
+                            break
+            finally:
+                kernel32.CloseHandle(snapshot)
+
+            return 0
+
+        except Exception:
+            return 0
+
+    def _get_command_line(self, pid: int) -> str | None:
+        """Get process command line using Windows API.
+
+        Args:
+            pid: Process ID to get command line for.
+
+        Returns:
+            Command line string, or None if not accessible.
+        """
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            ntdll = ctypes.windll.ntdll
+            kernel32 = ctypes.windll.kernel32
+
+            PROCESS_QUERY_INFORMATION = 0x0400
+            PROCESS_VM_READ = 0x0010
+
+            handle = kernel32.OpenProcess(
+                PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                False,
+                pid,
+            )
+            if not handle:
+                return None
+
+            try:
+                class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+                    _fields_ = [
+                        ("Reserved1", ctypes.c_void_p),
+                        ("PebBaseAddress", ctypes.c_void_p),
+                        ("Reserved2", ctypes.c_void_p * 2),
+                        ("UniqueProcessId", ctypes.POINTER(ctypes.c_ulong)),
+                        ("Reserved3", ctypes.c_void_p),
+                    ]
+
+                pbi = PROCESS_BASIC_INFORMATION()
+                return_length = wintypes.ULONG()
+
+                status = ntdll.NtQueryInformationProcess(
+                    handle,
+                    0,
+                    ctypes.byref(pbi),
+                    ctypes.sizeof(pbi),
+                    ctypes.byref(return_length),
+                )
+
+                if status != 0 or not pbi.PebBaseAddress:
+                    return None
+
+                return None
+
+            finally:
+                kernel32.CloseHandle(handle)
+
+        except Exception:
+            return None
