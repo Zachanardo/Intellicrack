@@ -153,8 +153,8 @@ class KnowledgeGraphGenerator:
     def __init__(self, root_dir: Path, rust_root: Path | None = None) -> None:
         """Initialize the knowledge graph generator."""
         self.root_dir = root_dir.resolve()
-        if self.root_dir.name != 'intellicrack':
-            possible_sub = self.root_dir / 'intellicrack'
+        if self.root_dir.name != 'src':
+            possible_sub = self.root_dir / 'src'
             if possible_sub.exists():
                 self.root_dir = possible_sub
 
@@ -1440,7 +1440,7 @@ init();
 def main() -> None:
     """Main function to parse arguments, scan, and visualize the architecture."""
     parser = argparse.ArgumentParser(description="Generate Intellicrack Knowledge Graph")
-    parser.add_argument("--root", "-r", default="intellicrack", help="Root Python package directory")
+    parser.add_argument("--root", "-r", default="src", help="Root Python package directory")
     parser.add_argument("--rust", default="intellicrack-launcher", help="Root Rust project directory")
     parser.add_argument(
         "--layout",

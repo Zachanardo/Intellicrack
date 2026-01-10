@@ -1,0 +1,59 @@
+INTELLICRACK PROJECT FILE TREE STRUCTURE
+========================================
+
+Generated: Fri, Jan 09, 2026 06:20:58 PM
+Directory: D:\Intellicrack\src
+
+This document provides a simple text-based tree structure of the Intellicrack project.
+For an interactive HTML version with clickable links, see IntellicrackStructure.hta
+
+----------------------------------------
+
+└── intellicrack/
+    ├── bridges/
+    │   ├── __init__.py
+    │   ├── base.py
+    │   ├── binary.py
+    │   ├── frida_bridge.py
+    │   ├── ghidra.py
+    │   ├── installer.py
+    │   ├── process.py
+    │   ├── radare2.py
+    │   └── x64dbg.py
+    ├── core/
+    │   ├── __init__.py
+    │   ├── config.py
+    │   ├── logging.py
+    │   ├── orchestrator.py
+    │   ├── script_gen.py
+    │   ├── session.py
+    │   ├── tools.py
+    │   └── types.py
+    ├── credentials/
+    │   ├── __init__.py
+    │   └── env_loader.py
+    ├── providers/
+    │   ├── __init__.py
+    │   ├── anthropic.py
+    │   ├── base.py
+    │   ├── google.py
+    │   ├── ollama.py
+    │   ├── openai.py
+    │   ├── openrouter.py
+    │   └── registry.py
+    ├── sandbox/
+    │   ├── __init__.py
+    │   ├── base.py
+    │   ├── manager.py
+    │   └── windows.py
+    ├── ui/
+    │   ├── resources/
+    │   │   ├── icons/
+    │   │   └── styles/
+    │   ├── __init__.py
+    │   ├── chat.py
+    │   ├── highlighter.py
+    │   └── tools.py
+    ├── __init__.py
+    ├── __main__.py
+    └── main.py

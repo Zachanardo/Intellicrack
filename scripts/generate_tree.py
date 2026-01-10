@@ -706,7 +706,7 @@ function hasHighlightedChildren(element) {{
 
 
 if __name__ == "__main__":
-    root_path = r"D:\Intellicrack\intellicrack"
+    root_path = r"D:\Intellicrack\src"
     hta_output_file = r"D:\Intellicrack\IntellicrackStructure.hta"
     txt_output_file = r"D:\Intellicrack\IntellicrackStructure.txt"
 
