@@ -1,0 +1,237 @@
+INTELLICRACK PROJECT FILE TREE STRUCTURE
+========================================
+
+Generated: Sun, Jan 18, 2026 02:29:18 PM
+Directory: D:\Intellicrack\src
+
+This document provides a simple text-based tree structure of the Intellicrack project.
+For an interactive HTML version with clickable links, see IntellicrackStructure.hta
+
+----------------------------------------
+
+├── intellicrack/
+│   ├── assets/
+│   │   ├── configs/
+│   │   │   ├── anthropic_claude3.json
+│   │   │   ├── frida_specialized.json
+│   │   │   ├── gptq_fast_inference.json
+│   │   │   ├── local_gguf_high_performance.json
+│   │   │   ├── ollama_codellama.json
+│   │   │   ├── onnx_production.json
+│   │   │   ├── openai_gpt4.json
+│   │   │   ├── pytorch_research.json
+│   │   │   └── vulnerability_assessment.json
+│   │   ├── fonts/
+│   │   │   ├── font_config.json
+│   │   │   ├── JetBrainsMono-Bold.ttf
+│   │   │   └── JetBrainsMono-Regular.ttf
+│   │   ├── icons/
+│   │   │   ├── accessories-text-editor.png
+│   │   │   ├── action_build.svg
+│   │   │   ├── action_debug.svg
+│   │   │   ├── action_deploy.svg
+│   │   │   ├── action_generate.svg
+│   │   │   ├── action_pause.svg
+│   │   │   ├── action_restart.svg
+│   │   │   ├── action_run.svg
+│   │   │   ├── action_stop.svg
+│   │   │   ├── action_test.svg
+│   │   │   ├── ai-assistant.png
+│   │   │   ├── ai_brain.svg
+│   │   │   ├── ai_inference.svg
+│   │   │   ├── ai_model.svg
+│   │   │   ├── ai_neural.svg
+│   │   │   ├── ai_training.svg
+│   │   │   ├── analyze.png
+│   │   │   ├── application-certificate.png
+│   │   │   ├── binary-file-icon.png
+│   │   │   ├── binary_disasm.svg
+│   │   │   ├── binary_dll.svg
+│   │   │   ├── binary_entropy.svg
+│   │   │   ├── binary_exe.svg
+│   │   │   ├── binary_hex.svg
+│   │   │   ├── binary_so.svg
+│   │   │   ├── cancel-button.png
+│   │   │   ├── computer-icon.png
+│   │   │   ├── db_connect.svg
+│   │   │   ├── db_export.svg
+│   │   │   ├── db_query.svg
+│   │   │   ├── db_table.svg
+│   │   │   ├── desktop-icon.png
+│   │   │   ├── detailed-view.png
+│   │   │   ├── dialog-password.png
+│   │   │   ├── document-edit.png
+│   │   │   ├── document-open.png
+│   │   │   ├── document-save-as.png
+│   │   │   ├── document-save.png
+│   │   │   ├── edit-delete.png
+│   │   │   ├── edit_copy.svg
+│   │   │   ├── edit_cut.svg
+│   │   │   ├── edit_delete.svg
+│   │   │   ├── edit_paste.svg
+│   │   │   ├── edit_redo.svg
+│   │   │   ├── edit_replace.svg
+│   │   │   ├── edit_search.svg
+│   │   │   ├── edit_undo.svg
+│   │   │   ├── export.png
+│   │   │   ├── file-icon.png
+│   │   │   ├── file_close.svg
+│   │   │   ├── file_import.svg
+│   │   │   ├── file_new.svg
+│   │   │   ├── file_open.svg
+│   │   │   ├── file_save.svg
+│   │   │   ├── file_save_as.svg
+│   │   │   ├── folder-icon.png
+│   │   │   ├── frida-tool.png
+│   │   │   ├── ghidra-tool.png
+│   │   │   ├── help_about.svg
+│   │   │   ├── help_docs.svg
+│   │   │   ├── help_documentation.svg
+│   │   │   ├── help_support.svg
+│   │   │   ├── help_tutorial.svg
+│   │   │   ├── icon_preview.png
+│   │   │   ├── import.png
+│   │   │   ├── list-add.png
+│   │   │   ├── mail-send.png
+│   │   │   ├── media-play.png
+│   │   │   ├── media-playback-start.png
+│   │   │   ├── nav_back.svg
+│   │   │   ├── nav_down.svg
+│   │   │   ├── nav_forward.svg
+│   │   │   ├── nav_home.svg
+│   │   │   ├── nav_refresh.svg
+│   │   │   ├── nav_up.svg
+│   │   │   ├── network-server.png
+│   │   │   ├── network-workgroup.png
+│   │   │   ├── open.png
+│   │   │   ├── package-x-generic.png
+│   │   │   ├── preferences-system.png
+│   │   │   ├── progress-spinner.png
+│   │   │   ├── python-file-icon.png
+│   │   │   ├── refresh.png
+│   │   │   ├── security-medium.png
+│   │   │   ├── security_firewall.svg
+│   │   │   ├── security_key.svg
+│   │   │   ├── security_lock.svg
+│   │   │   ├── security_scan.svg
+│   │   │   ├── security_shield.svg
+│   │   │   ├── security_warning.svg
+│   │   │   ├── settings.png
+│   │   │   ├── splash.png
+│   │   │   ├── status-error.png
+│   │   │   ├── status-success.png
+│   │   │   ├── status-warning.png
+│   │   │   ├── status_error.svg
+│   │   │   ├── status_idle.svg
+│   │   │   ├── status_info.svg
+│   │   │   ├── status_loading.svg
+│   │   │   ├── status_question.svg
+│   │   │   ├── status_ready.svg
+│   │   │   ├── status_success.svg
+│   │   │   ├── status_warning.svg
+│   │   │   ├── stop.png
+│   │   │   ├── system-search.png
+│   │   │   ├── tool_cheat_engine.svg
+│   │   │   ├── tool_frida.svg
+│   │   │   ├── tool_gdb.svg
+│   │   │   ├── tool_ghidra.svg
+│   │   │   ├── tool_ollydbg.svg
+│   │   │   ├── tool_radare2.svg
+│   │   │   ├── tool_x64dbg.svg
+│   │   │   └── vulnerability.png
+│   │   ├── styles/
+│   │   │   ├── dark_theme.qss
+│   │   │   └── light_theme.qss
+│   │   ├── icon.ico
+│   │   └── splash.png
+│   ├── bridges/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── binary.py
+│   │   ├── frida_bridge.py
+│   │   ├── ghidra.py
+│   │   ├── installer.py
+│   │   ├── named_pipe_client.py
+│   │   ├── process.py
+│   │   ├── radare2.py
+│   │   ├── schemas.py
+│   │   └── x64dbg.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   ├── license_analyzer.py
+│   │   ├── logging.py
+│   │   ├── orchestrator.py
+│   │   ├── process_manager.py
+│   │   ├── script_gen.py
+│   │   ├── session.py
+│   │   ├── tools.py
+│   │   └── types.py
+│   ├── credentials/
+│   │   ├── __init__.py
+│   │   ├── env_loader.py
+│   │   ├── oauth.py
+│   │   └── store.py
+│   ├── plugins/
+│   │   └── x64dbg_plugin/
+│   │       ├── third_party/
+│   │       │   └── nlohmann/
+│   │       │       └── json.hpp
+│   │       ├── CMakeLists.txt
+│   │       ├── command_handler.cpp
+│   │       ├── command_handler.h
+│   │       ├── event_handler.cpp
+│   │       ├── event_handler.h
+│   │       ├── intellicrack_x64dbg.cpp
+│   │       ├── pipe_server.cpp
+│   │       ├── pipe_server.h
+│   │       └── protocol.h
+│   ├── providers/
+│   │   ├── __init__.py
+│   │   ├── anthropic.py
+│   │   ├── base.py
+│   │   ├── discovery.py
+│   │   ├── google.py
+│   │   ├── grok.py
+│   │   ├── huggingface.py
+│   │   ├── ollama.py
+│   │   ├── openai.py
+│   │   ├── openrouter.py
+│   │   └── registry.py
+│   ├── sandbox/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── manager.py
+│   │   ├── qemu.py
+│   │   └── windows.py
+│   ├── ui/
+│   │   ├── dialogs/
+│   │   │   ├── __init__.py
+│   │   │   └── splash_screen.py
+│   │   ├── resources/
+│   │   │   ├── icons/
+│   │   │   ├── styles/
+│   │   │   ├── __init__.py
+│   │   │   ├── font_manager.py
+│   │   │   ├── icon_manager.py
+│   │   │   ├── resource_helper.py
+│   │   │   └── theme_manager.py
+│   │   ├── __init__.py
+│   │   ├── app.py
+│   │   ├── chat.py
+│   │   ├── highlighter.py
+│   │   ├── preferences.py
+│   │   ├── provider_config.py
+│   │   ├── sandbox_config.py
+│   │   ├── session_manager.py
+│   │   ├── tool_config.py
+│   │   └── tools.py
+│   ├── __init__.py
+│   ├── __main__.py
+│   └── main.py
+└── Intellicrack.egg-info/
+    ├── dependency_links.txt
+    ├── entry_points.txt
+    ├── PKG-INFO
+    ├── SOURCES.txt
+    └── top_level.txt

@@ -1,0 +1,1347 @@
+#!/usr/bin/env python3
+"""Process native JSON/text output from linters and convert to standard format.
+
+This script processes output from various linters and produces consistent
+findings files in JSON, XML, and TXT formats.
+Findings are sorted by file, with files having the most findings listed first.
+"""
+from __future__ import annotations
+
+import json
+import re
+import sys
+from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+
+def process_eslint(data: list[Any]) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process ESLint native JSON output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    cnt = 0
+    for file_obj in data:
+        fp = file_obj.get("filePath", "")
+        for msg in file_obj.get("messages", []):
+            cnt += 1
+            severity = "error" if msg.get("severity") == 2 else "warning"
+            grouped[fp].append({
+                "line": msg.get("line"),
+                "column": msg.get("column"),
+                "severity": severity,
+                "message": msg.get("message", ""),
+                "rule": msg.get("ruleId", ""),
+                "raw": f"{fp}:{msg.get('line')}:{msg.get('column')}: [{severity}] {msg.get('message', '')} ({msg.get('ruleId', '')})"
+            })
+    return grouped, cnt
+
+
+def process_ruff(data: list[Any]) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process Ruff native JSON output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for item in data:
+        fp = item.get("filename", "")
+        loc = item.get("location", {})
+        grouped[fp].append({
+            "line": loc.get("row"),
+            "column": loc.get("column"),
+            "code": item.get("code", ""),
+            "message": item.get("message", ""),
+            "raw": f"{fp}:{loc.get('row')}:{loc.get('column')}: {item.get('code', '')} {item.get('message', '')}"
+        })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_pyright(data: dict[str, Any]) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process Pyright native JSON output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    diagnostics = data.get("generalDiagnostics", [])
+    for item in diagnostics:
+        fp = item.get("file", "")
+        rng = item.get("range", {}).get("start", {})
+        grouped[fp].append({
+            "line": rng.get("line", 0) + 1,
+            "column": rng.get("character", 0) + 1,
+            "severity": item.get("severity", "error"),
+            "rule": item.get("rule", ""),
+            "message": item.get("message", ""),
+            "raw": f"{fp}:{rng.get('line', 0) + 1}:{rng.get('character', 0) + 1}: [{item.get('severity', 'error')}] {item.get('message', '')}"
+        })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_mypy_json(data: list[Any]) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process Mypy JSON output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for item in data:
+        fp = item.get("file", "")
+        grouped[fp].append({
+            "line": item.get("line"),
+            "column": item.get("column"),
+            "severity": item.get("severity", "error"),
+            "code": item.get("code", ""),
+            "message": item.get("message", ""),
+            "raw": f"{fp}:{item.get('line')}:{item.get('column')}: [{item.get('severity', 'error')}] {item.get('message', '')} [{item.get('code', '')}]"
+        })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_knip(data: dict[str, Any]) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process Knip native JSON output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    cnt = 0
+    categories = [
+        "dependencies", "devDependencies", "optionalPeerDependencies",
+        "unlisted", "binaries", "unresolved", "exports", "types", "duplicates"
+    ]
+    for issue in data.get("issues", []):
+        fp = issue.get("file", "unknown")
+        for category in categories:
+            items = issue.get(category, [])
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                cnt += 1
+                name = item.get("name", item.get("symbol", ""))
+                line_num = item.get("line")
+                col_num = item.get("col")
+                grouped[fp].append({
+                    "line": line_num,
+                    "column": col_num,
+                    "category": category,
+                    "rule": category,
+                    "message": f"[{category}] {name}",
+                    "raw": f"{fp}:{line_num or 0}:{col_num or 0}: [{category}] {name}"
+                })
+    return grouped, cnt
+
+
+def process_biome_json(data: dict[str, Any]) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process Biome native JSON output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    diagnostics = data.get("diagnostics", [])
+    for item in diagnostics:
+        location = item.get("location", {})
+        path_obj = location.get("path", {})
+        fp = path_obj.get("file", "unknown") if isinstance(path_obj, dict) else str(path_obj)
+        fp = fp.replace("\\\\", "/").replace("\\", "/")
+        span = location.get("span", {})
+        start_offset = span.get("start", 0) if isinstance(span, dict) else 0
+        severity = item.get("severity", "error").lower()
+        category = item.get("category", "")
+        message_data = item.get("message", item.get("description", ""))
+        if isinstance(message_data, list):
+            message = " ".join(
+                str(m.get("content", "")) if isinstance(m, dict) else str(m)
+                for m in message_data
+            ).strip()
+        else:
+            message = str(message_data)
+        grouped[fp].append({
+            "line": None,
+            "column": None,
+            "offset": start_offset,
+            "severity": severity,
+            "rule": category,
+            "message": message,
+            "raw": f"{fp}: [{severity}] {category}: {message}"
+        })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_biome_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process Biome text/stderr output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    lines = text_output.strip().split('\n')
+    cnt = 0
+    pattern = re.compile(r'^([^\s]+\.(?:js|ts|jsx|tsx|cjs|mjs)):(\d+):(\d+)\s+(lint/\S+|format)\s*')
+    for i, line in enumerate(lines):
+        line_stripped = line.strip()
+        if not line_stripped:
+            continue
+        match = pattern.match(line_stripped)
+        if match:
+            fp = match.group(1).replace("\\", "/")
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            rule = match.group(4)
+            message_line = ""
+            if i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                if next_line.startswith('\u00d7') or next_line.startswith('!'):
+                    message_line = next_line.lstrip('\u00d7!').strip()
+            cnt += 1
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "severity": "error" if "error" in rule.lower() else "warning",
+                "rule": rule,
+                "message": message_line or rule,
+                "raw": f"{fp}:{line_num}:{col_num}: {rule} {message_line}"
+            })
+    return grouped, cnt
+
+
+def process_ty_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process ty type checker text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):(\d+):(\d+):\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            message = match.group(4).strip()
+            code = ""
+            if message.startswith("error["):
+                code_end = message.find("]")
+                if code_end > 6:
+                    code = message[6:code_end]
+                    message = message[code_end + 1:].strip().lstrip(":").strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_vulture_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process vulture dead code detection text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):(\d+):\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            message = match.group(3).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": None,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_darglint_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    r"""Process darglint docstring linting text output.
+
+    Darglint outputs format: file:function:line: CODE: message
+    Example: intellicrack\\config.py:_ensure_config_manager_imported:35: DAR201: - return
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):([^:]+):(\d+):\s*(\S+):\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            func_name = match.group(2)
+            line_num = int(match.group(3))
+            code = match.group(4)
+            message = match.group(5).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": None,
+                "function": func_name,
+                "code": code,
+                "message": f"[{func_name}] {message}",
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_dead_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process dead code linting text output.
+
+    Dead tool outputs format: varname is never read, defined in file:line
+    Example: health is never read, defined in intellicrack/ai/local_gguf_server.py:398
+    Also handles multiple locations: var is never read, defined in file1:line1, file2:line2
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+?)\s+is never read,\s+defined in\s+(.+)$')
+    location_pattern = re.compile(r'([^,\s]+\.py):(\d+)')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            var_name = match.group(1).strip()
+            locations_str = match.group(2).strip()
+            locations = location_pattern.findall(locations_str)
+            for fp, line_num_str in locations:
+                grouped[fp].append({
+                    "line": int(line_num_str),
+                    "column": None,
+                    "variable": var_name,
+                    "message": f"'{var_name}' is never read",
+                    "raw": line
+                })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_mypy_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process mypy text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):(\d+):(\d+):\s*(\w+):\s*(.+)$')
+    pattern2 = re.compile(r'^(.+\.py):(\d+):\s*(\w+):\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line or line.startswith('Found ') or line.startswith('Success:'):
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            severity = match.group(4)
+            message = match.group(5).strip()
+            code = ""
+            if message.endswith(']') and '[' in message:
+                bracket_pos = message.rfind('[')
+                code = message[bracket_pos + 1:-1]
+                message = message[:bracket_pos].strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "severity": severity,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+        else:
+            match2 = pattern2.match(line)
+            if match2:
+                fp = match2.group(1)
+                line_num = int(match2.group(2))
+                severity = match2.group(3)
+                message = match2.group(4).strip()
+                code = ""
+                if message.endswith(']') and '[' in message:
+                    bracket_pos = message.rfind('[')
+                    code = message[bracket_pos + 1:-1]
+                    message = message[:bracket_pos].strip()
+                grouped[fp].append({
+                    "line": line_num,
+                    "column": None,
+                    "severity": severity,
+                    "code": code,
+                    "message": message,
+                    "raw": line
+                })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_bandit_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process bandit security linting text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    current_file = ""
+    current_line = 0
+    current_severity = ""
+    current_confidence = ""
+    current_issue = ""
+    current_code = ""
+
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith('>> Issue:'):
+            if current_file and current_issue:
+                grouped[current_file].append({
+                    "line": current_line,
+                    "column": None,
+                    "severity": current_severity,
+                    "confidence": current_confidence,
+                    "code": current_code,
+                    "message": current_issue,
+                    "raw": f"{current_file}:{current_line}: [{current_severity}] {current_code}: {current_issue}"
+                })
+            current_issue = line[9:].strip()
+            if current_issue.startswith('['):
+                bracket_end = current_issue.find(']')
+                if bracket_end > 0:
+                    current_code = current_issue[1:bracket_end]
+                    current_issue = current_issue[bracket_end + 1:].strip()
+        elif line.startswith('Severity:'):
+            parts = line.split()
+            if len(parts) >= 2:
+                current_severity = parts[1].rstrip(':')
+            if 'Confidence:' in line:
+                conf_idx = line.find('Confidence:')
+                conf_parts = line[conf_idx:].split()
+                if len(conf_parts) >= 2:
+                    current_confidence = conf_parts[1]
+        elif line.startswith('Location:'):
+            loc_match = re.search(r'Location:\s*(.+\.py):(\d+)', line)
+            if loc_match:
+                current_file = loc_match.group(1)
+                current_line = int(loc_match.group(2))
+        elif line.startswith('---') or line.startswith('Run started'):
+            if current_file and current_issue:
+                grouped[current_file].append({
+                    "line": current_line,
+                    "column": None,
+                    "severity": current_severity,
+                    "confidence": current_confidence,
+                    "code": current_code,
+                    "message": current_issue,
+                    "raw": f"{current_file}:{current_line}: [{current_severity}] {current_code}: {current_issue}"
+                })
+            current_file = ""
+            current_issue = ""
+            current_code = ""
+
+    if current_file and current_issue:
+        grouped[current_file].append({
+            "line": current_line,
+            "column": None,
+            "severity": current_severity,
+            "confidence": current_confidence,
+            "code": current_code,
+            "message": current_issue,
+            "raw": f"{current_file}:{current_line}: [{current_severity}] {current_code}: {current_issue}"
+        })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_clippy_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process cargo clippy text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'-->\s*(.+\.rs):(\d+):(\d+)')
+    current_level = ""
+    current_message = ""
+    lines = text_output.strip().split('\n')
+    for line in lines:
+        line_stripped = line.strip()
+        if line_stripped.startswith('warning:') or line_stripped.startswith('error:'):
+            parts = line_stripped.split(':', 1)
+            current_level = parts[0]
+            current_message = parts[1].strip() if len(parts) > 1 else ""
+        match = pattern.search(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "severity": current_level,
+                "message": current_message,
+                "raw": f"{fp}:{line_num}:{col_num}: [{current_level}] {current_message}"
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_markdownlint_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process markdownlint text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.md):(\d+)(?::(\d+))?\s*(MD\d+/\S+|\S+)?\s*(.*)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3)) if match.group(3) else None
+            code = match.group(4) or ""
+            message = match.group(5).strip() if match.group(5) else code
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_yamllint_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process yamllint text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    current_file = ""
+    pattern = re.compile(r'^\s*(\d+):(\d+)\s+(\w+)\s+(.+)$')
+    for line in text_output.strip().split('\n'):
+        line_stripped = line.strip()
+        if not line_stripped:
+            continue
+        if line_stripped.startswith('./') or line_stripped.endswith('.yml') or line_stripped.endswith('.yaml'):
+            current_file = line_stripped
+        else:
+            match = pattern.match(line_stripped)
+            if match and current_file:
+                line_num = int(match.group(1))
+                col_num = int(match.group(2))
+                severity = match.group(3)
+                message = match.group(4).strip()
+                code = ""
+                if message.startswith('(') and ')' in message:
+                    paren_end = message.find(')')
+                    code = message[1:paren_end]
+                    message = message[paren_end + 1:].strip()
+                grouped[current_file].append({
+                    "line": line_num,
+                    "column": col_num,
+                    "severity": severity,
+                    "code": code,
+                    "message": message,
+                    "raw": f"{current_file}:{line_num}:{col_num}: [{severity}] {message}"
+                })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_uncalled_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process uncalled dead function detection text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):\s*Unused function\s*[\'"]?(\w+)[\'"]?')
+    pattern2 = re.compile(r'^(.+\.py):(\d+):\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            func_name = match.group(2)
+            grouped[fp].append({
+                "line": None,
+                "column": None,
+                "message": f"Unused function: {func_name}",
+                "raw": line
+            })
+        else:
+            match2 = pattern2.match(line)
+            if match2:
+                fp = match2.group(1)
+                line_num = int(match2.group(2))
+                message = match2.group(3).strip()
+                grouped[fp].append({
+                    "line": line_num,
+                    "column": None,
+                    "message": message,
+                    "raw": line
+                })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_deadcode_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process deadcode text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):(\d+):\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line or line.startswith('Scanning') or line.startswith('Found'):
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            message = match.group(3).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": None,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_pmd_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    r"""Process PMD Java analysis text output.
+
+    PMD text output format: file:line:\tRuleName:\tMessage
+    Example: intellicrack\\scripts\\ghidra\\AdvancedAnalysis.java:1:\tExcessiveImports:\tA high...
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.java):(\d+):\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line or line.startswith('[') or line.startswith('WARN'):
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            rest = match.group(3).strip()
+            parts = rest.split('\t')
+            if len(parts) >= 2:
+                rule = parts[0].rstrip(':').strip()
+                message = parts[1].strip() if len(parts) > 1 else rest
+            else:
+                parts = rest.split(':', 1)
+                rule = parts[0].strip() if parts else ""
+                message = parts[1].strip() if len(parts) > 1 else rest
+            grouped[fp].append({
+                "line": line_num,
+                "column": None,
+                "rule": rule,
+                "message": f"[{rule}] {message}" if rule else message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_checkstyle_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process Checkstyle Java analysis text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^\[(\w+)\]\s*(.+\.java):(\d+)(?::(\d+))?:\s*(.+)$')
+    pattern2 = re.compile(r'^(.+\.java):(\d+)(?::(\d+))?:\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line or line.startswith('Starting audit') or line.startswith('Audit done'):
+            continue
+        match = pattern.match(line)
+        if match:
+            severity = match.group(1)
+            fp = match.group(2)
+            line_num = int(match.group(3))
+            col_num = int(match.group(4)) if match.group(4) else None
+            message = match.group(5).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "severity": severity,
+                "message": message,
+                "raw": line
+            })
+        else:
+            match2 = pattern2.match(line)
+            if match2:
+                fp = match2.group(1)
+                line_num = int(match2.group(2))
+                col_num = int(match2.group(3)) if match2.group(3) else None
+                message = match2.group(4).strip()
+                grouped[fp].append({
+                    "line": line_num,
+                    "column": col_num,
+                    "message": message,
+                    "raw": line
+                })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_cargo_audit_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process cargo-audit security vulnerability text output.
+
+    Cargo-audit output format (after fetching):
+    Crate:    dotenv
+    Version:  0.15.0
+    Warning:  unmaintained
+    Title:    dotenv is Unmaintained
+    Date:     2021-12-24
+    ID:       RUSTSEC-2021-0141
+    URL:      https://rustsec.org/advisories/RUSTSEC-2021-0141
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    current_advisory: dict[str, str] = {}
+    lines = text_output.strip().split('\n')
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    for line in lines:
+        clean_line = ansi_escape.sub('', line).strip()
+        if not clean_line:
+            if current_advisory.get('crate') and current_advisory.get('id'):
+                crate_name = current_advisory.get('crate', 'unknown')
+                vuln_id = current_advisory.get('id', '')
+                title = current_advisory.get('title', '')
+                severity = current_advisory.get('warning', current_advisory.get('severity', 'warning'))
+                grouped['Cargo.toml'].append({
+                    "line": None,
+                    "column": None,
+                    "crate": crate_name,
+                    "vulnerability": vuln_id,
+                    "severity": severity,
+                    "message": f"[{crate_name}] {title} ({vuln_id})",
+                    "raw": f"Cargo.toml: [{severity}] {crate_name} - {title} ({vuln_id})"
+                })
+                current_advisory = {}
+            continue
+        if ':' in clean_line:
+            parts = clean_line.split(':', 1)
+            key = parts[0].strip().lower()
+            value = parts[1].strip() if len(parts) > 1 else ''
+            if key == 'crate':
+                current_advisory['crate'] = value
+            elif key == 'version':
+                current_advisory['version'] = value
+            elif key == 'warning':
+                current_advisory['warning'] = value
+            elif key == 'title':
+                current_advisory['title'] = value
+            elif key == 'id':
+                current_advisory['id'] = value
+            elif key == 'severity':
+                current_advisory['severity'] = value
+    if current_advisory.get('crate') and current_advisory.get('id'):
+        crate_name = current_advisory.get('crate', 'unknown')
+        vuln_id = current_advisory.get('id', '')
+        title = current_advisory.get('title', '')
+        severity = current_advisory.get('warning', current_advisory.get('severity', 'warning'))
+        grouped['Cargo.toml'].append({
+            "line": None,
+            "column": None,
+            "crate": crate_name,
+            "vulnerability": vuln_id,
+            "severity": severity,
+            "message": f"[{crate_name}] {title} ({vuln_id})",
+            "raw": f"Cargo.toml: [{severity}] {crate_name} - {title} ({vuln_id})"
+        })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_cargo_deny_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process cargo-deny policy enforcement text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(error|warning)\[(\w+)\]:\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            severity = match.group(1)
+            code = match.group(2)
+            message = match.group(3).strip()
+            grouped['Cargo.toml'].append({
+                "line": None,
+                "column": None,
+                "severity": severity,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+        elif 'denied' in line.lower() or 'banned' in line.lower() or 'unauthorized' in line.lower():
+            grouped['Cargo.toml'].append({
+                "line": None,
+                "column": None,
+                "message": line,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_shellcheck_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process shellcheck shell script analysis text output (GCC format)."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.(?:sh|bash)):(\d+):(\d+):\s*(\w+):\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            severity = match.group(4)
+            message = match.group(5).strip()
+            code = ""
+            if message.startswith('[SC'):
+                bracket_end = message.find(']')
+                if bracket_end > 0:
+                    code = message[1:bracket_end]
+                    message = message[bracket_end + 1:].strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "severity": severity,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_jsonlint_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process JSON validation text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.json):\s*line\s*(\d+),\s*col\s*(\d+):\s*(.+)$')
+    pattern2 = re.compile(r'^(.+\.json):\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line or line.isdigit():
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            message = match.group(4).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "message": message,
+                "raw": line
+            })
+        else:
+            match2 = pattern2.match(line)
+            if match2:
+                fp = match2.group(1)
+                message = match2.group(2).strip()
+                line_num = None
+                if 'line ' in message:
+                    lm = re.search(r'line\s*(\d+)', message)
+                    if lm:
+                        line_num = int(lm.group(1))
+                grouped[fp].append({
+                    "line": line_num,
+                    "column": None,
+                    "message": message,
+                    "raw": line
+                })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_psscriptanalyzer_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process PSScriptAnalyzer PowerShell analysis text output."""
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.ps[md]?1):(\d+):(\d+):\s*\[(\w+)\]\s*(.+?)\s*\((\w+)\)$')
+    pattern2 = re.compile(r'^(.+\.ps[md]?1):(\d+):\s*(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            severity = match.group(4)
+            message = match.group(5).strip()
+            rule = match.group(6)
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "severity": severity,
+                "rule": rule,
+                "message": message,
+                "raw": line
+            })
+        else:
+            match2 = pattern2.match(line)
+            if match2:
+                fp = match2.group(1)
+                line_num = int(match2.group(2))
+                message = match2.group(3).strip()
+                grouped[fp].append({
+                    "line": line_num,
+                    "column": None,
+                    "message": message,
+                    "raw": line
+                })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_flake8_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process flake8 style linting text output.
+
+    Flake8 output format: file:line:col: CODE message
+    Example: intellicrack/core/analysis/analyzer.py:15:1: E302 expected 2 blank lines
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):(\d+):(\d+):\s*([A-Z]\d+)\s+(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            code = match.group(4)
+            message = match.group(5).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_wemake_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process wemake-python-styleguide text output.
+
+    Wemake is a flake8 plugin with same format: file:line:col: CODE message
+    Codes include WPS (wemake), C (complexity), and standard flake8 codes.
+    Example: intellicrack/core/main.py:42:1: WPS226 Found string literal over-use
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):(\d+):(\d+):\s*([A-Z]+\d+)\s+(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            code = match.group(4)
+            message = match.group(5).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_mccabe_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Process mccabe complexity checker text output.
+
+    McCabe output format: file:line:col: C901 'func' is too complex (N)
+    Example: intellicrack/core/main.py:100:1: C901 'process_binary' is too complex (15)
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    pattern = re.compile(r'^(.+\.py):(\d+):(\d+):\s*(C\d+)\s+(.+)$')
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            col_num = int(match.group(3))
+            code = match.group(4)
+            message = match.group(5).strip()
+            complexity = None
+            complexity_match = re.search(r'\((\d+)\)$', message)
+            if complexity_match:
+                complexity = int(complexity_match.group(1))
+            grouped[fp].append({
+                "line": line_num,
+                "column": col_num,
+                "code": code,
+                "complexity": complexity,
+                "message": message,
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_pydocstyle_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    r"""Process pydocstyle docstring linting text output.
+
+    Pydocstyle outputs in two-line format:
+    file:line func/class name:
+        CODE: message
+    Example:
+    intellicrack\core\main.py:15 in public function `process`:
+        D103: Missing docstring in public function
+    Also handles single-line format: file:line: CODE: message
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    lines = text_output.strip().split('\n')
+    current_file = ""
+    current_line = 0
+    current_context = ""
+    location_pattern = re.compile(r'^(.+\.py):(\d+)\s+(.*)$')
+    code_pattern = re.compile(r'^\s*(D\d+):\s*(.+)$')
+    single_line_pattern = re.compile(r'^(.+\.py):(\d+):\s*(D\d+):\s*(.+)$')
+
+    for line in lines:
+        if not line.strip():
+            continue
+        single_match = single_line_pattern.match(line)
+        if single_match:
+            fp = single_match.group(1)
+            line_num = int(single_match.group(2))
+            code = single_match.group(3)
+            message = single_match.group(4).strip()
+            grouped[fp].append({
+                "line": line_num,
+                "column": None,
+                "code": code,
+                "message": message,
+                "raw": line
+            })
+            continue
+        loc_match = location_pattern.match(line)
+        if loc_match:
+            current_file = loc_match.group(1)
+            current_line = int(loc_match.group(2))
+            current_context = loc_match.group(3).strip()
+            continue
+        code_match = code_pattern.match(line)
+        if code_match and current_file:
+            code = code_match.group(1)
+            message = code_match.group(2).strip()
+            if current_context:
+                message = f"{current_context} - {message}"
+            grouped[current_file].append({
+                "line": current_line,
+                "column": None,
+                "code": code,
+                "context": current_context,
+                "message": message,
+                "raw": f"{current_file}:{current_line}: {code}: {message}"
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_radon_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    r"""Process radon complexity metrics text output.
+
+    Radon cc (cyclomatic complexity) output formats:
+    file
+        line:col: class/method name - rank (complexity)
+
+    Example:
+    intellicrack\core\main.py
+        M 100:4 process_binary - C (15)
+        F 200:0 helper_func - A (3)
+
+    Codes: F=function, M=method, C=class
+    Ranks: A (1-5), B (6-10), C (11-20), D (21-30), E (31-40), F (41+)
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    lines = text_output.strip().split('\n')
+    current_file = ""
+    file_pattern = re.compile(r'^(\S+\.py)\s*$')
+    finding_pattern = re.compile(r'^\s+([FMCE])\s+(\d+):(\d+)\s+(.+?)\s+-\s+([A-F])\s+\((\d+)\)$')
+
+    for line in lines:
+        if not line.strip():
+            continue
+        file_match = file_pattern.match(line)
+        if file_match:
+            current_file = file_match.group(1)
+            continue
+        finding_match = finding_pattern.match(line)
+        if finding_match and current_file:
+            entity_type = finding_match.group(1)
+            line_num = int(finding_match.group(2))
+            col_num = int(finding_match.group(3))
+            name = finding_match.group(4).strip()
+            rank = finding_match.group(5)
+            complexity = int(finding_match.group(6))
+            type_names = {"F": "function", "M": "method", "C": "class", "E": "exception"}
+            entity_name = type_names.get(entity_type, entity_type)
+            grouped[current_file].append({
+                "line": line_num,
+                "column": col_num,
+                "entity_type": entity_type,
+                "name": name,
+                "rank": rank,
+                "complexity": complexity,
+                "message": f"{entity_name} '{name}' - complexity {complexity} (rank {rank})",
+                "raw": f"{current_file}:{line_num}:{col_num}: {entity_name} '{name}' - complexity {complexity} (rank {rank})"
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def process_xenon_text(text_output: str) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    r"""Process xenon code complexity monitoring text output.
+
+    Xenon output format (when thresholds exceeded):
+    ERROR:xenon:block "file:line name" has a rank of X
+
+    Example:
+    ERROR:xenon:block "intellicrack\config.py:150 get_system_path" has a rank of C
+
+    Ranks: A (1-5), B (6-10), C (11-20), D (21-30), E (31-40), F (41+)
+    """
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    error_pattern = re.compile(
+        r'^ERROR:xenon:block\s+"([^"]+):(\d+)\s+([^"]+)"\s+has a rank of\s+([A-F])$'
+    )
+    alt_pattern = re.compile(r'^(.+\.py)\s+-\s+([FMCE])\s+(.+?)\s+-\s+([A-F])\s+\((\d+)\)$')
+
+    for line in text_output.strip().split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        match = error_pattern.match(line)
+        if match:
+            fp = match.group(1)
+            line_num = int(match.group(2))
+            name = match.group(3).strip()
+            rank = match.group(4)
+            rank_complexity = {"A": 5, "B": 10, "C": 20, "D": 30, "E": 40, "F": 50}
+            complexity = rank_complexity.get(rank, 0)
+            grouped[fp].append({
+                "line": line_num,
+                "column": None,
+                "name": name,
+                "rank": rank,
+                "complexity": complexity,
+                "message": f"'{name}' has rank {rank} (complexity > threshold)",
+                "raw": f"{fp}:{line_num}: '{name}' has rank {rank}"
+            })
+            continue
+        alt_match = alt_pattern.match(line)
+        if alt_match:
+            fp = alt_match.group(1)
+            entity_type = alt_match.group(2)
+            name = alt_match.group(3).strip()
+            rank = alt_match.group(4)
+            complexity = int(alt_match.group(5))
+            type_names = {"F": "function", "M": "method", "C": "class", "E": "exception"}
+            entity_name = type_names.get(entity_type, entity_type)
+            grouped[fp].append({
+                "line": None,
+                "column": None,
+                "entity_type": entity_type,
+                "name": name,
+                "rank": rank,
+                "complexity": complexity,
+                "message": f"{entity_name} '{name}' exceeds threshold - rank {rank} (complexity {complexity})",
+                "raw": line
+            })
+    cnt = sum(len(v) for v in grouped.values())
+    return grouped, cnt
+
+
+def escape_xml(s: str) -> str:
+    """Escape special XML characters."""
+    return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def write_outputs(tool: str, grouped: dict[str, list[dict[str, Any]]], cnt: int) -> None:
+    """Write findings to TXT, JSON, and XML files, sorted by file (descending by count)."""
+    for subdir in ("txt", "json", "xml"):
+        Path(f"reports/{subdir}").mkdir(parents=True, exist_ok=True)
+
+    sorted_files = sorted(grouped.keys(), key=lambda x: len(grouped[x]), reverse=True)
+
+    txt_lines: list[str] = []
+    for fp in sorted_files:
+        if txt_lines:
+            txt_lines.extend(["", ""])
+        txt_lines.append(f"{len(grouped[fp])} findings in {fp}")
+        txt_lines.append("")
+        for i, f in enumerate(grouped[fp]):
+            txt_lines.append(f["raw"])
+            if i < len(grouped[fp]) - 1:
+                txt_lines.append("")
+
+    if cnt == 0:
+        txt_lines = ["No findings."]
+
+    Path(f"reports/txt/{tool}_findings.txt").write_text("\n".join(txt_lines), encoding="utf-8")
+
+    ts = datetime.now().isoformat()
+    files_arr = [{"path": fp, "count": len(grouped[fp]), "findings": grouped[fp]} for fp in sorted_files]
+    json_obj = {"tool": tool, "generated": ts, "total_findings": cnt, "total_files": len(sorted_files), "files": files_arr}
+    Path(f"reports/json/{tool}_findings.json").write_text(json.dumps(json_obj, indent=2), encoding="utf-8")
+
+    xml = f'<?xml version="1.0" encoding="UTF-8"?><LintReport tool="{tool}" generated="{ts}"><Summary><TotalFindings>{cnt}</TotalFindings><TotalFiles>{len(sorted_files)}</TotalFiles></Summary><Files>'
+    for fp in sorted_files:
+        xml += f'<File path="{escape_xml(fp)}" count="{len(grouped[fp])}">'
+        for f in grouped[fp]:
+            line_val = f.get("line") or 0
+            col = f.get("column") or 0
+            sev = f.get("severity", "")
+            rule = f.get("rule", f.get("code", ""))
+            msg = f.get("message", "")
+            raw = f.get("raw", "")
+            xml += f'<Finding line="{line_val}" column="{col}" severity="{escape_xml(sev)}" rule="{escape_xml(rule)}"><Message>{escape_xml(msg)}</Message><Raw>{escape_xml(raw)}</Raw></Finding>'
+        xml += "</File>"
+    xml += "</Files></LintReport>"
+    Path(f"reports/xml/{tool}_findings.xml").write_text(xml, encoding="utf-8")
+
+    print(f"[{tool.upper()}] {cnt} findings")
+
+
+def load_json_file(input_file: str) -> dict[str, Any] | list[Any]:
+    """Load JSON from a file, handling BOM and encoding issues."""
+    try:
+        with open(input_file, encoding="utf-8-sig") as f:
+            content = f.read().strip()
+            if not content:
+                return {}
+            return json.loads(content)
+    except json.JSONDecodeError:
+        return {}
+    except FileNotFoundError:
+        return {}
+    except Exception:
+        return {}
+
+
+def load_text_file(input_file: str) -> str:
+    """Load text from a file."""
+    try:
+        with open(input_file, encoding="utf-8-sig") as f:
+            return f.read()
+    except FileNotFoundError:
+        return ""
+    except Exception:
+        return ""
+
+
+def load_json_stdin() -> dict[str, Any] | list[Any]:
+    """Load JSON from stdin, handling various input formats."""
+    try:
+        content = sys.stdin.read().strip()
+        if not content:
+            return {}
+        lines = content.split('\n')
+        for line in lines:
+            line = line.strip()
+            if line.startswith('{') or line.startswith('['):
+                try:
+                    return json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            return {"_raw_text": content}
+    except Exception:
+        return {}
+
+
+TEXT_PROCESSORS: dict[str, Callable[[str], tuple[dict[str, list[dict[str, Any]]], int]]] = {
+    "ty": process_ty_text,
+    "vulture": process_vulture_text,
+    "darglint": process_darglint_text,
+    "dead": process_dead_text,
+    "mypy": process_mypy_text,
+    "bandit": process_bandit_text,
+    "clippy": process_clippy_text,
+    "markdownlint": process_markdownlint_text,
+    "yamllint": process_yamllint_text,
+    "uncalled": process_uncalled_text,
+    "deadcode": process_deadcode_text,
+    "pmd": process_pmd_text,
+    "checkstyle": process_checkstyle_text,
+    "cargo-audit": process_cargo_audit_text,
+    "cargo_audit": process_cargo_audit_text,
+    "cargo-deny": process_cargo_deny_text,
+    "cargo_deny": process_cargo_deny_text,
+    "shellcheck": process_shellcheck_text,
+    "jsonlint": process_jsonlint_text,
+    "psscriptanalyzer": process_psscriptanalyzer_text,
+    "biome": process_biome_text,
+    "flake8": process_flake8_text,
+    "wemake": process_wemake_text,
+    "mccabe": process_mccabe_text,
+    "pydocstyle": process_pydocstyle_text,
+    "radon": process_radon_text,
+    "xenon": process_xenon_text,
+}
+
+JSON_PROCESSORS: dict[str, tuple[Callable[..., tuple[dict[str, list[dict[str, Any]]], int]], Any]] = {
+    "eslint": (process_eslint, []),
+    "ruff": (process_ruff, []),
+    "pyright": (process_pyright, {"generalDiagnostics": []}),
+    "mypy": (process_mypy_json, []),
+    "knip": (process_knip, {"issues": []}),
+    "biome": (process_biome_json, {"diagnostics": []}),
+}
+
+ALL_TOOLS = sorted(set(TEXT_PROCESSORS.keys()) | set(JSON_PROCESSORS.keys()))
+
+
+def main() -> None:
+    """Main entry point for processing linter output."""
+    if len(sys.argv) < 2:
+        print("Usage: process_lint_json.py <tool> [input_file]")
+        print("       process_lint_json.py <tool> --stdin")
+        print("       process_lint_json.py <tool> --text <input_file>  (for text parsing)")
+        print(f"Tools: {', '.join(ALL_TOOLS)}")
+        sys.exit(1)
+
+    tool = sys.argv[1].lower()
+    input_file = ""
+
+    use_text_mode = len(sys.argv) >= 3 and sys.argv[2] == "--text"
+    use_stdin = len(sys.argv) < 3 or sys.argv[2] == "--stdin"
+
+    if use_text_mode:
+        if len(sys.argv) < 4:
+            print("Error: --text requires input file")
+            sys.exit(1)
+        input_file = sys.argv[3]
+        text_content = load_text_file(input_file)
+        data: dict[str, Any] | list[Any] = {"_raw_text": text_content}
+    elif use_stdin:
+        data = load_json_stdin()
+    else:
+        input_file = sys.argv[2]
+        data = load_json_file(input_file)
+
+    if tool not in set(TEXT_PROCESSORS.keys()) | set(JSON_PROCESSORS.keys()):
+        print(f"Unknown tool: {tool}")
+        print(f"Supported tools: {', '.join(ALL_TOOLS)}")
+        sys.exit(1)
+
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    cnt = 0
+
+    if use_text_mode and tool in TEXT_PROCESSORS:
+        text_content = ""
+        if isinstance(data, dict) and "_raw_text" in data:
+            text_content = str(data["_raw_text"])
+        grouped, cnt = TEXT_PROCESSORS[tool](text_content)
+    elif isinstance(data, dict) and "_raw_text" in data and tool in TEXT_PROCESSORS:
+        grouped, cnt = TEXT_PROCESSORS[tool](str(data["_raw_text"]))
+    elif tool in JSON_PROCESSORS:
+        processor, empty_default = JSON_PROCESSORS[tool]
+        if not data:
+            data = empty_default
+        grouped, cnt = processor(data)
+    elif tool in TEXT_PROCESSORS:
+        text_content = ""
+        if input_file:
+            text_content = load_text_file(input_file)
+        grouped, cnt = TEXT_PROCESSORS[tool](text_content)
+
+    write_outputs(tool, grouped, cnt)
+
+
+if __name__ == "__main__":
+    main()

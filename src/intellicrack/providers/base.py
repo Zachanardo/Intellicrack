@@ -1,0 +1,482 @@
+"""Base protocol for LLM providers.
+
+This module defines the abstract interface that all LLM provider implementations
+must follow, enabling consistent interaction across Anthropic, OpenAI, Google,
+Ollama, and OpenRouter.
+"""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, TypedDict
+
+from ..core.types import (
+    Message,
+    ModelInfo,
+    ProviderCredentials,
+    ToolCall,
+    ToolDefinition,
+)
+
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from ..core.types import ProviderName
+
+
+class JSONSchemaProperty(TypedDict, total=False):
+    """JSON Schema property definition for tool parameters."""
+
+    type: str
+    description: str
+    enum: list[str]
+    default: str | int | float | bool | None
+
+
+class JSONSchemaParameters(TypedDict):
+    """JSON Schema parameters object for tool functions."""
+
+    type: str
+    properties: dict[str, JSONSchemaProperty]
+    required: list[str]
+
+
+class AnthropicToolSchema(TypedDict):
+    """Anthropic tool schema format."""
+
+    name: str
+    description: str
+    input_schema: JSONSchemaParameters
+
+
+class OpenAIFunctionSchema(TypedDict):
+    """OpenAI function definition within a tool."""
+
+    name: str
+    description: str
+    parameters: JSONSchemaParameters
+
+
+class OpenAIToolSchema(TypedDict):
+    """OpenAI tool schema format."""
+
+    type: str
+    function: OpenAIFunctionSchema
+
+
+class GoogleFunctionDeclaration(TypedDict):
+    """Google Gemini function declaration format."""
+
+    name: str
+    description: str
+    parameters: JSONSchemaParameters
+
+
+class MessageDict(TypedDict, total=False):
+    """Provider-agnostic message dictionary."""
+
+    role: str
+    content: str | list[dict[str, object]]
+
+
+class LLMProviderBase(ABC):
+    """Abstract base class for LLM providers.
+
+    All provider implementations must inherit from this class and implement
+    the abstract methods defined here. This ensures a consistent interface
+    for the orchestrator to interact with any LLM provider.
+
+    Attributes:
+        _credentials: The stored credentials for this provider.
+        _connected: Whether the provider is currently connected.
+        _cancel_requested: Whether a cancellation has been requested.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the base provider."""
+        self._credentials: ProviderCredentials | None = None
+        self._connected: bool = False
+        self._cancel_requested: bool = False
+
+    @property
+    @abstractmethod
+    def name(self) -> ProviderName:
+        """Get the provider's name.
+
+        Returns:
+            The ProviderName enum value for this provider.
+        """
+
+    @property
+    def is_connected(self) -> bool:
+        """Check if the provider is connected and authenticated.
+
+        Returns:
+            True if the provider is ready to accept requests.
+        """
+        return self._connected
+
+    @abstractmethod
+    async def connect(self, credentials: ProviderCredentials) -> None:
+        """Connect to the provider with given credentials.
+
+        Args:
+            credentials: API credentials for authentication.
+
+        Raises:
+            AuthenticationError: If credentials are invalid.
+            ProviderError: If unable to connect to provider.
+        """
+
+    async def disconnect(self) -> None:
+        """Disconnect from the provider.
+
+        Cleans up any resources and invalidates the connection.
+        """
+        self._connected = False
+        self._credentials = None
+        self._cancel_requested = False
+
+    @abstractmethod
+    async def list_models(self) -> list[ModelInfo]:
+        """Dynamically fetch available models from the provider.
+
+        Returns:
+            List of available models with their capabilities.
+
+        Raises:
+            ProviderError: If not connected or request fails.
+        """
+
+    @abstractmethod
+    async def chat(
+        self,
+        messages: list[Message],
+        model: str,
+        tools: list[ToolDefinition] | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 4096,
+    ) -> tuple[Message, list[ToolCall] | None]:
+        """Send a chat completion request.
+
+        Args:
+            messages: Conversation history.
+            model: Model ID to use.
+            tools: Available tools for function calling.
+            temperature: Sampling temperature (0.0 to 1.0).
+            max_tokens: Maximum tokens in response.
+
+        Returns:
+            Tuple of (assistant message, tool calls if any).
+
+        Raises:
+            ModelNotFoundError: If model doesn't exist.
+            RateLimitError: If rate limited.
+            ProviderError: For other API errors.
+        """
+
+    @abstractmethod
+    async def chat_stream(
+        self,
+        messages: list[Message],
+        model: str,
+        tools: list[ToolDefinition] | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 4096,
+    ) -> AsyncIterator[str]:
+        """Stream a chat completion response.
+
+        Args:
+            messages: Conversation history.
+            model: Model ID to use.
+            tools: Available tools for function calling.
+            temperature: Sampling temperature (0.0 to 1.0).
+            max_tokens: Maximum tokens in response.
+
+        Yields:
+            Text chunks as they arrive.
+
+        Note:
+            Implementations should raise ModelNotFoundError if the model
+            doesn't exist, RateLimitError if rate limited, or ProviderError
+            for other API errors.
+        """
+        # Abstract async generator - yield required for type checker
+        yield ""
+
+    async def cancel_request(self) -> None:
+        """Cancel any in-flight request.
+
+        This method should safely abort ongoing API calls without
+        raising exceptions.
+        """
+        self._cancel_requested = True
+
+    @abstractmethod
+    def _convert_tools_to_provider_format(
+        self,
+        tools: list[ToolDefinition],
+    ) -> list[dict[str, object]]:
+        """Convert internal tool format to provider-specific format.
+
+        Args:
+            tools: List of ToolDefinition objects.
+
+        Returns:
+            List of tool definitions in provider's format.
+        """
+
+    @abstractmethod
+    def _convert_messages_to_provider_format(
+        self,
+        messages: list[Message],
+    ) -> list[dict[str, object]]:
+        """Convert internal message format to provider-specific format.
+
+        Args:
+            messages: List of Message objects.
+
+        Returns:
+            List of messages in provider's format.
+        """
+
+
+@dataclass
+class ProviderCapabilities:
+    """Describes the capabilities of an LLM provider.
+
+    Attributes:
+        supports_tools: Whether the provider supports function calling.
+        supports_vision: Whether the provider supports image input.
+        supports_streaming: Whether the provider supports streaming.
+        supports_json_mode: Whether the provider supports JSON output mode.
+        max_context_window: Maximum context window size in tokens.
+    """
+
+    supports_tools: bool = False
+    supports_vision: bool = False
+    supports_streaming: bool = True
+    supports_json_mode: bool = False
+    max_context_window: int = 128000
+
+
+@dataclass
+class ProviderState:
+    """Current state of a provider connection.
+
+    Attributes:
+        connected: Whether connected to the provider.
+        authenticated: Whether authentication succeeded.
+        last_request_time: Timestamp of last request.
+        requests_made: Total requests made this session.
+        errors_count: Number of errors encountered.
+        last_error: Last error message if any.
+    """
+
+    connected: bool = False
+    authenticated: bool = False
+    last_request_time: float | None = None
+    requests_made: int = 0
+    errors_count: int = 0
+    last_error: str | None = None
+
+
+@dataclass
+class ChatRequest:
+    """Encapsulates a chat request to an LLM provider.
+
+    Attributes:
+        messages: Conversation history.
+        model: Model ID to use.
+        tools: Available tools for function calling.
+        temperature: Sampling temperature.
+        max_tokens: Maximum response tokens.
+        stream: Whether to stream the response.
+    """
+
+    messages: list[Message]
+    model: str
+    tools: list[ToolDefinition] = field(default_factory=list)
+    temperature: float = 0.7
+    max_tokens: int = 4096
+    stream: bool = False
+
+
+@dataclass
+class ChatResponse:
+    """Encapsulates a chat response from an LLM provider.
+
+    Attributes:
+        message: The assistant's response message.
+        tool_calls: Tool calls requested by the model.
+        finish_reason: Why the response ended.
+        usage_prompt_tokens: Tokens used in prompt.
+        usage_completion_tokens: Tokens in completion.
+        model: Model that generated the response.
+    """
+
+    message: Message
+    tool_calls: list[ToolCall] | None = None
+    finish_reason: str = "stop"
+    usage_prompt_tokens: int = 0
+    usage_completion_tokens: int = 0
+    model: str = ""
+
+
+def _build_schema_property(
+    param_type: str,
+    description: str,
+    enum_values: list[str] | None = None,
+    default: object = None,
+) -> JSONSchemaProperty:
+    """Build a JSON Schema property from parameters.
+
+    Args:
+        param_type: The JSON Schema type string.
+        description: Description of the parameter.
+        enum_values: Optional list of allowed values.
+        default: Optional default value.
+
+    Returns:
+        JSONSchemaProperty with the specified values.
+    """
+    prop: JSONSchemaProperty = {
+        "type": param_type,
+        "description": description,
+    }
+    if enum_values is not None:
+        prop["enum"] = enum_values
+    if default is not None and isinstance(default, (str, int, float, bool)):
+        prop["default"] = default
+    return prop
+
+
+def create_anthropic_tool_schema(
+    tool: ToolDefinition,
+) -> list[AnthropicToolSchema]:
+    """Convert ToolDefinition to Anthropic's tool format.
+
+    Args:
+        tool: The tool definition to convert.
+
+    Returns:
+        List of tools in Anthropic's format.
+    """
+    tools: list[AnthropicToolSchema] = []
+
+    for func in tool.functions:
+        properties: dict[str, JSONSchemaProperty] = {}
+        required: list[str] = []
+
+        for param in func.parameters:
+            properties[param.name] = _build_schema_property(
+                param_type=param.type,
+                description=param.description,
+                enum_values=param.enum,
+                default=param.default,
+            )
+            if param.required:
+                required.append(param.name)
+
+        tool_schema: AnthropicToolSchema = {
+            "name": func.name,
+            "description": func.description,
+            "input_schema": {
+                "type": "object",
+                "properties": properties,
+                "required": required,
+            },
+        }
+        tools.append(tool_schema)
+
+    return tools
+
+
+def create_openai_tool_schema(
+    tool: ToolDefinition,
+) -> list[OpenAIToolSchema]:
+    """Convert ToolDefinition to OpenAI's tool format.
+
+    Args:
+        tool: The tool definition to convert.
+
+    Returns:
+        List of tools in OpenAI's format.
+    """
+    tools: list[OpenAIToolSchema] = []
+
+    for func in tool.functions:
+        properties: dict[str, JSONSchemaProperty] = {}
+        required: list[str] = []
+
+        for param in func.parameters:
+            properties[param.name] = _build_schema_property(
+                param_type=param.type,
+                description=param.description,
+                enum_values=param.enum,
+                default=param.default,
+            )
+            if param.required:
+                required.append(param.name)
+
+        tool_schema: OpenAIToolSchema = {
+            "type": "function",
+            "function": {
+                "name": func.name,
+                "description": func.description,
+                "parameters": {
+                    "type": "object",
+                    "properties": properties,
+                    "required": required,
+                },
+            },
+        }
+        tools.append(tool_schema)
+
+    return tools
+
+
+def create_google_tool_schema(
+    tool: ToolDefinition,
+) -> list[GoogleFunctionDeclaration]:
+    """Convert ToolDefinition to Google Gemini's tool format.
+
+    Args:
+        tool: The tool definition to convert.
+
+    Returns:
+        List of function declarations in Google's format.
+    """
+    function_declarations: list[GoogleFunctionDeclaration] = []
+
+    for func in tool.functions:
+        properties: dict[str, JSONSchemaProperty] = {}
+        required: list[str] = []
+
+        for param in func.parameters:
+            properties[param.name] = _build_schema_property(
+                param_type=param.type.upper(),
+                description=param.description,
+                enum_values=param.enum,
+                default=param.default,
+            )
+            if param.required:
+                required.append(param.name)
+
+        func_decl: GoogleFunctionDeclaration = {
+            "name": func.name,
+            "description": func.description,
+            "parameters": {
+                "type": "OBJECT",
+                "properties": properties,
+                "required": required,
+            },
+        }
+        function_declarations.append(func_decl)
+
+    return function_declarations
+
+
+LLMProvider = LLMProviderBase

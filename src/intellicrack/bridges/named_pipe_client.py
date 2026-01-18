@@ -1,0 +1,337 @@
+"""Named pipe client for x64dbg IPC."""
+
+from __future__ import annotations
+
+import asyncio
+import ctypes
+import json
+import os
+import uuid
+from collections.abc import Callable
+from ctypes import wintypes
+from dataclasses import dataclass
+from typing import Any
+
+from ..core.types import ToolError
+
+
+_LENGTH_PREFIX_SIZE = 4
+_CHUNK_SIZE = 65536
+
+EventHandler = Callable[[dict[str, Any]], None]
+
+
+@dataclass
+class PipeConfig:
+    """Configuration for named pipe client.
+
+    Attributes:
+        pipe_name: Named pipe path.
+        connect_timeout: Timeout for connecting to the pipe.
+        io_timeout: Timeout for read/write operations.
+        max_message_size: Maximum payload size in bytes.
+    """
+
+    pipe_name: str = r"\\.\pipe\intellicrack_x64dbg"
+    connect_timeout: float = 5.0
+    io_timeout: float = 10.0
+    max_message_size: int = 8 * 1024 * 1024
+
+
+class NamedPipeClient:
+    """Async named pipe client for x64dbg plugin IPC.
+
+    Attributes:
+        _config: Pipe configuration.
+        _handle: Windows pipe handle when connected.
+        _event_handler: Optional handler for event messages.
+    """
+
+    def __init__(
+        self,
+        config: PipeConfig | None = None,
+        event_handler: EventHandler | None = None,
+    ) -> None:
+        """Initialize the named pipe client.
+
+        Args:
+            config: Pipe configuration.
+            event_handler: Optional event handler.
+        """
+        self._config = config or PipeConfig()
+        self._handle: int | None = None
+        self._lock = asyncio.Lock()
+        self._event_handler = event_handler
+
+    @property
+    def is_connected(self) -> bool:
+        """Check connection status.
+
+        Returns:
+            True if connected to the pipe.
+        """
+        return self._handle is not None
+
+    def set_event_handler(self, handler: EventHandler | None) -> None:
+        """Set the event handler callback.
+
+        Args:
+            handler: Event handler to set.
+        """
+        self._event_handler = handler
+
+    async def connect(self) -> None:
+        """Connect to the named pipe.
+
+        Raises:
+            ToolError: If connection fails.
+        """
+        if os.name != "nt":
+            error_message = "Named pipes are only supported on Windows"
+            raise ToolError(error_message)
+
+        if self._handle is not None:
+            return
+
+        try:
+            self._handle = await asyncio.wait_for(
+                asyncio.to_thread(self._open_handle),
+                timeout=self._config.connect_timeout,
+            )
+        except TimeoutError as exc:
+            error_message = "Timed out connecting to named pipe"
+            raise ToolError(error_message) from exc
+
+    async def close(self) -> None:
+        """Close the pipe connection."""
+        if self._handle is None:
+            return
+        await asyncio.to_thread(self._close_handle)
+        self._handle = None
+
+    async def send_command(
+        self,
+        command: str,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Send a command and wait for response.
+
+        Args:
+            command: Command name.
+            params: Command parameters.
+
+        Returns:
+            Response payload.
+        """
+        request_id = str(uuid.uuid4())
+        request = {
+            "id": request_id,
+            "type": "command",
+            "command": command,
+            "params": params or {},
+        }
+
+        async with self._lock:
+            await self._send_message(request)
+            while True:
+                message = await self._read_message()
+                msg_type = str(message.get("type", ""))
+                if msg_type == "event":
+                    if self._event_handler is not None:
+                        self._event_handler(message)
+                    continue
+
+                if message.get("id") == request_id:
+                    return message
+
+    async def _send_message(self, payload: dict[str, Any]) -> None:
+        """Send a JSON message over the pipe.
+
+        Args:
+            payload: Message payload.
+
+        Raises:
+            ToolError: If sending fails.
+        """
+        data = json.dumps(payload, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+        if len(data) > self._config.max_message_size:
+            error_message = "Message exceeds maximum size"
+            raise ToolError(error_message)
+
+        length_prefix = len(data).to_bytes(_LENGTH_PREFIX_SIZE, "little", signed=False)
+        await self._write_bytes(length_prefix + data)
+
+    async def _read_message(self) -> dict[str, Any]:
+        """Read a JSON message from the pipe.
+
+        Returns:
+            Parsed JSON payload.
+
+        Raises:
+            ToolError: If reading or parsing fails.
+        """
+        length_bytes = await self._read_exact(_LENGTH_PREFIX_SIZE)
+        if len(length_bytes) != _LENGTH_PREFIX_SIZE:
+            error_message = "Failed to read message length"
+            raise ToolError(error_message)
+
+        length = int.from_bytes(length_bytes, "little", signed=False)
+        if length <= 0 or length > self._config.max_message_size:
+            error_message = "Invalid message length"
+            raise ToolError(error_message)
+
+        data = await self._read_exact(length)
+        try:
+            payload = json.loads(data.decode("utf-8"))
+        except json.JSONDecodeError as exc:
+            error_message = f"Invalid JSON payload: {exc}"
+            raise ToolError(error_message) from exc
+
+        if not isinstance(payload, dict):
+            error_message = "Unexpected message payload type"
+            raise ToolError(error_message)
+        return payload
+
+    async def _read_exact(self, size: int) -> bytes:
+        """Read an exact number of bytes from the pipe.
+
+        Args:
+            size: Number of bytes to read.
+
+        Returns:
+            Bytes read.
+
+        Raises:
+            ToolError: If read fails.
+        """
+        try:
+            return await asyncio.wait_for(
+                asyncio.to_thread(self._read_exact_sync, size),
+                timeout=self._config.io_timeout,
+            )
+        except TimeoutError as exc:
+            self._cancel_io()
+            error_message = "Timed out reading from pipe"
+            raise ToolError(error_message) from exc
+
+    async def _write_bytes(self, data: bytes) -> None:
+        """Write bytes to the pipe.
+
+        Args:
+            data: Bytes to write.
+
+        Raises:
+            ToolError: If write fails.
+        """
+        try:
+            await asyncio.wait_for(
+                asyncio.to_thread(self._write_sync, data),
+                timeout=self._config.io_timeout,
+            )
+        except TimeoutError as exc:
+            self._cancel_io()
+            error_message = "Timed out writing to pipe"
+            raise ToolError(error_message) from exc
+
+    def _open_handle(self) -> int:
+        if os.name != "nt":
+            error_message = "Named pipes are only supported on Windows"
+            raise ToolError(error_message)
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+        pipe_name = self._config.pipe_name
+        timeout_ms = int(self._config.connect_timeout * 1000)
+
+        wait_ok = kernel32.WaitNamedPipeW(pipe_name, timeout_ms)
+        if wait_ok == 0:
+            error = ctypes.get_last_error()
+            error_message = f"Named pipe not available (error {error})"
+            raise ToolError(error_message)
+
+        handle = kernel32.CreateFileW(
+            pipe_name,
+            0x80000000 | 0x40000000,
+            0,
+            None,
+            3,
+            0,
+            None,
+        )
+
+        if handle == wintypes.HANDLE(-1).value:
+            error = ctypes.get_last_error()
+            error_message = f"Failed to open pipe (error {error})"
+            raise ToolError(error_message)
+
+        return int(handle)
+
+    def _close_handle(self) -> None:
+        if self._handle is None:
+            return
+        ctypes.windll.kernel32.CloseHandle(self._handle)
+
+    def _read_exact_sync(self, size: int) -> bytes:
+        if self._handle is None:
+            error_message = "Pipe not connected"
+            raise ToolError(error_message)
+
+        kernel32 = ctypes.windll.kernel32
+        data = bytearray()
+        remaining = size
+
+        while remaining > 0:
+            chunk_size = min(_CHUNK_SIZE, remaining)
+            buffer = ctypes.create_string_buffer(chunk_size)
+            bytes_read = wintypes.DWORD(0)
+            success = kernel32.ReadFile(
+                self._handle,
+                buffer,
+                chunk_size,
+                ctypes.byref(bytes_read),
+                None,
+            )
+            if not success:
+                error = ctypes.get_last_error()
+                error_message = f"Pipe read failed (error {error})"
+                raise ToolError(error_message)
+            if bytes_read.value == 0:
+                error_message = "Pipe closed"
+                raise ToolError(error_message)
+            data.extend(buffer.raw[:bytes_read.value])
+            remaining -= bytes_read.value
+
+        return bytes(data)
+
+    def _write_sync(self, data: bytes) -> None:
+        if self._handle is None:
+            error_message = "Pipe not connected"
+            raise ToolError(error_message)
+
+        kernel32 = ctypes.windll.kernel32
+        total = len(data)
+        offset = 0
+
+        while offset < total:
+            chunk = data[offset:offset + _CHUNK_SIZE]
+            bytes_written = wintypes.DWORD(0)
+            success = kernel32.WriteFile(
+                self._handle,
+                chunk,
+                len(chunk),
+                ctypes.byref(bytes_written),
+                None,
+            )
+            if not success:
+                error = ctypes.get_last_error()
+                error_message = f"Pipe write failed (error {error})"
+                raise ToolError(error_message)
+            offset += bytes_written.value
+
+    def _cancel_io(self) -> None:
+        if self._handle is None:
+            return
+        cancel = getattr(ctypes.windll.kernel32, "CancelIoEx", None)
+        if cancel is None:
+            return
+        cancel(self._handle, None)

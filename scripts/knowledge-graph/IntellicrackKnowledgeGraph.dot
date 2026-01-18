@@ -1,0 +1,24 @@
+digraph "Intellicrack" {
+  "intellicrack.providers.openrouter";
+  "intellicrack.core.session";
+  "intellicrack.core.types";
+  "intellicrack.credentials.env_loader";
+  "intellicrack.providers.google";
+  "intellicrack.core";
+  "intellicrack.core.logging";
+  "intellicrack.providers.ollama";
+  "intellicrack.ui.app";
+  "intellicrack.providers.registry";
+  "intellicrack.core.script_gen";
+  "intellicrack.core.tools";
+  "intellicrack.sandbox.manager";
+  "intellicrack.main";
+  "intellicrack.providers.openai";
+  "intellicrack.ui.resources";
+  "intellicrack.core.orchestrator";
+  "intellicrack.core.config";
+  "intellicrack.ui.dialogs";
+  "intellicrack.providers.huggingface";
+  "intellicrack.core.process_manager";
+  "intellicrack.providers.anthropic";
+}

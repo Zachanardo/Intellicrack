@@ -1,0 +1,451 @@
+# Intellicrack .gitignore
+# Comprehensive ignore file for the Intellicrack project
+
+# ==============================================================================
+# PYTHON
+# ==============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+# Exception for Windows application manifest required for build
+!intellicrack-launcher/intellicrack.exe.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django/Flask stuff
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+instance/
+.webassets-cache
+
+# Scrapy stuff
+.scrapy
+
+# PyBuilder
+.pybuilder/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+.pdm-python
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ==============================================================================
+# VIRTUAL ENVIRONMENTS (ALL VARIATIONS)
+# ==============================================================================
+venv*/
+.venv/
+.venv*/
+virtualenv/
+virtualenv*/
+env/
+.env/
+ENV/
+pythonenv*/
+pyenv*/
+.pyenv*/
+*_venv/
+*_env/
+.conda/
+conda-env/
+
+# ==============================================================================
+# UV PACKAGE MANAGER
+# ==============================================================================
+.uv/
+uv-cache/
+
+# ==============================================================================
+# INTELLICRACK SPECIFIC
+# ==============================================================================
+# Generated files
+*.patched
+*.backup
+*.generated.py
+*.generated.js
+
+# ML Models and artifacts
+*.bin
+*.onnx
+*.gguf
+*.safetensors
+*.pth
+*.h5
+*.joblib
+*.pkl
+*.pickle
+
+# Capture files
+*.pcap
+*.pcapng
+*.cap
+
+# Signature files
+*.signature
+*.yara
+*.rules
+
+# ==============================================================================
+# LOGS AND OUTPUT FILES
+# ==============================================================================
+*.log
+logs/
+output/
+*.log.*
+
+# ==============================================================================
+# SECURITY AND SECRETS
+# ==============================================================================
+# API keys and secrets
+*.key
+*.pem
+*.crt
+*.pfx
+*.api_key
+api_keys.txt
+secrets/
+credentials/
+.secrets/
+
+# Environment files
+.env
+.env.*
+!.env.example
+*.env
+
+# ==============================================================================
+# AI/LLM TOOLS AND CONFIGS
+# ==============================================================================
+# Claude and AI assistants
+ClaudeCode.ps1
+claude*.ps1
+Claude*.ps1
+*claude*.ps1
+
+# Other AI tools
+gemini*.ps1
+Gemini*.ps1
+*gemini*.ps1
+codex*.ps1
+Codex*.ps1
+*codex*.ps1
+GeminiCLI.ps1
+Codex.ps1
+QWEN.ps1
+
+# GitHub Copilot config
+.github/copilot-instructions.md
+
+# AI cache and configs
+.llm_cache/
+llm_configs/
+conversation_history/
+.serena/
+.zen*/
+.zen_venv/
+.mcp.json
+
+# AI configuration files
+gemini_cli_config.json
+GEMINI.md
+QWEN.md
+
+# ==============================================================================
+# EDITORS AND IDEs
+# ==============================================================================
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-*
+
+# Other editors
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+*.iml
+
+# ==============================================================================
+# OPERATING SYSTEMS
+# ==============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+Icon?
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# ==============================================================================
+# LINTING AND FORMATTING
+# ==============================================================================
+# Ruff
+.ruff_cache/
+ruff.toml
+
+# Pylint
+.pylint.d/
+.pylintrc
+
+# Flake8
+.flake8_cache/
+.flake8
+
+# mypy
+mypy.ini
+
+# ==============================================================================
+# TOOLS AND BINARIES
+# ==============================================================================
+# Ghidra installation
+tools/ghidra/
+tools/ghidra_*.zip
+tools/ghidra_temp/
+# radare2 installation
+tools/radare2/
+tools/radare2*.zip
+tools/radare2_temp/
+# QEMU installation
+tools/qemu/
+tools/qemu-w64-setup-*.exe
+*.dll
+*.exe
+!tools/AdobeInjector/AdobeInjector.exe
+!tools/AdobeInjector/wintrust.dll
+*.ini
+Qt*.dll
+vcruntime*.dll
+
+# Java tools
+*.jar
+
+# ==============================================================================
+# PACKAGE MANAGERS AND DEPENDENCIES
+# ==============================================================================
+# Node.js / Yarn
+node_modules/
+package-lock.json
+yarn.lock
+.yarn/
+
+# UV package manager
+uv.lock
+
+# ==============================================================================
+# TEMPORARY AND CACHE FILES
+# ==============================================================================
+temp/
+temp_venv/
+cache/
+.cache/
+
+# Backup files
+backups/
+backup/
+*.backup/
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# ==============================================================================
+# PROFILING AND PERFORMANCE
+# ==============================================================================
+*.prof
+*.lprof
+.benchmarks/
+
+# ==============================================================================
+# DATABASE FILES
+# ==============================================================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ==============================================================================
+# SPECIFIC FILES TO IGNORE
+# ==============================================================================
+# Screenshots and images (except documentation)
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# Docker and containerization
+.docker/
+docker-compose.override.yml
+
+# Git artifacts
+*.orig
+*.rej
+
+# JSON results and reports
+*_integration_test_report*.json
+*_scan_results*.json
+
+# ==============================================================================
+# ROOT DIRECTORY FILES
+# ==============================================================================
+# Exclude PowerShell scripts in root
+/*.ps1
+
+# Exclude batch files except essential ones
+/*.bat
+!REMOVE_NUL.bat
+
+# Lock files
+*.lock
+!requirements.lock
+!pixi.lock
+
+# Linting and testing reports
+bandit-report.json
+rollout-*.json
+.aider*
+
+# ==============================================================================
+# LARGE FILES
+# ==============================================================================
+# Large memory dumps
+*.dump
+*.mem
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# ==============================================================================
+# RUST BUILD ARTIFACTS
+# ==============================================================================
+intellicrack-launcher/target/
+target/
+
+# ==============================================================================
+# REMOVED TEMPLATE DIRECTORIES - DO NOT RECREATE
+# ==============================================================================
+# These directories were removed as part of template cleanup
+# Templates were constraining AI functionality - removed in favor of dynamic generation
+intellicrack/ai/templates/
+intellicrack/utils/templates/

@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Intellicrack Architecture Graph</title>
+  <script src="https://unpkg.com/graphology@0.25.4/dist/graphology.umd.min.js"></script>
+  <script src="https://unpkg.com/sigma@2.4.0/build/sigma.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: rgba(26,26,46,0.95);
+      --bg-tertiary: rgba(0,0,0,0.2);
+      --text-primary: #eee;
+      --text-secondary: #888;
+      --accent: #667eea;
+      --accent-secondary: #764ba2;
+      --border: rgba(255,255,255,0.1);
+      --success: #28a745;
+      --danger: #dc3545;
+      --info: #17a2b8;
+    }
+    body.light-theme {
+      --bg-primary: #f5f5f5;
+      --bg-secondary: rgba(255,255,255,0.95);
+      --bg-tertiary: rgba(0,0,0,0.05);
+      --text-primary: #222;
+      --text-secondary: #666;
+      --border: rgba(0,0,0,0.1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow: hidden; transition: background 0.3s, color 0.3s; }
+    #container { width: 100vw; height: 100vh; }
+    #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 30px 50px; border-radius: 12px; z-index: 9999; text-align: center; }
+    #loading h2 { margin-bottom: 15px; color: var(--accent); }
+    .progress-bar { width: 200px; height: 6px; background: #333; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-secondary)); width: 0%; transition: width 0.3s; }
+    #controls { position: fixed; top: 15px; right: 15px; width: 320px; background: var(--bg-secondary); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); z-index: 1000; backdrop-filter: blur(10px); border: 1px solid var(--border); transition: background 0.3s; }
+    .controls-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .controls-header h3 { font-size: 16px; font-weight: 600; }
+    .theme-toggle { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+    .theme-toggle:hover { border-color: var(--accent); }
+    .controls-body { padding: 15px 20px; }
+    .search-container { position: relative; margin-bottom: 15px; }
+    #search { width: 100%; padding: 10px 15px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); font-size: 14px; }
+    #search:focus { outline: none; border-color: var(--accent); }
+    .search-hint { font-size: 10px; color: var(--text-secondary); margin-top: 4px; }
+    #search-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; max-height: 300px; overflow-y: auto; display: none; z-index: 1001; margin-top: 5px; }
+    .search-result { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+    .search-result:hover, .search-result.selected { background: rgba(102,126,234,0.2); }
+    .result-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .result-label { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .result-type { font-size: 11px; color: var(--text-secondary); background: var(--bg-tertiary); padding: 2px 8px; border-radius: 10px; }
+    .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .view-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .view-btn { padding: 6px 12px; font-size: 11px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .view-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .view-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .cluster-toggle { width: 100%; padding: 8px 12px; margin-top: 10px; font-size: 11px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .cluster-toggle:hover { border-color: var(--accent); }
+    .cluster-toggle.active { background: #50E3C2; border-color: #50E3C2; color: #000; }
+    #panel { position: fixed; top: 15px; left: 15px; width: 380px; max-height: calc(100vh - 30px); background: var(--bg-secondary); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); z-index: 1000; display: none; overflow: hidden; backdrop-filter: blur(10px); border: 1px solid var(--border); transition: background 0.3s; }
+    #panel.visible { display: block; animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    .panel-header { padding: 15px 20px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%); display: flex; justify-content: space-between; align-items: center; }
+    .panel-title { font-weight: 600; font-size: 14px; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white; }
+    .panel-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 18px; }
+    .panel-close:hover { background: rgba(255,255,255,0.3); }
+    .node-info { padding: 15px 20px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border); }
+    .info-row { display: flex; margin-bottom: 8px; font-size: 13px; }
+    .info-label { font-weight: 600; color: var(--text-secondary); width: 80px; flex-shrink: 0; }
+    .info-value { color: var(--text-primary); word-break: break-all; }
+    .action-bar { padding: 12px 20px; background: rgba(255,193,7,0.1); border-bottom: 1px solid rgba(255,193,7,0.2); display: flex; gap: 8px; flex-wrap: wrap; }
+    .action-btn { padding: 6px 12px; font-size: 11px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: transform 0.1s, opacity 0.2s; }
+    .action-btn:hover { opacity: 0.9; }
+    .action-btn:active { transform: scale(0.95); }
+    .action-btn.incoming { background: var(--success); color: white; }
+    .action-btn.outgoing { background: var(--danger); color: white; }
+    .action-btn.both { background: var(--accent); color: white; }
+    .action-btn.clear { background: #6c757d; color: white; }
+    .action-btn.path { background: var(--info); color: white; }
+    .panel-content { max-height: calc(100vh - 280px); overflow-y: auto; }
+    .section { border-bottom: 1px solid var(--border); }
+    .section-header { padding: 12px 20px; background: var(--bg-tertiary); font-weight: 600; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .section-header:hover { background: rgba(102,126,234,0.1); }
+    .section-badge { padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .section-badge.out { background: var(--danger); }
+    .section-badge.in { background: var(--success); }
+    .virtual-list { position: relative; }
+    .virtual-list-viewport { max-height: 200px; overflow-y: auto; }
+    .virtual-list-spacer { width: 100%; }
+    .virtual-list-content { position: absolute; left: 0; right: 0; }
+    .connection-list { list-style: none; }
+    .connection-list.collapsed { display: none; }
+    .connection-item { padding: 10px 20px 10px 30px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; gap: 10px; height: 42px; box-sizing: border-box; }
+    .connection-item:hover, .connection-item.selected { background: rgba(102,126,234,0.15); }
+    .conn-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .conn-name { font-size: 12px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .conn-type { font-size: 10px; color: var(--text-secondary); background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; }
+    .no-conn { padding: 20px; text-align: center; color: var(--text-secondary); font-size: 12px; font-style: italic; }
+    #pathfinder { display: none; padding: 15px 20px; background: rgba(23,162,184,0.1); border-bottom: 1px solid rgba(23,162,184,0.2); }
+    #pathfinder.visible { display: block; }
+    .pf-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .pf-input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-tertiary); color: var(--text-primary); font-size: 12px; }
+    .pf-btn { padding: 8px 16px; background: var(--info); border: none; color: white; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    #path-result { font-size: 12px; }
+    .path-step { display: inline-flex; align-items: center; gap: 5px; background: rgba(102,126,234,0.2); padding: 4px 10px; border-radius: 4px; margin: 2px; cursor: pointer; transition: background 0.2s; }
+    .path-step:hover { background: rgba(102,126,234,0.4); }
+    .path-arrow { color: var(--accent); margin: 0 5px; }
+    #stats { position: fixed; bottom: 15px; left: 15px; background: var(--bg-secondary); padding: 12px 20px; border-radius: 8px; font-size: 12px; z-index: 1000; display: flex; gap: 20px; backdrop-filter: blur(10px); border: 1px solid var(--border); transition: background 0.3s; }
+    .stat { display: flex; gap: 5px; }
+    .stat-value { font-weight: 600; color: var(--accent); }
+    #edge-tooltip { position: fixed; background: var(--bg-secondary); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; font-size: 11px; pointer-events: none; z-index: 2000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    #keyboard-help { position: fixed; bottom: 15px; right: 15px; background: var(--bg-secondary); padding: 8px 12px; border-radius: 6px; font-size: 10px; color: var(--text-secondary); border: 1px solid var(--border); z-index: 999; cursor: pointer; }
+    #keyboard-help:hover { border-color: var(--accent); }
+    .kbd { background: var(--bg-tertiary); padding: 2px 6px; border-radius: 3px; font-family: monospace; margin: 0 2px; }
+    .cluster-node { stroke-dasharray: 4,2; }
+    .help-btn { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 14px; transition: all 0.2s; margin-left: 8px; }
+    .help-btn:hover { border-color: var(--accent); color: var(--accent); }
+    #shortcuts-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+    #shortcuts-modal.visible { display: flex; }
+    .modal-content { background: var(--bg-secondary); border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.4); animation: modalIn 0.2s ease; }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+    .modal-header h2 { font-size: 18px; font-weight: 600; }
+    .modal-close { background: none; border: none; color: var(--text-secondary); font-size: 24px; cursor: pointer; padding: 0; line-height: 1; }
+    .modal-close:hover { color: var(--text-primary); }
+    .shortcut-section { margin-bottom: 20px; }
+    .shortcut-section h3 { font-size: 12px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; letter-spacing: 0.5px; }
+    .shortcut-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .shortcut-row:last-child { border-bottom: none; }
+    .shortcut-keys { display: flex; gap: 4px; }
+    .shortcut-desc { color: var(--text-secondary); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div id="loading"><h2>Building Graph</h2><div class="progress-bar"><div class="progress-fill" id="progress"></div></div><p id="load-status">Initializing...</p></div>
+  <div id="container"></div>
+  <div id="controls">
+    <div class="controls-header"><h3>Intellicrack Architecture</h3><div style="display:flex;gap:4px"><button class="help-btn" onclick="toggleShortcuts()" title="Keyboard shortcuts">?</button><button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">&#9728;</button></div></div>
+    <div class="controls-body">
+      <div class="search-container">
+        <input type="text" id="search" autocomplete="off" aria-label="Search nodes">
+        <div class="search-hint">Press <span class="kbd">Ctrl+F</span> to search, <span class="kbd">&#8593;</span><span class="kbd">&#8595;</span> to navigate, <span class="kbd">Enter</span> to select</div>
+        <div id="search-results"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#FF4444"></div>Entry</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4A90D9"></div>Module</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#F5A623"></div>Class</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#D0021B"></div>Function</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#7ED321"></div>Struct</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9B9B9B"></div>External</div>
+      </div>
+      <div class="view-controls">
+        <button class="view-btn active" data-filter="all">All</button>
+        <button class="view-btn" data-filter="module">Modules</button>
+        <button class="view-btn" data-filter="class">Classes</button>
+        <button class="view-btn" data-filter="function">Functions</button>
+      </div>
+      <button class="cluster-toggle" id="cluster-toggle">&#128448; Toggle Cluster View</button>
+    </div>
+  </div>
+  <div id="panel">
+    <div class="panel-header"><span class="panel-title" id="panel-title">Node</span><button class="panel-close" onclick="closePanel()">&times;</button></div>
+    <div class="node-info" id="node-info"></div>
+    <div class="action-bar">
+      <button class="action-btn incoming" onclick="highlight('in')">Incoming</button>
+      <button class="action-btn outgoing" onclick="highlight('out')">Outgoing</button>
+      <button class="action-btn both" onclick="highlight('both')">Both</button>
+      <button class="action-btn clear" onclick="clearHL()">Clear</button>
+      <button class="action-btn path" onclick="togglePathfinder()">Find Path</button>
+    </div>
+    <div id="pathfinder">
+      <div class="pf-row"><label for="pf-to" style="font-size:11px;color:var(--text-secondary);margin-right:8px">Target:</label><input type="text" class="pf-input" id="pf-to" aria-label="Target node"><button class="pf-btn" onclick="findPath()">Go</button></div>
+      <div id="path-result"></div>
+    </div>
+    <div class="panel-content">
+      <div class="section">
+        <div class="section-header" onclick="toggleSec('out')"><span>Outgoing</span><span class="section-badge out" id="out-count">0</span></div>
+        <div class="virtual-list" id="out-virtual">
+          <div class="virtual-list-viewport" id="out-viewport">
+            <div class="virtual-list-spacer" id="out-spacer"></div>
+            <ul class="connection-list virtual-list-content" id="out-list"></ul>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header" onclick="toggleSec('in')"><span>Incoming</span><span class="section-badge in" id="in-count">0</span></div>
+        <div class="virtual-list" id="in-virtual">
+          <div class="virtual-list-viewport" id="in-viewport">
+            <div class="virtual-list-spacer" id="in-spacer"></div>
+            <ul class="connection-list virtual-list-content" id="in-list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="stats">
+    <div class="stat">Nodes: <span class="stat-value" id="stat-nodes">0</span></div>
+    <div class="stat">Edges: <span class="stat-value" id="stat-edges">0</span></div>
+    <div class="stat">Visible: <span class="stat-value" id="stat-visible">0</span></div>
+  </div>
+  <div id="edge-tooltip"></div>
+  <div id="keyboard-help" onclick="toggleShortcuts()"><span class="kbd">?</span> Keyboard Shortcuts</div>
+  <div id="shortcuts-modal" onclick="if(event.target===this)toggleShortcuts()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Keyboard Shortcuts</h2>
+        <button class="modal-close" onclick="toggleShortcuts()">&times;</button>
+      </div>
+      <div class="shortcut-section">
+        <h3>General</h3>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">Ctrl</span><span class="kbd">F</span></div><span class="shortcut-desc">Focus search input</span></div>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">Esc</span></div><span class="shortcut-desc">Close panel and search</span></div>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">T</span></div><span class="shortcut-desc">Toggle dark/light theme</span></div>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">?</span></div><span class="shortcut-desc">Show this help dialog</span></div>
+      </div>
+      <div class="shortcut-section">
+        <h3>Search</h3>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">&#8593;</span><span class="kbd">&#8595;</span></div><span class="shortcut-desc">Navigate search results</span></div>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">Enter</span></div><span class="shortcut-desc">Select highlighted result</span></div>
+      </div>
+      <div class="shortcut-section">
+        <h3>Node Panel</h3>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">&#8592;</span></div><span class="shortcut-desc">Go to first incoming connection</span></div>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">&#8594;</span></div><span class="shortcut-desc">Go to first outgoing connection</span></div>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">&#8593;</span><span class="kbd">&#8595;</span></div><span class="shortcut-desc">Navigate connection lists</span></div>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">Enter</span></div><span class="shortcut-desc">Go to selected connection</span></div>
+      </div>
+      <div class="shortcut-section">
+        <h3>Graph</h3>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">Scroll</span></div><span class="shortcut-desc">Zoom in/out</span></div>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">Drag</span></div><span class="shortcut-desc">Pan the graph</span></div>
+        <div class="shortcut-row"><div class="shortcut-keys"><span class="kbd">Click</span></div><span class="shortcut-desc">Select node</span></div>
+      </div>
+    </div>
+  </div>
+  <script>
+const rawNodes=[{"id": "intellicrack.providers.openrouter", "label": "openrouter", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.providers", "x": 589.4736842105262, "y": 126.3157894736842}, {"id": "intellicrack.core.session", "label": "session", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.core", "x": 210.52631578947367, "y": 126.3157894736842}, {"id": "intellicrack.core.types", "label": "types", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.core", "x": 294.7368421052631, "y": 126.3157894736842}, {"id": "intellicrack.credentials.env_loader", "label": "env_loader", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.credentials", "x": 336.84210526315786, "y": 126.3157894736842}, {"id": "intellicrack.providers.google", "label": "google", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.providers", "x": 421.05263157894734, "y": 126.3157894736842}, {"id": "intellicrack.core", "label": "core", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.core", "x": 378.9473684210526, "y": 0.0}, {"id": "intellicrack.core.logging", "label": "logging", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.core", "x": 42.10526315789473, "y": 126.3157894736842}, {"id": "intellicrack.providers.ollama", "label": "ollama", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.providers", "x": 505.2631578947368, "y": 126.3157894736842}, {"id": "intellicrack.ui.app", "label": "app", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.ui", "x": 715.7894736842105, "y": 126.3157894736842}, {"id": "intellicrack.providers.registry", "label": "registry", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.providers", "x": 631.578947368421, "y": 126.3157894736842}, {"id": "intellicrack.core.script_gen", "label": "script_gen", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.core", "x": 168.42105263157893, "y": 126.3157894736842}, {"id": "intellicrack.core.tools", "label": "tools", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.core", "x": 252.6315789473684, "y": 126.3157894736842}, {"id": "intellicrack.sandbox.manager", "label": "manager", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.sandbox", "x": 673.6842105263157, "y": 126.3157894736842}, {"id": "intellicrack.main", "label": "main", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.main", "x": 421.05263157894734, "y": 0.0}, {"id": "intellicrack.providers.openai", "label": "openai", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.providers", "x": 547.3684210526316, "y": 126.3157894736842}, {"id": "intellicrack.ui.resources", "label": "resources", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.ui", "x": 800.0, "y": 126.3157894736842}, {"id": "intellicrack.core.orchestrator", "label": "orchestrator", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.core", "x": 84.21052631578947, "y": 126.3157894736842}, {"id": "intellicrack.core.config", "label": "config", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.core", "x": 0.0, "y": 126.3157894736842}, {"id": "intellicrack.ui.dialogs", "label": "dialogs", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.ui", "x": 757.8947368421052, "y": 126.3157894736842}, {"id": "intellicrack.providers.huggingface", "label": "huggingface", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.providers", "x": 463.1578947368421, "y": 126.3157894736842}, {"id": "intellicrack.core.process_manager", "label": "process_manager", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.core", "x": 126.3157894736842, "y": 126.3157894736842}, {"id": "intellicrack.providers.anthropic", "label": "anthropic", "color": "#D2E5FF", "type": "unknown", "size": 3, "cluster": "intellicrack.providers", "x": 378.9473684210526, "y": 126.3157894736842}];const rawEdges=[];const clusters={"intellicrack.credentials": {"id": "intellicrack.credentials", "label": "credentials", "size": 1, "children": ["intellicrack.credentials.env_loader"], "modules": 0, "classes": 0, "functions": 0}, "intellicrack.providers": {"id": "intellicrack.providers", "label": "providers", "size": 7, "children": ["intellicrack.providers.anthropic", "intellicrack.providers.google", "intellicrack.providers.huggingface", "intellicrack.providers.ollama", "intellicrack.providers.openai", "intellicrack.providers.openrouter", "intellicrack.providers.registry"], "modules": 0, "classes": 0, "functions": 0}, "intellicrack.core": {"id": "intellicrack.core", "label": "core", "size": 9, "children": ["intellicrack.core", "intellicrack.core.config", "intellicrack.core.logging", "intellicrack.core.orchestrator", "intellicrack.core.process_manager", "intellicrack.core.script_gen", "intellicrack.core.session", "intellicrack.core.tools", "intellicrack.core.types"], "modules": 0, "classes": 0, "functions": 0}, "intellicrack.ui": {"id": "intellicrack.ui", "label": "ui", "size": 3, "children": ["intellicrack.ui.app", "intellicrack.ui.dialogs", "intellicrack.ui.resources"], "modules": 0, "classes": 0, "functions": 0}, "intellicrack.main": {"id": "intellicrack.main", "label": "main", "size": 1, "children": ["intellicrack.main"], "modules": 0, "classes": 0, "functions": 0}, "intellicrack.sandbox": {"id": "intellicrack.sandbox", "label": "sandbox", "size": 1, "children": ["intellicrack.sandbox.manager"], "modules": 0, "classes": 0, "functions": 0}};const entryPoint=null;const typeColors={"module": "#4A90D9", "class": "#F5A623", "function": "#D0021B", "variable": "#BD10E0", "external": "#9B9B9B", "cluster": "#50E3C2", "entry": "#FF4444"};
+let graph,renderer,selectedNode=null,currentFilter='all',clusterMode=false,isDarkTheme=true;
+const connIndex={in:{},out:{}};const searchTrie={};const nodeMap=new Map();const clusterState={};
+let searchSelectedIdx=-1,currentSearchResults=[];
+const ITEM_HEIGHT=42;const VISIBLE_BUFFER=5;
+
+const workerCode=`
+self.onmessage=function(e){
+  const{type,data}=e.data;
+  if(type==='search'){
+    const{query,trie,limit}=data;
+    if(!query||query.length<2){self.postMessage({type:'searchResult',results:[]});return;}
+    const ql=query.toLowerCase();
+    let c=trie;
+    for(const ch of ql)if(!c[ch]){self.postMessage({type:'searchResult',results:[]});return;}else c=c[ch];
+    const ids=Array.from(c.nodes||[]).slice(0,limit);
+    self.postMessage({type:'searchResult',results:ids});
+  }
+  if(type==='findPath'){
+    const{from,to,connIn,connOut,maxLen}=data;
+    if(from===to){self.postMessage({type:'pathResult',path:[from]});return;}
+    const q=[[from]],v=new Set([from]);
+    while(q.length){
+      const p=q.shift();
+      if(p.length>maxLen)continue;
+      const c=p[p.length-1];
+      const nb=[...(connOut[c]||[]),...(connIn[c]||[])];
+      for(const n of nb){
+        if(n===to){self.postMessage({type:'pathResult',path:[...p,n]});return;}
+        if(!v.has(n)){v.add(n);q.push([...p,n]);}
+      }
+    }
+    self.postMessage({type:'pathResult',path:null});
+  }
+};`;
+let worker=null;
+try{const blob=new Blob([workerCode],{type:'application/javascript'});worker=new Worker(URL.createObjectURL(blob));}catch(e){console.warn('WebWorker not available, using main thread');}
+
+function setProgress(p,m){document.getElementById('progress').style.width=p+'%';document.getElementById('load-status').textContent=m;}
+function chunk(arr,size){const r=[];for(let i=0;i<arr.length;i+=size)r.push(arr.slice(i,i+size));return r;}
+async function processChunks(chunks,fn,base,range,label){for(let i=0;i<chunks.length;i++){chunks[i].forEach(fn);const pct=base+Math.floor((i+1)/chunks.length*range);setProgress(pct,label+' ('+(i+1)+'/'+chunks.length+')');await new Promise(r=>requestAnimationFrame(r));}}
+
+function searchNodes(q,l=15){
+  if(!q||q.length<2)return[];
+  const ql=q.toLowerCase();
+  let c=searchTrie;
+  for(const ch of ql)if(!c[ch])return[];else c=c[ch];
+  return Array.from(c.nodes||[]).slice(0,l).map(id=>nodeMap.get(id)).filter(Boolean)
+    .sort((a,b)=>{const aE=a.label.toLowerCase()===ql,bE=b.label.toLowerCase()===ql;if(aE&&!bE)return-1;if(bE&&!aE)return 1;return a.label.length-b.label.length;});
+}
+
+function findShortestPath(f,t,m=15){
+  if(f===t)return[f];
+  const q=[[f]],v=new Set([f]);
+  while(q.length){
+    const p=q.shift();
+    if(p.length>m)continue;
+    const c=p[p.length-1],nb=[...(connIndex.out[c]||[]),...(connIndex.in[c]||[])];
+    for(const n of nb){if(n===t)return[...p,n];if(!v.has(n)){v.add(n);q.push([...p,n]);}}
+  }
+  return null;
+}
+
+async function init(){
+  setProgress(5,'Initializing...');
+  await new Promise(r=>requestAnimationFrame(r));
+  graph=new graphology.Graph({allowSelfLoops:false,multi:false});
+  const CHUNK=2000;
+  const nodeChunks=chunk(rawNodes,CHUNK);
+  const edgeChunks=chunk(rawEdges,CHUNK);
+
+  await processChunks(nodeChunks,n=>{
+    nodeMap.set(n.id,n);
+    graph.addNode(n.id,{
+      x:n.x||Math.random()*1000,y:n.y||Math.random()*1000,
+      size:n.size,color:n.color,label:n.label,nodeType:n.type,
+      cluster:n.cluster,originalColor:n.color,originalSize:n.size,hidden:false
+    });
+  },5,35,'Adding nodes');
+
+  await processChunks(edgeChunks,e=>{
+    if(e.source!==e.target&&graph.hasNode(e.source)&&graph.hasNode(e.target)&&!graph.hasEdge(e.source,e.target))
+      graph.addEdge(e.source,e.target,{color:'rgba(150,150,150,0.15)',size:0.3,originalColor:'rgba(150,150,150,0.15)'});
+  },40,25,'Adding edges');
+
+  setProgress(70,'Building search index...');
+  await new Promise(r=>requestAnimationFrame(r));
+  const trieChunks=chunk(rawNodes,CHUNK);
+  for(let i=0;i<trieChunks.length;i++){
+    trieChunks[i].forEach(n=>{
+      [n.id.toLowerCase(),n.label.toLowerCase()].forEach(t=>{
+        let c=searchTrie;
+        for(const ch of t){if(!c[ch])c[ch]={nodes:new Set()};c=c[ch];c.nodes.add(n.id);}
+      });
+    });
+    await new Promise(r=>requestAnimationFrame(r));
+  }
+
+  rawEdges.forEach(e=>{
+    if(!connIndex.out[e.source])connIndex.out[e.source]=[];
+    connIndex.out[e.source].push(e.target);
+    if(!connIndex.in[e.target])connIndex.in[e.target]=[];
+    connIndex.in[e.target].push(e.source);
+  });
+
+  Object.keys(clusters).forEach(cid=>{clusterState[cid]=true;});
+
+  setProgress(85,'Starting renderer...');
+  await new Promise(r=>requestAnimationFrame(r));
+
+  const container=document.getElementById('container');
+  renderer=new Sigma(graph,container,{
+    renderLabels:true,labelThreshold:12,labelRenderedSizeThreshold:8,
+    labelFont:'Segoe UI',labelSize:11,labelWeight:'normal',
+    labelColor:{color:'#ffffff'},
+    defaultNodeColor:'#4A90D9',defaultEdgeColor:'rgba(150,150,150,0.1)',
+    minCameraRatio:0.01,maxCameraRatio:15,
+    enableEdgeEvents:true,zIndex:true,renderEdgeLabels:false,
+    enableEdgeClickEvents:false,enableEdgeWheelEvents:false,
+    enableEdgeHoverEvents:true,stagePadding:50
+  });
+
+  renderer.on('clickNode',({node})=>showPanel(node));
+  renderer.on('clickStage',()=>closePanel());
+
+  renderer.on('enterEdge',({edge})=>{
+    const tooltip=document.getElementById('edge-tooltip');
+    const src=graph.source(edge),tgt=graph.target(edge);
+    const srcLabel=graph.getNodeAttribute(src,'label');
+    const tgtLabel=graph.getNodeAttribute(tgt,'label');
+    tooltip.innerHTML=`<strong>${srcLabel}</strong> &#8594; <strong>${tgtLabel}</strong>`;
+    tooltip.style.display='block';
+    graph.setEdgeAttribute(edge,'color','rgba(102,126,234,0.9)');
+    graph.setEdgeAttribute(edge,'size',2);
+    renderer.refresh();
+  });
+
+  renderer.on('leaveEdge',({edge})=>{
+    const tooltip=document.getElementById('edge-tooltip');
+    tooltip.style.display='none';
+    const orig=graph.getEdgeAttribute(edge,'originalColor')||'rgba(150,150,150,0.15)';
+    graph.setEdgeAttribute(edge,'color',orig);
+    graph.setEdgeAttribute(edge,'size',0.3);
+    renderer.refresh();
+  });
+
+  document.addEventListener('mousemove',e=>{
+    const tooltip=document.getElementById('edge-tooltip');
+    if(tooltip.style.display==='block'){
+      tooltip.style.left=(e.clientX+15)+'px';
+      tooltip.style.top=(e.clientY+15)+'px';
+    }
+  });
+
+  setProgress(100,'Done!');
+  await new Promise(r=>setTimeout(r,200));
+  document.getElementById('loading').style.display='none';
+  updateStats();
+
+  renderer.getCamera().setState({x:0,y:0,ratio:0.5,angle:0});
+}
+
+function updateStats(){
+  document.getElementById('stat-nodes').textContent=graph.order;
+  document.getElementById('stat-edges').textContent=graph.size;
+  let v=0;graph.forEachNode((n,a)=>{if(!a.hidden)v++;});
+  document.getElementById('stat-visible').textContent=v;
+}
+
+function setFilter(f){
+  currentFilter=f;
+  document.querySelectorAll('.view-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.filter===f);
+  });
+  graph.forEachNode((n,a)=>{
+    const show=f==='all'||a.nodeType===f;
+    graph.setNodeAttribute(n,'hidden',!show);
+    graph.setNodeAttribute(n,'color',show?a.originalColor:'rgba(100,100,100,0.1)');
+  });
+  renderer.refresh();
+  updateStats();
+}
+
+function toggleClusterMode(){
+  clusterMode=!clusterMode;
+  document.getElementById('cluster-toggle').classList.toggle('active',clusterMode);
+
+  if(clusterMode){
+    Object.entries(clusters).forEach(([cid,meta])=>{
+      if(!clusterState[cid]){
+        meta.children.forEach(childId=>{
+          if(graph.hasNode(childId)&&childId!==cid){
+            graph.setNodeAttribute(childId,'hidden',true);
+          }
+        });
+      }
+    });
+  }else{
+    graph.forEachNode((n,a)=>{
+      const show=currentFilter==='all'||a.nodeType===currentFilter;
+      graph.setNodeAttribute(n,'hidden',!show);
+      graph.setNodeAttribute(n,'color',show?a.originalColor:'rgba(100,100,100,0.1)');
+    });
+  }
+  renderer.refresh();
+  updateStats();
+}
+
+function toggleCluster(clusterId){
+  if(!clusters[clusterId])return;
+  clusterState[clusterId]=!clusterState[clusterId];
+  const expanded=clusterState[clusterId];
+
+  clusters[clusterId].children.forEach(childId=>{
+    if(graph.hasNode(childId)&&childId!==clusterId){
+      const show=expanded&&(currentFilter==='all'||graph.getNodeAttribute(childId,'nodeType')===currentFilter);
+      graph.setNodeAttribute(childId,'hidden',!show);
+    }
+  });
+
+  renderer.refresh();
+  updateStats();
+}
+
+function showPanel(nodeId){
+  selectedNode=nodeId;
+  const a=graph.getNodeAttributes(nodeId);
+
+  document.getElementById('panel-title').textContent=a.label;
+  document.getElementById('panel-title').title=nodeId;
+
+  let clusterHtml=a.cluster||'N/A';
+  if(clusters[a.cluster]){
+    clusterHtml=`<span style="cursor:pointer;text-decoration:underline" onclick="toggleCluster('${a.cluster}')">${a.cluster}</span>`;
+  }
+
+  document.getElementById('node-info').innerHTML=
+    '<div class="info-row"><span class="info-label">Type:</span><span class="info-value">'+a.nodeType+'</span></div>'+
+    '<div class="info-row"><span class="info-label">Full Path:</span><span class="info-value">'+nodeId+'</span></div>'+
+    '<div class="info-row"><span class="info-label">Cluster:</span><span class="info-value">'+clusterHtml+'</span></div>';
+
+  const outN=connIndex.out[nodeId]||[],inN=connIndex.in[nodeId]||[];
+  document.getElementById('out-count').textContent=outN.length;
+  document.getElementById('in-count').textContent=inN.length;
+
+  setupVirtualList('out',outN);
+  setupVirtualList('in',inN);
+
+  document.getElementById('pf-to').value='';
+  document.getElementById('path-result').innerHTML='';
+  document.getElementById('pathfinder').classList.remove('visible');
+  document.getElementById('panel').classList.add('visible');
+
+  const pos=graph.getNodeAttributes(nodeId);
+  renderer.getCamera().animate({x:pos.x,y:pos.y,ratio:0.5},{duration:400,easing:'quadraticOut'});
+}
+
+function setupVirtualList(type,nodes){
+  const viewport=document.getElementById(type+'-viewport');
+  const spacer=document.getElementById(type+'-spacer');
+  const list=document.getElementById(type+'-list');
+
+  if(!nodes.length){
+    spacer.style.height='0px';
+    list.innerHTML='<li class="no-conn">None</li>';
+    list.style.top='0px';
+    return;
+  }
+
+  const sorted=nodes.map(id=>({id,attrs:graph.hasNode(id)?graph.getNodeAttributes(id):null}))
+    .filter(x=>x.attrs)
+    .sort((a,b)=>{
+      const order={module:0,class:1,function:2,struct:3,external:4};
+      const ao=order[a.attrs.nodeType]??5,bo=order[b.attrs.nodeType]??5;
+      return ao!==bo?ao-bo:a.attrs.label.localeCompare(b.attrs.label);
+    });
+
+  const totalHeight=sorted.length*ITEM_HEIGHT;
+  spacer.style.height=totalHeight+'px';
+
+  viewport._sortedData=sorted;
+  viewport._type=type;
+  viewport._selectedIdx=-1;
+
+  const render=()=>{
+    const scrollTop=viewport.scrollTop;
+    const viewportHeight=viewport.clientHeight;
+    const startIdx=Math.max(0,Math.floor(scrollTop/ITEM_HEIGHT)-VISIBLE_BUFFER);
+    const endIdx=Math.min(sorted.length,Math.ceil((scrollTop+viewportHeight)/ITEM_HEIGHT)+VISIBLE_BUFFER);
+
+    list.style.top=(startIdx*ITEM_HEIGHT)+'px';
+    list.innerHTML=sorted.slice(startIdx,endIdx).map(({id,attrs},i)=>{
+      const realIdx=startIdx+i;
+      const selectedClass=viewport._selectedIdx===realIdx?' selected':'';
+      return '<li class="connection-item'+selectedClass+'" data-idx="'+realIdx+'" onclick="goToNode(\''+id.replace(/'/g,"\\'")+'\')">'
+        +'<span class="conn-dot" style="background:'+attrs.color+'"></span>'
+        +'<span class="conn-name" title="'+id+'">'+attrs.label+'</span>'
+        +'<span class="conn-type">'+attrs.nodeType+'</span></li>';
+    }).join('');
+  };
+
+  viewport.onscroll=render;
+  render();
+}
+
+function goToNode(nodeId){
+  if(!graph.hasNode(nodeId))return;
+  const pos=graph.getNodeAttributes(nodeId);
+  renderer.getCamera().animate({x:pos.x,y:pos.y,ratio:0.8},{duration:400,easing:'quadraticOut'});
+  setTimeout(()=>showPanel(nodeId),450);
+}
+
+function closePanel(){
+  document.getElementById('panel').classList.remove('visible');
+  clearHL();
+  selectedNode=null;
+}
+
+function toggleSec(sec){
+  const viewport=document.getElementById(sec+'-viewport');
+  viewport.classList.toggle('collapsed');
+}
+
+function highlight(dir){
+  if(!selectedNode)return;
+  const outN=connIndex.out[selectedNode]||[],inN=connIndex.in[selectedNode]||[];
+  let hl=[selectedNode];
+  if(dir==='out'||dir==='both')hl=hl.concat(outN);
+  if(dir==='in'||dir==='both')hl=hl.concat(inN);
+  const hlSet=new Set(hl);
+
+  graph.forEachNode((n,a)=>{
+    const isHL=hlSet.has(n);
+    graph.setNodeAttribute(n,'color',isHL?a.originalColor:'rgba(100,100,100,0.15)');
+    graph.setNodeAttribute(n,'size',isHL?a.originalSize*1.5:a.originalSize*0.5);
+  });
+
+  graph.forEachEdge((e,a,src,tgt)=>{
+    const isRel=(dir==='out'&&src===selectedNode)||(dir==='in'&&tgt===selectedNode)||(dir==='both'&&(src===selectedNode||tgt===selectedNode));
+    graph.setEdgeAttribute(e,'color',isRel?'rgba(102,126,234,0.8)':'rgba(100,100,100,0.05)');
+    graph.setEdgeAttribute(e,'size',isRel?1.5:0.2);
+  });
+
+  renderer.refresh();
+}
+
+function clearHL(){
+  graph.forEachNode((n,a)=>{
+    graph.setNodeAttribute(n,'color',a.originalColor);
+    graph.setNodeAttribute(n,'size',a.originalSize);
+  });
+  graph.forEachEdge((e,a)=>{
+    graph.setEdgeAttribute(e,'color',a.originalColor||'rgba(150,150,150,0.15)');
+    graph.setEdgeAttribute(e,'size',0.3);
+  });
+  renderer.refresh();
+}
+
+function togglePathfinder(){document.getElementById('pathfinder').classList.toggle('visible');}
+
+function findPath(){
+  if(!selectedNode)return;
+  const to=document.getElementById('pf-to').value.trim();
+  if(!to)return;
+
+  let targetId=null;
+  graph.forEachNode((n,a)=>{
+    if((n.toLowerCase().includes(to.toLowerCase())||a.label.toLowerCase().includes(to.toLowerCase()))&&!targetId)targetId=n;
+  });
+
+  if(!targetId){document.getElementById('path-result').innerHTML='<span style="color:var(--danger)">Node not found</span>';return;}
+
+  const path=findShortestPath(selectedNode,targetId);
+  if(!path){document.getElementById('path-result').innerHTML='<span style="color:var(--danger)">No path found</span>';return;}
+
+  const pathSet=new Set(path);
+  graph.forEachNode((n,a)=>{
+    graph.setNodeAttribute(n,'color',pathSet.has(n)?a.originalColor:'rgba(100,100,100,0.1)');
+    graph.setNodeAttribute(n,'size',pathSet.has(n)?a.originalSize*2:a.originalSize*0.3);
+  });
+
+  graph.forEachEdge((e,a,src,tgt)=>{
+    const srcIdx=path.indexOf(src),tgtIdx=path.indexOf(tgt);
+    const isPath=srcIdx!==-1&&tgtIdx!==-1&&Math.abs(srcIdx-tgtIdx)===1;
+    graph.setEdgeAttribute(e,'color',isPath?'rgba(255,107,107,0.9)':'rgba(100,100,100,0.03)');
+    graph.setEdgeAttribute(e,'size',isPath?3:0.1);
+  });
+
+  renderer.refresh();
+
+  document.getElementById('path-result').innerHTML=
+    '<div style="margin-bottom:5px;color:var(--success)">Path ('+(path.length-1)+' hops):</div>'+
+    path.map((n,i)=>{
+      const a=graph.getNodeAttributes(n);
+      return '<span class="path-step" onclick="goToNode(\''+n.replace(/'/g,"\\'")+'\')">'+a.label+'</span>'+
+        (i<path.length-1?'<span class="path-arrow">&#8594;</span>':'');
+    }).join('');
+}
+
+function toggleTheme(){
+  isDarkTheme=!isDarkTheme;
+  document.body.classList.toggle('light-theme',!isDarkTheme);
+  if(renderer){
+    renderer.setSetting('labelColor',{color:isDarkTheme?'#ffffff':'#222222'});
+    renderer.refresh();
+  }
+}
+
+function toggleShortcuts(){
+  document.getElementById('shortcuts-modal').classList.toggle('visible');
+}
+
+function updateSearchResults(){
+  const container=document.getElementById('search-results');
+  if(!currentSearchResults.length){
+    container.style.display='none';
+    return;
+  }
+  container.innerHTML=currentSearchResults.map((n,i)=>
+    '<div class="search-result'+(i===searchSelectedIdx?' selected':'')+'" data-idx="'+i+'" onclick="selectSearchResult('+i+')">'
+    +'<span class="result-dot" style="background:'+n.color+'"></span>'
+    +'<span class="result-label">'+n.label+'</span>'
+    +'<span class="result-type">'+n.type+'</span></div>'
+  ).join('');
+  container.style.display='block';
+}
+
+function selectSearchResult(idx){
+  if(idx>=0&&idx<currentSearchResults.length){
+    goToNode(currentSearchResults[idx].id);
+    document.getElementById('search-results').style.display='none';
+    document.getElementById('search').value='';
+    currentSearchResults=[];
+    searchSelectedIdx=-1;
+  }
+}
+
+document.getElementById('search').addEventListener('input',function(e){
+  const q=e.target.value;
+  currentSearchResults=searchNodes(q);
+  searchSelectedIdx=currentSearchResults.length>0?0:-1;
+  updateSearchResults();
+});
+
+document.querySelectorAll('.view-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>setFilter(btn.dataset.filter));
+});
+
+document.getElementById('cluster-toggle').addEventListener('click',toggleClusterMode);
+
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.search-container')){
+    document.getElementById('search-results').style.display='none';
+  }
+});
+
+document.addEventListener('keydown',function(e){
+  const searchInput=document.getElementById('search');
+  const searchResults=document.getElementById('search-results');
+  const isSearchFocused=document.activeElement===searchInput;
+  const isSearchOpen=searchResults.style.display==='block';
+
+  if((e.ctrlKey||e.metaKey)&&e.key==='f'){
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+    return;
+  }
+
+  if(e.key==='Escape'){
+    const modal=document.getElementById('shortcuts-modal');
+    if(modal.classList.contains('visible')){
+      modal.classList.remove('visible');
+      return;
+    }
+    closePanel();
+    searchResults.style.display='none';
+    searchInput.blur();
+    currentSearchResults=[];
+    searchSelectedIdx=-1;
+    return;
+  }
+
+  if(e.key.toLowerCase()==='t'&&!isSearchFocused){
+    toggleTheme();
+    return;
+  }
+
+  if((e.key==='?'||e.key==='/')&&!isSearchFocused){
+    e.preventDefault();
+    toggleShortcuts();
+    return;
+  }
+
+  if(isSearchOpen&&currentSearchResults.length>0){
+    if(e.key==='ArrowDown'){
+      e.preventDefault();
+      searchSelectedIdx=Math.min(searchSelectedIdx+1,currentSearchResults.length-1);
+      updateSearchResults();
+    }else if(e.key==='ArrowUp'){
+      e.preventDefault();
+      searchSelectedIdx=Math.max(searchSelectedIdx-1,0);
+      updateSearchResults();
+    }else if(e.key==='Enter'){
+      e.preventDefault();
+      selectSearchResult(searchSelectedIdx);
+    }
+  }
+
+  if(selectedNode&&!isSearchFocused){
+    const outN=connIndex.out[selectedNode]||[];
+    const inN=connIndex.in[selectedNode]||[];
+    const allConn=[...outN,...inN];
+
+    if(e.key==='ArrowRight'&&outN.length>0){
+      e.preventDefault();
+      goToNode(outN[0]);
+    }else if(e.key==='ArrowLeft'&&inN.length>0){
+      e.preventDefault();
+      goToNode(inN[0]);
+    }else if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+      const viewport=document.getElementById((e.key==='ArrowUp'?'in':'out')+'-viewport');
+      if(viewport&&viewport._sortedData&&viewport._sortedData.length>0){
+        e.preventDefault();
+        viewport._selectedIdx=Math.max(0,Math.min(
+          (viewport._selectedIdx||0)+(e.key==='ArrowDown'?1:-1),
+          viewport._sortedData.length-1
+        ));
+        viewport.scrollTop=viewport._selectedIdx*ITEM_HEIGHT-viewport.clientHeight/2;
+        const render=viewport.onscroll;
+        if(render)render();
+      }
+    }else if(e.key==='Enter'){
+      const outViewport=document.getElementById('out-viewport');
+      const inViewport=document.getElementById('in-viewport');
+      const activeViewport=document.activeElement.closest('.virtual-list-viewport')||
+        (outViewport._selectedIdx>=0?outViewport:inViewport._selectedIdx>=0?inViewport:null);
+      if(activeViewport&&activeViewport._sortedData&&activeViewport._selectedIdx>=0){
+        e.preventDefault();
+        goToNode(activeViewport._sortedData[activeViewport._selectedIdx].id);
+      }
+    }
+  }
+});
+
+init();
+  </script>
+</body>
+</html>

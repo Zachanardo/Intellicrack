@@ -1,0 +1,370 @@
+[build-system]
+requires = ["setuptools>=75.8.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Intellicrack"
+version = "2.0.0"
+authors = [{ name = "Zachary Flint", email = "zach.flint2@gmail.com" }]
+description = "Intellicrack: AI-powered reverse engineering orchestration platform"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.13"
+keywords = [
+    "reverse-engineering",
+    "binary-analysis",
+    "ai-orchestration",
+    "security-research",
+    "frida",
+    "ghidra",
+    "radare2",
+    "x64dbg",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security",
+    "Topic :: Software Development :: Disassemblers",
+    "Topic :: Software Development :: Debuggers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: Microsoft :: Windows",
+    "Environment :: Console",
+    "Environment :: X11 Applications :: Qt",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/zacharyflint/intellicrack"
+"Bug Tracker" = "https://github.com/zacharyflint/intellicrack/issues"
+Documentation = "https://intellicrack.readthedocs.io"
+"Source Code" = "https://github.com/zacharyflint/intellicrack"
+
+[project.scripts]
+intellicrack = "intellicrack.main:main"
+
+[project.gui-scripts]
+intellicrack-gui = "intellicrack.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["intellicrack", "intellicrack.*"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: Slow running tests",
+    "integration: Integration tests",
+    "unit: Unit tests",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py313']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  \.git
+  | \.github
+  | \.pixi
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.ruff_cache
+  | \.vscode
+  | \.idea
+  | \.claude
+  | \.serena
+  | build
+  | dist
+  | tools
+  | docs
+  | node_modules
+  | CLI\ Coding
+  | Screenshots
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.13"
+mypy_path = [".", "stubs"]
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+ignore_missing_imports = true
+follow_imports = "silent"
+show_error_codes = true
+strict = true
+exclude = [
+    "^tools/",
+    "^build/",
+    "^dist/",
+    "^\\.git/",
+    "^\\.github/",
+    "^\\.pixi/",
+    "^docs/",
+    "^\\.mypy_cache/",
+    "^\\.pytest_cache/",
+    "^\\.ruff_cache/",
+    "^\\.claude/",
+    "^\\.serena/",
+    "^\\.idea/",
+    "^\\.vscode/",
+    "^node_modules/",
+    "^CLI\\ Coding/",
+    "^Screenshots/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "frida.*",
+    "r2pipe.*",
+    "ghidra_bridge.*",
+    "pefile.*",
+    "lief.*",
+]
+ignore_missing_imports = true
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "PyQt6.*",
+]
+ignore_missing_imports = true
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "intellicrack.ui.*",
+]
+disable_error_code = ["attr-defined", "misc", "no-any-return", "redundant-cast", "unused-ignore"]
+
+[tool.pyright]
+include = ["src/intellicrack", "tests"]
+exclude = [
+    "**/__pycache__",
+    "**/node_modules",
+    "**/.venv",
+    "**/build",
+    "**/dist",
+    "**/.git",
+    "**/.github",
+    "**/.pytest_cache",
+    "**/.mypy_cache",
+    "**/.ruff_cache",
+    "**/.claude",
+    "**/.serena",
+    "**/.idea",
+    "**/.vscode",
+    "tools",
+    "docs",
+    ".pixi",
+    "CLI Coding",
+    "Screenshots",
+]
+typeCheckingMode = "strict"
+pythonVersion = "3.13"
+pythonPlatform = "Windows"
+useLibraryCodeForTypes = false
+analyzeUnannotatedFunctions = true
+enableTypeIgnoreComments = true
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+reportMissingImports = "warning"
+reportMissingTypeStubs = false
+reportMissingModuleSource = "warning"
+reportUndefinedVariable = "error"
+reportGeneralTypeIssues = "error"
+
+[[tool.pyright.executionEnvironments]]
+root = "."
+pythonVersion = "3.13"
+pythonPlatform = "Windows"
+extraPaths = ["."]
+
+[tool.ruff]
+line-length = 140
+target-version = "py313"
+preview = true
+src = ["."]
+exclude = [
+    "tests/",
+    ".git/",
+    ".github/",
+    ".venv/",
+    ".pixi/",
+    "build/",
+    "dist/",
+    "*.egg-info/",
+    "__pycache__/",
+    ".vscode/",
+    ".idea/",
+    "docs/",
+    "tools/",
+    ".ruff_cache/",
+    ".mypy_cache/",
+    ".pytest_cache/",
+    ".claude/",
+    ".serena/",
+    "node_modules/",
+    "CLI Coding/",
+    "Screenshots/",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "C9",   # mccabe complexity
+    "N",    # pep8-naming
+    "A",    # flake8-builtins
+    "C4",   # flake8-comprehensions
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "UP",   # pyupgrade
+    "ICN",  # flake8-import-conventions
+    "T20",  # flake8-print
+    "ARG",  # flake8-unused-arguments
+    "G",    # flake8-logging-format
+    "TC",   # flake8-type-checking
+    "RET",  # flake8-return
+    "PL",   # pylint
+    "TRY",  # tryceratops
+    "RUF",  # ruff-specific
+    "PERF", # perflint
+    "D",    # pydocstyle
+    "S",    # bandit security
+]
+
+unfixable = [
+    "TRY400",
+    "RUF013",
+    "RUF022",
+    "RET503",
+]
+
+ignore = [
+    "E501",    # line-too-long
+    "T201",    # print
+    "D203",    # incorrect-blank-line-before-class
+    "D213",    # multi-line-summary-second-line
+    "S101",    # assert
+    "S603",    # subprocess-without-shell-equals-true
+    "S607",    # partial-path
+    "PLR0911", # too-many-return-statements
+    "PLR0912", # too-many-branches
+    "PLR0913", # too-many-arguments
+    "PLR0915", # too-many-statements
+    "PLR1702", # too-many-nested-blocks
+]
+
+fixable = ["ALL"]
+dummy-variable-rgx = "^(_+|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+"src/intellicrack/ui/highlighter.py" = ["N802"]
+"src/intellicrack/bridges/*.py" = ["S404"]
+"src/intellicrack/sandbox/*.py" = ["S404"]
+"src/intellicrack/ui/tool_config.py" = ["S404"]
+"src/intellicrack/ui/sandbox_config.py" = ["S404"]
+"src/intellicrack/core/process_manager.py" = ["S404"]
+"src/intellicrack/providers/base.py" = ["TC001"]
+"src/intellicrack/providers/*.py" = ["TC003", "TRY003", "PLR6301", "TRY300", "PLR0914"]
+"tests/**/*.py" = [
+    "PLR6301",  # Method could be a function - pytest test methods need self
+    "PLR2004",  # Magic value used - test values are intentional
+    "ARG002",   # Unused function argument - fixtures may be unused
+    "S102",     # Use of exec - may be needed for dynamic code testing
+    "S404",     # subprocess module - needed for process management tests
+    "D104",     # Missing docstring in public package - __init__.py files
+    "TC002",    # Third-party import in TYPE_CHECKING - test fixtures often need runtime imports
+    "TC003",    # Standard library import in TYPE_CHECKING - test fixtures often need runtime imports
+    "PLC0415",  # Import at top-level - dynamic imports acceptable in tests
+    "SIM108",   # Use ternary operator - readability preference in tests
+    "PLR6201",  # Use set literal - tuple membership is fine
+    "PERF401",  # Use list comprehension - explicit loops can be clearer in tests
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 50
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pylint]
+max-args = 20
+max-branches = 25
+max-statements = 100
+max-public-methods = 40
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+force-wrap-aliases = true
+combine-as-imports = true
+known-first-party = ["intellicrack"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "docs", "tools", ".git", ".github", ".pixi", "node_modules", "CLI Coding", "Screenshots"]
+skips = ["B101", "B601"]
+
+[tool.coverage.run]
+source = ["src/intellicrack"]
+omit = ["*/.git/*", "*/.pixi/*", "*/tests/*", "*/docs/*", "*/__pycache__/*", "*/tools/*", "*/node_modules/*", "*/CLI Coding/*", "*/Screenshots/*"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+precision = 2
+show_missing = true
+skip_covered = false
+sort = "Cover"
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "coverage_html_report"
+title = "Intellicrack Coverage Report"

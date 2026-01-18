@@ -1,0 +1,319 @@
+"""Font management for Intellicrack UI.
+
+Provides custom font loading and application for the Intellicrack interface.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from pathlib import Path  # noqa: TC003
+from typing import ClassVar, Final
+
+from PyQt6.QtGui import QFont, QFontDatabase
+
+from .resource_helper import get_assets_path
+
+
+_logger = logging.getLogger(__name__)
+
+
+DEFAULT_CODE_FONT: Final[str] = "JetBrains Mono"
+DEFAULT_UI_FONT: Final[str] = "Segoe UI"
+
+FALLBACK_CODE_FONTS: Final[list[str]] = [
+    "JetBrains Mono",
+    "Cascadia Code",
+    "Fira Code",
+    "Source Code Pro",
+    "Consolas",
+    "Monaco",
+    "Courier New",
+    "monospace",
+]
+
+FALLBACK_UI_FONTS: Final[list[str]] = [
+    "Segoe UI",
+    "Inter",
+    "Roboto",
+    "Helvetica Neue",
+    "Arial",
+    "sans-serif",
+]
+
+
+class FontManager:
+    """Singleton font manager for custom font loading and management.
+
+    Handles loading custom fonts from the assets directory and provides
+    font instances for code and UI elements.
+    """
+
+    _instance: ClassVar[FontManager | None] = None
+
+    def __init__(self) -> None:
+        """Initialize the font manager."""
+        self._fonts_loaded: bool = False
+        self._loaded_families: list[str] = []
+        self._code_font_family: str = ""
+        self._ui_font_family: str = ""
+        self._font_config: dict[str, object] = {}
+
+    @classmethod
+    def get_instance(cls) -> FontManager:
+        """Get the singleton instance of FontManager.
+
+        Returns:
+            The FontManager singleton instance.
+        """
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Reset the singleton instance (primarily for testing)."""
+        cls._instance = None
+
+    def load_fonts(self) -> bool:
+        """Load all custom fonts from the fonts directory.
+
+        Returns:
+            True if at least one font was loaded successfully.
+        """
+        if self._fonts_loaded:
+            return bool(self._loaded_families)
+
+        self._fonts_loaded = True
+        self._load_font_config()
+
+        try:
+            fonts_dir = get_assets_path() / "fonts"
+            if not fonts_dir.exists():
+                _logger.warning("Fonts directory not found: %s", fonts_dir)
+                self._setup_fallback_fonts()
+                return False
+
+            font_files = list(fonts_dir.glob("*.ttf")) + list(fonts_dir.glob("*.otf"))
+
+            for font_file in font_files:
+                self._load_font_file(font_file)
+
+            if not self._loaded_families:
+                self._setup_fallback_fonts()
+                fonts_loaded = False
+            else:
+                _logger.info("Loaded %d custom fonts", len(self._loaded_families))
+                self._setup_fonts_from_loaded()
+                fonts_loaded = True
+
+        except (FileNotFoundError, PermissionError) as e:
+            _logger.warning("Error loading fonts: %s", e)
+            self._setup_fallback_fonts()
+            fonts_loaded = False
+
+        return fonts_loaded
+
+    def _load_font_config(self) -> None:
+        """Load font configuration from font_config.json."""
+        try:
+            config_path = get_assets_path() / "fonts" / "font_config.json"
+            if config_path.exists():
+                with open(config_path, encoding="utf-8") as f:
+                    self._font_config = json.load(f)
+                    _logger.debug("Loaded font config: %s", self._font_config)
+        except (json.JSONDecodeError, OSError) as e:
+            _logger.debug("Could not load font config: %s", e)
+            self._font_config = {}
+
+    def _load_font_file(self, font_path: Path) -> bool:
+        """Load a single font file.
+
+        Args:
+            font_path: Path to the font file.
+
+        Returns:
+            True if the font was loaded successfully.
+        """
+        font_id = QFontDatabase.addApplicationFont(str(font_path))
+
+        if font_id < 0:
+            _logger.warning("Failed to load font: %s", font_path)
+            return False
+
+        families = QFontDatabase.applicationFontFamilies(font_id)
+        if families:
+            self._loaded_families.extend(families)
+            _logger.debug("Loaded font families: %s from %s", families, font_path.name)
+            return True
+
+        return False
+
+    def _setup_fonts_from_loaded(self) -> None:
+        """Set up code and UI fonts from loaded font families."""
+        for family in self._loaded_families:
+            lower_family = family.lower()
+            if "mono" in lower_family or "code" in lower_family:
+                if not self._code_font_family:
+                    self._code_font_family = family
+            elif not self._ui_font_family:
+                self._ui_font_family = family
+
+        if not self._code_font_family:
+            self._code_font_family = FontManager._find_available_font(FALLBACK_CODE_FONTS)
+
+        if not self._ui_font_family:
+            self._ui_font_family = FontManager._find_available_font(FALLBACK_UI_FONTS)
+
+    def _setup_fallback_fonts(self) -> None:
+        """Set up fallback fonts when custom fonts are not available."""
+        self._code_font_family = FontManager._find_available_font(FALLBACK_CODE_FONTS)
+        self._ui_font_family = FontManager._find_available_font(FALLBACK_UI_FONTS)
+
+    @staticmethod
+    def _find_available_font(candidates: list[str]) -> str:
+        """Find the first available font from a list of candidates.
+
+        Args:
+            candidates: List of font family names to try.
+
+        Returns:
+            The first available font family name, or the last candidate if none found.
+        """
+        families = QFontDatabase.families()
+
+        for candidate in candidates:
+            if candidate in families:
+                return candidate
+
+            for family in families:
+                if candidate.lower() in family.lower():
+                    return family
+
+        return candidates[-1] if candidates else "monospace"
+
+    def get_code_font(self, size: int = 10) -> QFont:
+        """Get a font suitable for code display.
+
+        Args:
+            size: Font size in points.
+
+        Returns:
+            QFont configured for code display.
+        """
+        if not self._fonts_loaded:
+            self.load_fonts()
+
+        font = QFont(self._code_font_family, size)
+        font.setStyleHint(QFont.StyleHint.Monospace)
+        font.setFixedPitch(True)
+        return font
+
+    def get_code_font_bold(self, size: int = 10) -> QFont:
+        """Get a bold font suitable for code display.
+
+        Args:
+            size: Font size in points.
+
+        Returns:
+            QFont configured for bold code display.
+        """
+        font = self.get_code_font(size)
+        font.setBold(True)
+        return font
+
+    def get_ui_font(self, size: int = 9) -> QFont:
+        """Get a font suitable for UI elements.
+
+        Args:
+            size: Font size in points.
+
+        Returns:
+            QFont configured for UI display.
+        """
+        if not self._fonts_loaded:
+            self.load_fonts()
+
+        font = QFont(self._ui_font_family, size)
+        font.setStyleHint(QFont.StyleHint.SansSerif)
+        return font
+
+    def get_ui_font_bold(self, size: int = 9) -> QFont:
+        """Get a bold font suitable for UI elements.
+
+        Args:
+            size: Font size in points.
+
+        Returns:
+            QFont configured for bold UI display.
+        """
+        font = self.get_ui_font(size)
+        font.setBold(True)
+        return font
+
+    def get_heading_font(self, size: int = 12) -> QFont:
+        """Get a font suitable for headings.
+
+        Args:
+            size: Font size in points.
+
+        Returns:
+            QFont configured for heading display.
+        """
+        font = self.get_ui_font(size)
+        font.setBold(True)
+        return font
+
+    @property
+    def code_font_family(self) -> str:
+        """Get the current code font family name.
+
+        Returns:
+            Code font family name.
+        """
+        if not self._fonts_loaded:
+            self.load_fonts()
+        return self._code_font_family
+
+    @property
+    def ui_font_family(self) -> str:
+        """Get the current UI font family name.
+
+        Returns:
+            UI font family name.
+        """
+        if not self._fonts_loaded:
+            self.load_fonts()
+        return self._ui_font_family
+
+    @property
+    def loaded_families(self) -> list[str]:
+        """Get list of all loaded font families.
+
+        Returns:
+            List of loaded font family names.
+        """
+        return self._loaded_families.copy()
+
+    def is_custom_font_loaded(self) -> bool:
+        """Check if any custom fonts were loaded.
+
+        Returns:
+            True if custom fonts were loaded successfully.
+        """
+        return bool(self._loaded_families)
+
+    def get_font_info(self) -> dict[str, object]:
+        """Get information about loaded fonts.
+
+        Returns:
+            Dictionary with font loading status and details.
+        """
+        return {
+            "fonts_loaded": self._fonts_loaded,
+            "custom_fonts_available": self.is_custom_font_loaded(),
+            "loaded_families": self._loaded_families,
+            "code_font": self._code_font_family,
+            "ui_font": self._ui_font_family,
+            "config": self._font_config,
+        }

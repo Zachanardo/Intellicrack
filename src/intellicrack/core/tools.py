@@ -1,0 +1,408 @@
+"""Tool registry for managing tool bridges.
+
+This module provides a registry for tool bridges that handles
+initialization, availability checking, and tool schema generation
+for LLM function calling.
+"""
+
+from __future__ import annotations
+
+import asyncio
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
+
+from ..bridges.binary import BinaryBridge
+from ..bridges.frida_bridge import FridaBridge
+from ..bridges.ghidra import GhidraBridge
+from ..bridges.installer import ToolInstaller
+from ..bridges.process import ProcessBridge
+from ..bridges.radare2 import Radare2Bridge
+from ..bridges.x64dbg import X64DbgBridge
+from .logging import get_logger
+from .types import ToolDefinition, ToolError, ToolName
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from ..bridges.base import ToolBridgeBase
+
+
+_logger = get_logger("core.tools")
+
+_ERR_BRIDGE_NA = "bridge not available"
+_ERR_UNKNOWN_TOOL = "unknown tool"
+_ERR_NOT_REGISTERED = "not registered"
+_ERR_UNKNOWN_FUNC = "unknown function"
+_ERR_NOT_CALLABLE = "not callable"
+_ERR_CALL_FAILED = "call failed"
+
+
+@dataclass
+class ToolStatus:
+    """Status of a registered tool.
+
+    Attributes:
+        name: Tool name.
+        available: Whether the tool is available.
+        connected: Whether the tool is connected.
+        version: Tool version if known.
+        path: Installation path if known.
+        error: Last error if any.
+    """
+
+    name: ToolName
+    available: bool
+    connected: bool
+    version: str | None = None
+    path: Path | None = None
+    error: str | None = None
+
+
+class ToolRegistry:
+    """Registry for tool bridges.
+
+    Manages initialization, availability, and provides unified access
+    to all tool bridges.
+
+    Attributes:
+        _bridges: Registered tool bridges.
+        _installer: Tool installer/detector.
+        _tools_dir: Directory for tool installations.
+    """
+
+    def __init__(self, tools_dir: Path) -> None:
+        """Initialize the tool registry.
+
+        Args:
+            tools_dir: Directory for tool installations.
+        """
+        self._bridges: dict[ToolName, ToolBridgeBase] = {}
+        self._installer = ToolInstaller(tools_dir)
+        self._tools_dir = tools_dir
+        self._initialized = False
+
+    @property
+    def tools_directory(self) -> Path:
+        """Get the tools directory.
+
+        Returns:
+            Path to tools directory.
+        """
+        return self._tools_dir
+
+    async def initialize(self) -> None:
+        """Initialize all tool bridges.
+
+        Creates bridge instances for all supported tools.
+        """
+        if self._initialized:
+            return
+
+        self._bridges[ToolName.BINARY] = BinaryBridge()
+        self._bridges[ToolName.PROCESS] = ProcessBridge()
+        self._bridges[ToolName.FRIDA] = FridaBridge()
+        self._bridges[ToolName.GHIDRA] = GhidraBridge()
+        self._bridges[ToolName.RADARE2] = Radare2Bridge()
+        self._bridges[ToolName.X64DBG] = X64DbgBridge()
+
+        await self._bridges[ToolName.BINARY].initialize()
+        await self._bridges[ToolName.PROCESS].initialize()
+        await self._bridges[ToolName.FRIDA].initialize()
+
+        _logger.info("Tool registry initialized with %d bridges", len(self._bridges))
+        self._initialized = True
+
+    async def initialize_tool(self, name: ToolName) -> bool:
+        """Initialize a specific tool.
+
+        Finds or installs the tool and initializes its bridge.
+
+        Args:
+            name: Tool to initialize.
+
+        Returns:
+            True if initialization succeeded.
+        """
+        if name not in self._bridges:
+            _logger.error("Unknown tool: %s", name)
+            return False
+
+        bridge = self._bridges[name]
+
+        if name in {ToolName.BINARY, ToolName.PROCESS, ToolName.FRIDA}:
+            if not await bridge.is_available():
+                await bridge.initialize()
+            return await bridge.is_available()
+
+        success = False
+        try:
+            tool_path = await self._installer.ensure_tool(name)
+            await bridge.initialize(tool_path)
+            _logger.info("Initialized tool: %s at %s", name.value, tool_path)
+            success = True
+        except Exception:
+            _logger.exception("Failed to initialize tool %s", name.value)
+
+        return success
+
+    async def shutdown(self) -> None:
+        """Shutdown all tool bridges."""
+        for name, bridge in self._bridges.items():
+            try:
+                await bridge.shutdown()
+                _logger.debug("Shutdown bridge: %s", name.value)
+            except Exception as e:
+                _logger.warning("Error shutting down %s: %s", name.value, e)
+
+        self._initialized = False
+        _logger.info("Tool registry shutdown")
+
+    def get(self, name: ToolName) -> ToolBridgeBase | None:
+        """Get a tool bridge by name.
+
+        Args:
+            name: Tool name.
+
+        Returns:
+            Tool bridge or None if not registered.
+        """
+        return self._bridges.get(name)
+
+    def get_binary_bridge(self) -> BinaryBridge:
+        """Get the binary operations bridge.
+
+        Returns:
+            BinaryBridge instance.
+
+        Raises:
+            ToolError: If bridge not available.
+        """
+        bridge = self._bridges.get(ToolName.BINARY)
+        if bridge is None or not isinstance(bridge, BinaryBridge):
+            raise ToolError(_ERR_BRIDGE_NA)
+        return bridge
+
+    def get_process_bridge(self) -> ProcessBridge:
+        """Get the process control bridge.
+
+        Returns:
+            ProcessBridge instance.
+
+        Raises:
+            ToolError: If bridge not available.
+        """
+        bridge = self._bridges.get(ToolName.PROCESS)
+        if bridge is None or not isinstance(bridge, ProcessBridge):
+            raise ToolError(_ERR_BRIDGE_NA)
+        return bridge
+
+    def get_frida_bridge(self) -> FridaBridge:
+        """Get the Frida instrumentation bridge.
+
+        Returns:
+            FridaBridge instance.
+
+        Raises:
+            ToolError: If bridge not available.
+        """
+        bridge = self._bridges.get(ToolName.FRIDA)
+        if bridge is None or not isinstance(bridge, FridaBridge):
+            raise ToolError(_ERR_BRIDGE_NA)
+        return bridge
+
+    def get_ghidra_bridge(self) -> GhidraBridge:
+        """Get the Ghidra analysis bridge.
+
+        Returns:
+            GhidraBridge instance.
+
+        Raises:
+            ToolError: If bridge not available.
+        """
+        bridge = self._bridges.get(ToolName.GHIDRA)
+        if bridge is None or not isinstance(bridge, GhidraBridge):
+            raise ToolError(_ERR_BRIDGE_NA)
+        return bridge
+
+    def get_radare2_bridge(self) -> Radare2Bridge:
+        """Get the radare2 analysis bridge.
+
+        Returns:
+            Radare2Bridge instance.
+
+        Raises:
+            ToolError: If bridge not available.
+        """
+        bridge = self._bridges.get(ToolName.RADARE2)
+        if bridge is None or not isinstance(bridge, Radare2Bridge):
+            raise ToolError(_ERR_BRIDGE_NA)
+        return bridge
+
+    def get_x64dbg_bridge(self) -> X64DbgBridge:
+        """Get the x64dbg debugger bridge.
+
+        Returns:
+            X64DbgBridge instance.
+
+        Raises:
+            ToolError: If bridge not available.
+        """
+        bridge = self._bridges.get(ToolName.X64DBG)
+        if bridge is None or not isinstance(bridge, X64DbgBridge):
+            raise ToolError(_ERR_BRIDGE_NA)
+        return bridge
+
+    async def get_status(self, name: ToolName) -> ToolStatus:
+        """Get status of a tool.
+
+        Args:
+            name: Tool name.
+
+        Returns:
+            ToolStatus instance.
+        """
+        bridge = self._bridges.get(name)
+        if bridge is None:
+            return ToolStatus(
+                name=name,
+                available=False,
+                connected=False,
+                error="Tool not registered",
+            )
+
+        try:
+            available = await bridge.is_available()
+            state = bridge.state
+
+            version = None
+            path = None
+
+            if name not in {ToolName.BINARY, ToolName.PROCESS, ToolName.FRIDA}:
+                try:
+                    path = await self._installer.find_tool(name)
+                    if path is not None:
+                        version = await self._installer.get_version(name, path)
+                except Exception as e:
+                    _logger.debug(
+                        "Could not determine path/version for %s: %s",
+                        name.value,
+                        e,
+                    )
+
+            return ToolStatus(
+                name=name,
+                available=available,
+                connected=state.connected,
+                version=str(version) if version is not None else None,
+                path=path,
+                error=state.last_error,
+            )
+
+        except Exception as e:
+            return ToolStatus(
+                name=name,
+                available=False,
+                connected=False,
+                error=str(e),
+            )
+
+    async def get_all_status(self) -> list[ToolStatus]:
+        """Get status of all tools.
+
+        Returns:
+            List of ToolStatus instances.
+        """
+        tasks = [self.get_status(name) for name in self._bridges]
+        return await asyncio.gather(*tasks)
+
+    def get_tool_definitions(self) -> list[ToolDefinition]:
+        """Get tool definitions for LLM function calling.
+
+        Returns:
+            List of ToolDefinition instances.
+        """
+        definitions: list[ToolDefinition] = []
+
+        for bridge in self._bridges.values():
+            try:
+                definitions.append(bridge.tool_definition)
+            except Exception as e:
+                _logger.warning("Failed to get tool definition: %s", e)
+
+        return definitions
+
+    def get_available_tools(self) -> list[ToolName]:
+        """Get list of available tools.
+
+        Returns:
+            List of available tool names.
+        """
+        return list(self._bridges.keys())
+
+    async def execute_tool_call(
+        self,
+        tool_name: str,
+        function_name: str,
+        arguments: dict[str, Any],
+    ) -> Any:
+        """Execute a tool function call.
+
+        Args:
+            tool_name: Name of the tool (e.g., "ghidra", "frida").
+            function_name: Function to call (e.g., "decompile", "hook_function").
+            arguments: Function arguments.
+
+        Returns:
+            Result of the function call.
+
+        Raises:
+            ToolError: If execution fails.
+        """
+        try:
+            tool_enum = ToolName(tool_name.lower())
+        except ValueError:
+            raise ToolError(_ERR_UNKNOWN_TOOL) from None
+
+        bridge = self._bridges.get(tool_enum)
+        if bridge is None:
+            raise ToolError(_ERR_NOT_REGISTERED)
+
+        method = getattr(bridge, function_name, None)
+        if method is None:
+            raise ToolError(_ERR_UNKNOWN_FUNC)
+
+        if not callable(method):
+            raise ToolError(_ERR_NOT_CALLABLE)
+
+        result: Any = None
+        try:
+            if asyncio.iscoroutinefunction(method):
+                result = await method(**arguments)
+            else:
+                result = await asyncio.to_thread(method, **arguments)
+        except Exception as e:
+            _logger.exception("Tool call failed: %s.%s", tool_name, function_name)
+            raise ToolError(_ERR_CALL_FAILED) from e
+
+        return result
+
+    async def ensure_tool_ready(self, name: ToolName) -> bool:
+        """Ensure a tool is ready for use.
+
+        Initializes the tool if not already initialized.
+
+        Args:
+            name: Tool name.
+
+        Returns:
+            True if tool is ready.
+        """
+        bridge = self._bridges.get(name)
+        if bridge is None:
+            return False
+
+        if await bridge.is_available():
+            return True
+
+        return await self.initialize_tool(name)
