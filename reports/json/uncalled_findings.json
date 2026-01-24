@@ -1,0 +1,776 @@
+{
+  "tool": "uncalled",
+  "generated": "2026-01-18T16:32:13.927596",
+  "total_findings": 98,
+  "total_files": 30,
+  "files": [
+    {
+      "path": "src\\intellicrack\\core\\script_gen.py",
+      "count": 10,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: add_script",
+          "raw": "src\\intellicrack\\core\\script_gen.py: Unused function add_script"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_frida_api_reference",
+          "raw": "src\\intellicrack\\core\\script_gen.py: Unused function get_frida_api_reference"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_ghidra_api_reference",
+          "raw": "src\\intellicrack\\core\\script_gen.py: Unused function get_ghidra_api_reference"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_radare2_reference",
+          "raw": "src\\intellicrack\\core\\script_gen.py: Unused function get_radare2_reference"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_script",
+          "raw": "src\\intellicrack\\core\\script_gen.py: Unused function get_script"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_x64dbg_reference",
+          "raw": "src\\intellicrack\\core\\script_gen.py: Unused function get_x64dbg_reference"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: list_scripts",
+          "raw": "src\\intellicrack\\core\\script_gen.py: Unused function list_scripts"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: load_script",
+          "raw": "src\\intellicrack\\core\\script_gen.py: Unused function load_script"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: save_script",
+          "raw": "src\\intellicrack\\core\\script_gen.py: Unused function save_script"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: to_prompt_context",
+          "raw": "src\\intellicrack\\core\\script_gen.py: Unused function to_prompt_context"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\core\\tools.py",
+      "count": 7,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_available_tools",
+          "raw": "src\\intellicrack\\core\\tools.py: Unused function get_available_tools"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_frida_bridge",
+          "raw": "src\\intellicrack\\core\\tools.py: Unused function get_frida_bridge"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_ghidra_bridge",
+          "raw": "src\\intellicrack\\core\\tools.py: Unused function get_ghidra_bridge"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_process_bridge",
+          "raw": "src\\intellicrack\\core\\tools.py: Unused function get_process_bridge"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_radare2_bridge",
+          "raw": "src\\intellicrack\\core\\tools.py: Unused function get_radare2_bridge"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_sandbox_bridge",
+          "raw": "src\\intellicrack\\core\\tools.py: Unused function get_sandbox_bridge"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_x64dbg_bridge",
+          "raw": "src\\intellicrack\\core\\tools.py: Unused function get_x64dbg_bridge"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\resources\\font_manager.py",
+      "count": 7,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: code_font_family",
+          "raw": "src\\intellicrack\\ui\\resources\\font_manager.py: Unused function code_font_family"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_code_font_bold",
+          "raw": "src\\intellicrack\\ui\\resources\\font_manager.py: Unused function get_code_font_bold"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_font_info",
+          "raw": "src\\intellicrack\\ui\\resources\\font_manager.py: Unused function get_font_info"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_heading_font",
+          "raw": "src\\intellicrack\\ui\\resources\\font_manager.py: Unused function get_heading_font"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_ui_font_bold",
+          "raw": "src\\intellicrack\\ui\\resources\\font_manager.py: Unused function get_ui_font_bold"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: reset_instance",
+          "raw": "src\\intellicrack\\ui\\resources\\font_manager.py: Unused function reset_instance"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: ui_font_family",
+          "raw": "src\\intellicrack\\ui\\resources\\font_manager.py: Unused function ui_font_family"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\resources\\icon_manager.py",
+      "count": 7,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: clear_cache",
+          "raw": "src\\intellicrack\\ui\\resources\\icon_manager.py: Unused function clear_cache"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_status_icon",
+          "raw": "src\\intellicrack\\ui\\resources\\icon_manager.py: Unused function get_status_icon"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_status_pixmap",
+          "raw": "src\\intellicrack\\ui\\resources\\icon_manager.py: Unused function get_status_pixmap"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: icon_exists",
+          "raw": "src\\intellicrack\\ui\\resources\\icon_manager.py: Unused function icon_exists"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: list_available_icons",
+          "raw": "src\\intellicrack\\ui\\resources\\icon_manager.py: Unused function list_available_icons"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: preload_icons",
+          "raw": "src\\intellicrack\\ui\\resources\\icon_manager.py: Unused function preload_icons"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: reset_instance",
+          "raw": "src\\intellicrack\\ui\\resources\\icon_manager.py: Unused function reset_instance"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\credentials\\env_loader.py",
+      "count": 6,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: create_env_template",
+          "raw": "src\\intellicrack\\credentials\\env_loader.py: Unused function create_env_template"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_env_var",
+          "raw": "src\\intellicrack\\credentials\\env_loader.py: Unused function get_env_var"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_provider_credentials",
+          "raw": "src\\intellicrack\\credentials\\env_loader.py: Unused function get_provider_credentials"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: list_configured_providers",
+          "raw": "src\\intellicrack\\credentials\\env_loader.py: Unused function list_configured_providers"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: list_missing_providers",
+          "raw": "src\\intellicrack\\credentials\\env_loader.py: Unused function list_missing_providers"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: reload",
+          "raw": "src\\intellicrack\\credentials\\env_loader.py: Unused function reload"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\providers\\registry.py",
+      "count": 6,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: active_name",
+          "raw": "src\\intellicrack\\providers\\registry.py: Unused function active_name"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_active_provider",
+          "raw": "src\\intellicrack\\providers\\registry.py: Unused function get_active_provider"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: has_connected_provider",
+          "raw": "src\\intellicrack\\providers\\registry.py: Unused function has_connected_provider"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: register_provider",
+          "raw": "src\\intellicrack\\providers\\registry.py: Unused function register_provider"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: set_active",
+          "raw": "src\\intellicrack\\providers\\registry.py: Unused function set_active"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: set_credential_loader",
+          "raw": "src\\intellicrack\\providers\\registry.py: Unused function set_credential_loader"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\resources\\theme_manager.py",
+      "count": 6,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: clear_cache",
+          "raw": "src\\intellicrack\\ui\\resources\\theme_manager.py: Unused function clear_cache"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: current_theme",
+          "raw": "src\\intellicrack\\ui\\resources\\theme_manager.py: Unused function current_theme"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_available_themes",
+          "raw": "src\\intellicrack\\ui\\resources\\theme_manager.py: Unused function get_available_themes"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: is_dark_theme",
+          "raw": "src\\intellicrack\\ui\\resources\\theme_manager.py: Unused function is_dark_theme"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: reset_instance",
+          "raw": "src\\intellicrack\\ui\\resources\\theme_manager.py: Unused function reset_instance"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: toggle_theme",
+          "raw": "src\\intellicrack\\ui\\resources\\theme_manager.py: Unused function toggle_theme"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\core\\process_manager.py",
+      "count": 5,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: clear_shutdown_request",
+          "raw": "src\\intellicrack\\core\\process_manager.py: Unused function clear_shutdown_request"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_all_tracked",
+          "raw": "src\\intellicrack\\core\\process_manager.py: Unused function get_all_tracked"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_running_processes",
+          "raw": "src\\intellicrack\\core\\process_manager.py: Unused function get_running_processes"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: is_shutdown_requested",
+          "raw": "src\\intellicrack\\core\\process_manager.py: Unused function is_shutdown_requested"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: reset_instance",
+          "raw": "src\\intellicrack\\core\\process_manager.py: Unused function reset_instance"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\tools.py",
+      "count": 5,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: activate_tab",
+          "raw": "src\\intellicrack\\ui\\tools.py: Unused function activate_tab"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: clear_tab",
+          "raw": "src\\intellicrack\\ui\\tools.py: Unused function clear_tab"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: set_current_address",
+          "raw": "src\\intellicrack\\ui\\tools.py: Unused function set_current_address"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: set_tab_content",
+          "raw": "src\\intellicrack\\ui\\tools.py: Unused function set_tab_content"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: set_tab_info",
+          "raw": "src\\intellicrack\\ui\\tools.py: Unused function set_tab_info"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\core\\orchestrator.py",
+      "count": 4,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: confirm_pending",
+          "raw": "src\\intellicrack\\core\\orchestrator.py: Unused function confirm_pending"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: current_session",
+          "raw": "src\\intellicrack\\core\\orchestrator.py: Unused function current_session"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: set_confirmation_callback",
+          "raw": "src\\intellicrack\\core\\orchestrator.py: Unused function set_confirmation_callback"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: stats",
+          "raw": "src\\intellicrack\\core\\orchestrator.py: Unused function stats"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\providers\\discovery.py",
+      "count": 4,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_by_id",
+          "raw": "src\\intellicrack\\providers\\discovery.py: Unused function get_by_id"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_discovery_events",
+          "raw": "src\\intellicrack\\providers\\discovery.py: Unused function get_discovery_events"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_last_event",
+          "raw": "src\\intellicrack\\providers\\discovery.py: Unused function get_last_event"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_provider_model_count",
+          "raw": "src\\intellicrack\\providers\\discovery.py: Unused function get_provider_model_count"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\bridges\\schemas.py",
+      "count": 3,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: build_schema_parameters",
+          "raw": "src\\intellicrack\\bridges\\schemas.py: Unused function build_schema_parameters"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_all_schemas_for_provider",
+          "raw": "src\\intellicrack\\bridges\\schemas.py: Unused function get_all_schemas_for_provider"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: validate_and_convert",
+          "raw": "src\\intellicrack\\bridges\\schemas.py: Unused function validate_and_convert"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\core\\config.py",
+      "count": 3,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: ensure_directories",
+          "raw": "src\\intellicrack\\core\\config.py: Unused function ensure_directories"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: is_provider_enabled",
+          "raw": "src\\intellicrack\\core\\config.py: Unused function is_provider_enabled"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: is_tool_enabled",
+          "raw": "src\\intellicrack\\core\\config.py: Unused function is_tool_enabled"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\credentials\\oauth.py",
+      "count": 3,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: do_GET",
+          "raw": "src\\intellicrack\\credentials\\oauth.py: Unused function do_GET"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: log_message",
+          "raw": "src\\intellicrack\\credentials\\oauth.py: Unused function log_message"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: needs_refresh",
+          "raw": "src\\intellicrack\\credentials\\oauth.py: Unused function needs_refresh"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\resources\\resource_helper.py",
+      "count": 3,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_font_path",
+          "raw": "src\\intellicrack\\ui\\resources\\resource_helper.py: Unused function get_font_path"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_style_path",
+          "raw": "src\\intellicrack\\ui\\resources\\resource_helper.py: Unused function get_style_path"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: resource_exists",
+          "raw": "src\\intellicrack\\ui\\resources\\resource_helper.py: Unused function resource_exists"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\core\\logging.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: log_exception",
+          "raw": "src\\intellicrack\\core\\logging.py: Unused function log_exception"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: log_tool_call",
+          "raw": "src\\intellicrack\\core\\logging.py: Unused function log_tool_call"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\core\\session.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: add_patch",
+          "raw": "src\\intellicrack\\core\\session.py: Unused function add_patch"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: to_metadata",
+          "raw": "src\\intellicrack\\core\\session.py: Unused function to_metadata"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\providers\\ollama.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: cloud_available",
+          "raw": "src\\intellicrack\\providers\\ollama.py: Unused function cloud_available"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: local_available",
+          "raw": "src\\intellicrack\\providers\\ollama.py: Unused function local_available"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\session_manager.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_description",
+          "raw": "src\\intellicrack\\ui\\session_manager.py: Unused function get_description"
+        },
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_session_name",
+          "raw": "src\\intellicrack\\ui\\session_manager.py: Unused function get_session_name"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\bridges\\frida_bridge.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: set_message_handler",
+          "raw": "src\\intellicrack\\bridges\\frida_bridge.py: Unused function set_message_handler"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\bridges\\named_pipe_client.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: set_event_handler",
+          "raw": "src\\intellicrack\\bridges\\named_pipe_client.py: Unused function set_event_handler"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\providers\\anthropic.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_system_prompt",
+          "raw": "src\\intellicrack\\providers\\anthropic.py: Unused function get_system_prompt"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\app.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: closeEvent",
+          "raw": "src\\intellicrack\\ui\\app.py: Unused function closeEvent"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\chat.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: set_focus_input",
+          "raw": "src\\intellicrack\\ui\\chat.py: Unused function set_focus_input"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\confirmation_dialog.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: remember_similar",
+          "raw": "src\\intellicrack\\ui\\confirmation_dialog.py: Unused function remember_similar"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\dialogs\\splash_screen.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: show_loading_step",
+          "raw": "src\\intellicrack\\ui\\dialogs\\splash_screen.py: Unused function show_loading_step"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\highlighter.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: highlightBlock",
+          "raw": "src\\intellicrack\\ui\\highlighter.py: Unused function highlightBlock"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\preferences.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: set_config_path",
+          "raw": "src\\intellicrack\\ui\\preferences.py: Unused function set_config_path"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\provider_config.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: get_selected_model",
+          "raw": "src\\intellicrack\\ui\\provider_config.py: Unused function get_selected_model"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\ui\\sandbox_config.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: is_sandbox_available",
+          "raw": "src\\intellicrack\\ui\\sandbox_config.py: Unused function is_sandbox_available"
+        }
+      ]
+    }
+  ]
+}

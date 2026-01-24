@@ -334,7 +334,7 @@ class BinaryBridge(BinaryOperationsBridge):
         """
         del tool_path
         self._state = BridgeState(connected=True, tool_running=True)
-        _logger.info("Binary operations bridge initialized")
+        _logger.info("bridge_initialized")
 
     async def shutdown(self) -> None:
         """Shutdown and cleanup resources."""
@@ -345,7 +345,7 @@ class BinaryBridge(BinaryOperationsBridge):
         self._modified = False
         self._patches = []
         await super().shutdown()
-        _logger.info("Binary operations bridge shutdown")
+        _logger.info("bridge_shutdown")
 
     async def is_available(self) -> bool:  # noqa: PLR6301
         """Check if binary operations are available.
@@ -412,7 +412,7 @@ class BinaryBridge(BinaryOperationsBridge):
                 target_path=self._binary_path,
             )
 
-            _logger.info("Loaded binary: %s (%s, %s)", path.name, file_type, arch)
+            _logger.info("binary_loaded", extra={"path": str(path.name), "file_type": file_type, "arch": arch})
 
             return BinaryInfo(
                 path=self._binary_path,
@@ -430,7 +430,7 @@ class BinaryBridge(BinaryOperationsBridge):
             )
 
         except Exception as e:
-            _logger.exception("Failed to load binary")
+            _logger.exception("binary_load_failed")
             raise ToolError(_ERR_LOAD_FAILED) from e
 
     def _detect_format(self) -> str:
@@ -547,9 +547,7 @@ class BinaryBridge(BinaryOperationsBridge):
                 entropy = self._calculate_entropy(data)
                 section_name_raw: str | bytes = section.name
                 section_name: str = (
-                    section_name_raw.decode("utf-8", errors="replace")
-                    if isinstance(section_name_raw, bytes)
-                    else section_name_raw
+                    section_name_raw.decode("utf-8", errors="replace") if isinstance(section_name_raw, bytes) else section_name_raw
                 )
                 sections.append(
                     SectionInfo(
@@ -610,17 +608,10 @@ class BinaryBridge(BinaryOperationsBridge):
                         )
                     )
 
-        elif (
-            self._lief_binary is not None
-            and hasattr(self._lief_binary, "imported_functions")
-        ):
+        elif self._lief_binary is not None and hasattr(self._lief_binary, "imported_functions"):
             for func in self._lief_binary.imported_functions:
                 func_name_raw: str | bytes = func.name
-                func_name: str = (
-                    func_name_raw.decode("utf-8", errors="replace")
-                    if isinstance(func_name_raw, bytes)
-                    else func_name_raw
-                )
+                func_name: str = func_name_raw.decode("utf-8", errors="replace") if isinstance(func_name_raw, bytes) else func_name_raw
                 imports.append(
                     ImportInfo(
                         dll="",
@@ -651,16 +642,11 @@ class BinaryBridge(BinaryOperationsBridge):
                     )
                 )
 
-        elif (
-            self._lief_binary is not None
-            and hasattr(self._lief_binary, "exported_functions")
-        ):
+        elif self._lief_binary is not None and hasattr(self._lief_binary, "exported_functions"):
             for idx, func in enumerate(self._lief_binary.exported_functions):
                 export_name_raw: str | bytes = func.name
                 export_name: str = (
-                    export_name_raw.decode("utf-8", errors="replace")
-                    if isinstance(export_name_raw, bytes)
-                    else export_name_raw
+                    export_name_raw.decode("utf-8", errors="replace") if isinstance(export_name_raw, bytes) else export_name_raw
                 )
                 exports.append(
                     ExportInfo(
@@ -716,7 +702,7 @@ class BinaryBridge(BinaryOperationsBridge):
 
         self._data[offset:end] = data
         self._modified = True
-        _logger.debug("Wrote %d bytes at offset 0x%X", len(data), offset)
+        _logger.debug("bytes_written", extra={"length": len(data), "offset": hex(offset)})
 
     async def apply_patch(self, patch: PatchInfo) -> bool:
         """Apply a patch to the binary.
@@ -738,10 +724,12 @@ class BinaryBridge(BinaryOperationsBridge):
         original = await self.read_bytes(offset, len(patch.new_bytes))
         if original != patch.original_bytes:
             _logger.warning(
-                "Original bytes mismatch at 0x%X: expected %s, found %s",
-                offset,
-                patch.original_bytes.hex(),
-                original.hex(),
+                "patch_bytes_mismatch",
+                extra={
+                    "offset": hex(offset),
+                    "expected": patch.original_bytes.hex(),
+                    "found": original.hex(),
+                },
             )
 
         await self.write_bytes(offset, patch.new_bytes)
@@ -756,11 +744,13 @@ class BinaryBridge(BinaryOperationsBridge):
         self._patches.append(patch_record)
 
         _logger.info(
-            "Applied patch at 0x%X: %s -> %s (%s)",
-            offset,
-            original.hex(),
-            patch.new_bytes.hex(),
-            patch.description,
+            "patch_applied",
+            extra={
+                "offset": hex(offset),
+                "original": original.hex(),
+                "new": patch.new_bytes.hex(),
+                "description": patch.description,
+            },
         )
 
         return True
@@ -790,10 +780,10 @@ class BinaryBridge(BinaryOperationsBridge):
                     description=applied.description,
                     applied=False,
                 )
-                _logger.info("Reverted patch at 0x%X", patch.address)
+                _logger.info("patch_reverted", extra={"address": hex(patch.address)})
                 return True
 
-        _logger.warning("No applied patch found at 0x%X", patch.address)
+        _logger.warning("patch_not_found", extra={"address": hex(patch.address)})
         return False
 
     async def save(self, path: Path | None = None) -> Path:
@@ -816,7 +806,7 @@ class BinaryBridge(BinaryOperationsBridge):
             raise ToolError(_ERR_NO_SAVE_PATH)
 
         save_path.write_bytes(bytes(self._data))
-        _logger.info("Saved binary to %s", save_path)
+        _logger.info("binary_saved", extra={"path": str(save_path)})
 
         if save_path == self._binary_path:
             self._modified = False
@@ -947,9 +937,7 @@ class BinaryBridge(BinaryOperationsBridge):
             if instruction_count >= count:
                 break
             hex_bytes = " ".join(f"{b:02X}" for b in insn.bytes)
-            lines.append(
-                f"0x{insn.address:08X}:  {hex_bytes:<24} {insn.mnemonic} {insn.op_str}"
-            )
+            lines.append(f"0x{insn.address:08X}:  {hex_bytes:<24} {insn.mnemonic} {insn.op_str}")
 
         return "\n".join(lines)
 
@@ -1024,9 +1012,7 @@ class BinaryBridge(BinaryOperationsBridge):
 
         raise ToolError(_ERR_OFFSET_NOT_AVAIL)
 
-    async def get_strings(
-        self, min_length: int = _MIN_STRING_LEN
-    ) -> list[tuple[int, str]]:
+    async def get_strings(self, min_length: int = _MIN_STRING_LEN) -> list[tuple[int, str]]:
         """Extract strings from the binary.
 
         Args:
@@ -1043,10 +1029,5 @@ class BinaryBridge(BinaryOperationsBridge):
 
         data = bytes(self._data)
 
-        ascii_pattern = re.compile(
-            rb"[\x20-\x7e]{" + str(min_length).encode() + rb",}"
-        )
-        return [
-            (match.start(), match.group().decode("ascii"))
-            for match in ascii_pattern.finditer(data)
-        ]
+        ascii_pattern = re.compile(rb"[\x20-\x7e]{" + str(min_length).encode() + rb",}")
+        return [(match.start(), match.group().decode("ascii")) for match in ascii_pattern.finditer(data)]

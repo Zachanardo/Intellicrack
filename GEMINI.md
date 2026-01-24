@@ -7,12 +7,14 @@ This document provides an overview of the Intellicrack project, its setup, and d
 ### EXPLICIT TOOL SCOPE - CRITICAL
 
 **What Intellicrack IS:**
+
 - **SOFTWARE LICENSING CRACKER** - Defeats licensing protections, serial validation, and registration systems
 - **PROTECTION ANALYZER** - Analyzes and bypasses copy protection, trial limitations, and activation mechanisms
 - **BINARY PATCHER** - Modifies binaries to remove licensing checks and protection routines
 - **LICENSE KEYGEN CREATOR** - Generates valid license keys and registration codes
 
 **What Intellicrack IS NOT:**
+
 - **NOT a malware creation tool** - No malware injection, payload delivery, or virus creation
 - **NOT a system exploit framework** - No OS exploitation, privilege escalation, or system compromise
 - **NOT a network attack tool** - No network intrusion, packet injection, or remote exploitation

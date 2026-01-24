@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -41,6 +42,8 @@ from intellicrack.core.process_manager import ProcessManager, ProcessType
 
 from .resources import IconManager
 
+
+_logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from intellicrack.sandbox.manager import SandboxManager
@@ -160,36 +163,36 @@ class SandboxTestWorker(QThread):
         Returns:
             XML configuration string.
         """
-        config_lines = ['<Configuration>']
+        config_lines = ["<Configuration>"]
 
-        config_lines.append('  <VGpu>Enable</VGpu>')
+        config_lines.append("  <VGpu>Enable</VGpu>")
 
         if self._network_enabled:
-            config_lines.append('  <Networking>Enable</Networking>')
+            config_lines.append("  <Networking>Enable</Networking>")
         else:
-            config_lines.append('  <Networking>Disable</Networking>')
+            config_lines.append("  <Networking>Disable</Networking>")
 
         if self._memory_limit_mb > 0:
-            config_lines.append(f'  <MemoryInMB>{self._memory_limit_mb}</MemoryInMB>')
+            config_lines.append(f"  <MemoryInMB>{self._memory_limit_mb}</MemoryInMB>")
 
         if self._shared_folder:
             shared_path = Path(self._shared_folder)
             if shared_path.exists():
-                config_lines.append('  <MappedFolders>')
-                config_lines.append('    <MappedFolder>')
-                config_lines.append(f'      <HostFolder>{shared_path}</HostFolder>')
-                config_lines.append('      <SandboxFolder>C:\\Shared</SandboxFolder>')
-                config_lines.append(f'      <ReadOnly>{"true" if self._read_only else "false"}</ReadOnly>')
-                config_lines.append('    </MappedFolder>')
-                config_lines.append('  </MappedFolders>')
+                config_lines.append("  <MappedFolders>")
+                config_lines.append("    <MappedFolder>")
+                config_lines.append(f"      <HostFolder>{shared_path}</HostFolder>")
+                config_lines.append("      <SandboxFolder>C:\\Shared</SandboxFolder>")
+                config_lines.append(f"      <ReadOnly>{'true' if self._read_only else 'false'}</ReadOnly>")
+                config_lines.append("    </MappedFolder>")
+                config_lines.append("  </MappedFolders>")
 
-        config_lines.append('  <LogonCommand>')
+        config_lines.append("  <LogonCommand>")
         config_lines.append('    <Command>cmd.exe /c "echo Intellicrack Sandbox Test &amp;&amp; timeout /t 5"</Command>')
-        config_lines.append('  </LogonCommand>')
+        config_lines.append("  </LogonCommand>")
 
-        config_lines.append('</Configuration>')
+        config_lines.append("</Configuration>")
 
-        return '\n'.join(config_lines)
+        return "\n".join(config_lines)
 
     def stop(self) -> None:
         """Stop the sandbox test and terminate the process."""
@@ -300,9 +303,7 @@ class SandboxConfigDialog(QDialog):
 
         self._network_enabled_checkbox = QCheckBox("Enable networking in sandbox")
         self._network_enabled_checkbox.setChecked(False)
-        self._network_enabled_checkbox.setToolTip(
-            "WARNING: Enabling networking allows sandbox to access external resources"
-        )
+        self._network_enabled_checkbox.setToolTip("WARNING: Enabling networking allows sandbox to access external resources")
         network_layout.addRow(self._network_enabled_checkbox)
 
         self._block_telemetry_checkbox = QCheckBox("Block telemetry endpoints")
@@ -342,9 +343,7 @@ class SandboxConfigDialog(QDialog):
         button_layout.addStretch()
 
         button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok
-            | QDialogButtonBox.StandardButton.Cancel
-            | QDialogButtonBox.StandardButton.Apply
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Apply
         )
         button_box.accepted.connect(self._on_accept)
         button_box.rejected.connect(self.reject)
@@ -360,6 +359,10 @@ class SandboxConfigDialog(QDialog):
     def _check_availability(self) -> None:
         """Check if Windows Sandbox is available."""
         if sys.platform != "win32":
+            _logger.info(
+                "sandbox_config_validated",
+                extra={"valid": False, "reason": "non_windows_platform", "platform": sys.platform},
+            )
             self._set_unavailable("Windows Sandbox is only available on Windows")
             return
 
@@ -378,14 +381,34 @@ class SandboxConfigDialog(QDialog):
                 creationflags=creation_flags,
             )
             if "Enabled" in result.stdout:
+                _logger.info(
+                    "sandbox_config_validated",
+                    extra={"valid": True, "sandbox_available": True},
+                )
                 self._set_available()
             else:
+                _logger.info(
+                    "sandbox_config_validated",
+                    extra={"valid": False, "reason": "feature_not_enabled"},
+                )
                 self._set_unavailable("Windows Sandbox feature is not enabled")
         except subprocess.TimeoutExpired:
+            _logger.exception(
+                "sandbox_config_error",
+                extra={"operation": "availability_check", "error": "timeout"},
+            )
             self._set_unavailable("Timeout checking Windows Sandbox status")
         except FileNotFoundError:
+            _logger.exception(
+                "sandbox_config_error",
+                extra={"operation": "availability_check", "error": "powershell_not_found"},
+            )
             self._set_unavailable("PowerShell not found")
         except OSError as e:
+            _logger.exception(
+                "sandbox_config_error",
+                extra={"operation": "availability_check", "error": str(e)},
+            )
             self._set_unavailable(f"Could not determine Windows Sandbox status: {e}")
 
     def _set_available(self) -> None:
@@ -462,7 +485,16 @@ class SandboxConfigDialog(QDialog):
                 self._shared_folder_input.setText(settings.get("shared_folder", str(default_shared)))
                 self._read_only_checkbox.setChecked(settings.get("shared_folder_read_only", False))
 
-            except (json.JSONDecodeError, OSError):
+                _logger.info(
+                    "sandbox_config_loaded",
+                    extra={"config_file": str(self.CONFIG_FILE), "settings_count": len(settings)},
+                )
+
+            except (json.JSONDecodeError, OSError) as e:
+                _logger.exception(
+                    "sandbox_config_error",
+                    extra={"operation": "load", "error": str(e), "config_file": str(self.CONFIG_FILE)},
+                )
                 self._shared_folder_input.setText(str(default_shared))
         else:
             self._shared_folder_input.setText(str(default_shared))
@@ -490,8 +522,7 @@ class SandboxConfigDialog(QDialog):
         reply = QMessageBox.question(
             self,
             "Test Sandbox",
-            "This will launch Windows Sandbox to verify it's working.\n\n"
-            "The sandbox will open briefly for testing.\n\nContinue?",
+            "This will launch Windows Sandbox to verify it's working.\n\nThe sandbox will open briefly for testing.\n\nContinue?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
@@ -591,9 +622,18 @@ class SandboxConfigDialog(QDialog):
                 with contextlib.suppress(OSError):
                     shared_folder.mkdir(parents=True, exist_ok=True)
 
+            _logger.info(
+                "sandbox_config_saved",
+                extra={"config_file": str(self.CONFIG_FILE), "settings_count": len(settings)},
+            )
+
             self.settings_updated.emit()
 
         except OSError as e:
+            _logger.exception(
+                "sandbox_config_error",
+                extra={"operation": "save", "error": str(e), "config_file": str(self.CONFIG_FILE)},
+            )
             QMessageBox.warning(
                 self,
                 "Save Error",

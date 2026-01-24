@@ -51,9 +51,7 @@ class TestOpenRouterModelListing:
         """Test OpenRouter returns many models (it's an aggregator)."""
         models = await openrouter_provider.list_models()
 
-        assert len(models) >= 10, (
-            f"Expected at least 10 models from OpenRouter, got {len(models)}"
-        )
+        assert len(models) >= 10, f"Expected at least 10 models from OpenRouter, got {len(models)}"
 
     @pytest.mark.asyncio
     async def test_list_models_returns_model_info_instances(
@@ -64,9 +62,7 @@ class TestOpenRouterModelListing:
         models = await openrouter_provider.list_models()
 
         for model in models[:20]:
-            assert isinstance(model, ModelInfo), (
-                f"Expected ModelInfo, got {type(model)}"
-            )
+            assert isinstance(model, ModelInfo), f"Expected ModelInfo, got {type(model)}"
 
     @pytest.mark.asyncio
     async def test_model_info_has_valid_id(
@@ -77,9 +73,7 @@ class TestOpenRouterModelListing:
         models = await openrouter_provider.list_models()
 
         for model in models[:20]:
-            assert isinstance(model.id, str), (
-                f"Expected str id, got {type(model.id)}"
-            )
+            assert isinstance(model.id, str), f"Expected str id, got {type(model.id)}"
             assert len(model.id) > 0, "Model ID should not be empty"
 
     @pytest.mark.asyncio
@@ -91,9 +85,7 @@ class TestOpenRouterModelListing:
         models = await openrouter_provider.list_models()
 
         for model in models[:20]:
-            assert isinstance(model.name, str), (
-                f"Expected str name, got {type(model.name)}"
-            )
+            assert isinstance(model.name, str), f"Expected str name, got {type(model.name)}"
             assert len(model.name) > 0, "Model name should not be empty"
 
     @pytest.mark.asyncio
@@ -105,9 +97,7 @@ class TestOpenRouterModelListing:
         models = await openrouter_provider.list_models()
 
         for model in models[:20]:
-            assert model.provider == ProviderName.OPENROUTER, (
-                f"Expected OPENROUTER provider, got {model.provider}"
-            )
+            assert model.provider == ProviderName.OPENROUTER, f"Expected OPENROUTER provider, got {model.provider}"
 
     @pytest.mark.asyncio
     async def test_model_info_has_positive_context_window(
@@ -118,12 +108,8 @@ class TestOpenRouterModelListing:
         models = await openrouter_provider.list_models()
 
         for model in models[:20]:
-            assert isinstance(model.context_window, int), (
-                f"Expected int context_window, got {type(model.context_window)}"
-            )
-            assert model.context_window > 0, (
-                f"Model {model.id} has invalid context_window: {model.context_window}"
-            )
+            assert isinstance(model.context_window, int), f"Expected int context_window, got {type(model.context_window)}"
+            assert model.context_window > 0, f"Model {model.id} has invalid context_window: {model.context_window}"
 
     @pytest.mark.asyncio
     async def test_model_info_has_boolean_capabilities(
@@ -134,15 +120,9 @@ class TestOpenRouterModelListing:
         models = await openrouter_provider.list_models()
 
         for model in models[:20]:
-            assert isinstance(model.supports_tools, bool), (
-                f"Expected bool supports_tools, got {type(model.supports_tools)}"
-            )
-            assert isinstance(model.supports_vision, bool), (
-                f"Expected bool supports_vision, got {type(model.supports_vision)}"
-            )
-            assert isinstance(model.supports_streaming, bool), (
-                f"Expected bool supports_streaming, got {type(model.supports_streaming)}"
-            )
+            assert isinstance(model.supports_tools, bool), f"Expected bool supports_tools, got {type(model.supports_tools)}"
+            assert isinstance(model.supports_vision, bool), f"Expected bool supports_vision, got {type(model.supports_vision)}"
+            assert isinstance(model.supports_streaming, bool), f"Expected bool supports_streaming, got {type(model.supports_streaming)}"
 
     @pytest.mark.asyncio
     async def test_model_info_may_have_pricing(
@@ -152,14 +132,9 @@ class TestOpenRouterModelListing:
         """Test that some models have pricing information."""
         models = await openrouter_provider.list_models()
 
-        models_with_pricing = [
-            m for m in models
-            if m.input_cost_per_1m_tokens is not None
-        ]
+        models_with_pricing = [m for m in models if m.input_cost_per_1m_tokens is not None]
 
-        assert len(models_with_pricing) > 0, (
-            "Expected at least some models to have pricing information"
-        )
+        assert len(models_with_pricing) > 0, "Expected at least some models to have pricing information"
 
     @pytest.mark.asyncio
     async def test_multiple_calls_return_consistent_results(

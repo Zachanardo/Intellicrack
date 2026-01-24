@@ -7,7 +7,6 @@ required for Qt widget testing.
 from __future__ import annotations
 
 from collections.abc import Generator
-from typing import cast
 
 import pytest
 from PyQt6.QtWidgets import QApplication
@@ -24,10 +23,10 @@ def qapp() -> Generator[QApplication]:
     Yields:
         QApplication instance for widget testing.
     """
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
-    else:
-        app = cast("QApplication", app)
+    existing = QApplication.instance()
+    if existing is not None and isinstance(existing, QApplication):
+        yield existing
+        return
 
+    app = QApplication([])
     yield app

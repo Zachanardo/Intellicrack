@@ -17,6 +17,7 @@ from ..bridges.ghidra import GhidraBridge
 from ..bridges.installer import ToolInstaller
 from ..bridges.process import ProcessBridge
 from ..bridges.radare2 import Radare2Bridge
+from ..bridges.sandbox_bridge import SandboxBridge
 from ..bridges.x64dbg import X64DbgBridge
 from .logging import get_logger
 from .types import ToolDefinition, ToolError, ToolName
@@ -105,12 +106,14 @@ class ToolRegistry:
         self._bridges[ToolName.GHIDRA] = GhidraBridge()
         self._bridges[ToolName.RADARE2] = Radare2Bridge()
         self._bridges[ToolName.X64DBG] = X64DbgBridge()
+        self._bridges[ToolName.SANDBOX] = SandboxBridge()
 
         await self._bridges[ToolName.BINARY].initialize()
         await self._bridges[ToolName.PROCESS].initialize()
         await self._bridges[ToolName.FRIDA].initialize()
+        await self._bridges[ToolName.SANDBOX].initialize()
 
-        _logger.info("Tool registry initialized with %d bridges", len(self._bridges))
+        _logger.info("tool_registry_initialized", extra={"bridge_count": len(self._bridges)})
         self._initialized = True
 
     async def initialize_tool(self, name: ToolName) -> bool:
@@ -125,12 +128,12 @@ class ToolRegistry:
             True if initialization succeeded.
         """
         if name not in self._bridges:
-            _logger.error("Unknown tool: %s", name)
+            _logger.error("unknown_tool", extra={"tool_name": name})
             return False
 
         bridge = self._bridges[name]
 
-        if name in {ToolName.BINARY, ToolName.PROCESS, ToolName.FRIDA}:
+        if name in {ToolName.BINARY, ToolName.PROCESS, ToolName.FRIDA, ToolName.SANDBOX}:
             if not await bridge.is_available():
                 await bridge.initialize()
             return await bridge.is_available()
@@ -139,10 +142,10 @@ class ToolRegistry:
         try:
             tool_path = await self._installer.ensure_tool(name)
             await bridge.initialize(tool_path)
-            _logger.info("Initialized tool: %s at %s", name.value, tool_path)
+            _logger.info("tool_initialized", extra={"tool_name": name.value, "tool_path": str(tool_path)})
             success = True
         except Exception:
-            _logger.exception("Failed to initialize tool %s", name.value)
+            _logger.exception("tool_initialization_failed", extra={"tool_name": name.value})
 
         return success
 
@@ -151,12 +154,12 @@ class ToolRegistry:
         for name, bridge in self._bridges.items():
             try:
                 await bridge.shutdown()
-                _logger.debug("Shutdown bridge: %s", name.value)
+                _logger.debug("bridge_shutdown", extra={"bridge_name": name.value})
             except Exception as e:
-                _logger.warning("Error shutting down %s: %s", name.value, e)
+                _logger.warning("bridge_shutdown_error", extra={"bridge_name": name.value, "error": str(e)})
 
         self._initialized = False
-        _logger.info("Tool registry shutdown")
+        _logger.info("tool_registry_shutdown")
 
     def get(self, name: ToolName) -> ToolBridgeBase | None:
         """Get a tool bridge by name.
@@ -253,6 +256,20 @@ class ToolRegistry:
             raise ToolError(_ERR_BRIDGE_NA)
         return bridge
 
+    def get_sandbox_bridge(self) -> SandboxBridge:
+        """Get the sandbox bridge.
+
+        Returns:
+            SandboxBridge instance.
+
+        Raises:
+            ToolError: If bridge not available.
+        """
+        bridge = self._bridges.get(ToolName.SANDBOX)
+        if bridge is None or not isinstance(bridge, SandboxBridge):
+            raise ToolError(_ERR_BRIDGE_NA)
+        return bridge
+
     async def get_status(self, name: ToolName) -> ToolStatus:
         """Get status of a tool.
 
@@ -278,16 +295,15 @@ class ToolRegistry:
             version = None
             path = None
 
-            if name not in {ToolName.BINARY, ToolName.PROCESS, ToolName.FRIDA}:
+            if name not in {ToolName.BINARY, ToolName.PROCESS, ToolName.FRIDA, ToolName.SANDBOX}:
                 try:
                     path = await self._installer.find_tool(name)
                     if path is not None:
                         version = await self._installer.get_version(name, path)
                 except Exception as e:
                     _logger.debug(
-                        "Could not determine path/version for %s: %s",
-                        name.value,
-                        e,
+                        "tool_path_version_lookup_failed",
+                        extra={"tool_name": name.value, "error": str(e)},
                     )
 
             return ToolStatus(
@@ -328,7 +344,7 @@ class ToolRegistry:
             try:
                 definitions.append(bridge.tool_definition)
             except Exception as e:
-                _logger.warning("Failed to get tool definition: %s", e)
+                _logger.warning("tool_definition_retrieval_failed", extra={"error": str(e)})
 
         return definitions
 
@@ -382,7 +398,7 @@ class ToolRegistry:
             else:
                 result = await asyncio.to_thread(method, **arguments)
         except Exception as e:
-            _logger.exception("Tool call failed: %s.%s", tool_name, function_name)
+            _logger.exception("tool_call_failed", extra={"tool_name": tool_name, "function_name": function_name})
             raise ToolError(_ERR_CALL_FAILED) from e
 
         return result

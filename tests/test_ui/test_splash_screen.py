@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import Generator
 
 import pytest
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QApplication, QLabel, QProgressBar
 
@@ -22,6 +21,10 @@ from intellicrack.ui.dialogs.splash_screen import (
     SplashScreen,
 )
 from intellicrack.ui.resources.resource_helper import get_assets_path
+
+
+_FRAMELESS_HINT: int = 2048
+_STAYS_ON_TOP_HINT: int = 262144
 
 
 @pytest.fixture
@@ -43,13 +46,11 @@ class TestSplashScreenCreation:
         assert splash is not None
         splash.close()
 
-    def test_splash_has_correct_window_flags(
-        self, splash_screen: SplashScreen
-    ) -> None:
+    def test_splash_has_correct_window_flags(self, splash_screen: SplashScreen) -> None:
         """Splash screen has correct window flags."""
-        flags = splash_screen.windowFlags()
-        assert flags & Qt.WindowType.FramelessWindowHint
-        assert flags & Qt.WindowType.WindowStaysOnTopHint
+        flags = int(splash_screen.windowFlags())
+        assert flags & _FRAMELESS_HINT
+        assert flags & _STAYS_ON_TOP_HINT
 
     def test_splash_has_pixmap(self, splash_screen: SplashScreen) -> None:
         """Splash screen has a valid pixmap."""
@@ -118,9 +119,7 @@ class TestProgressTracking:
         splash_screen.set_progress(-50)
         assert splash_screen.progress == 0
 
-    def test_progress_updates_progress_bar(
-        self, splash_screen: SplashScreen
-    ) -> None:
+    def test_progress_updates_progress_bar(self, splash_screen: SplashScreen) -> None:
         """Progress update affects the progress bar widget."""
         splash_screen.set_progress(75)
         assert splash_screen._progress_bar.value() == 75
@@ -134,16 +133,12 @@ class TestStatusMessage:
         assert len(splash_screen.status) > 0
         assert splash_screen.status == "Initializing..."
 
-    def test_status_updated_with_progress(
-        self, splash_screen: SplashScreen
-    ) -> None:
+    def test_status_updated_with_progress(self, splash_screen: SplashScreen) -> None:
         """Status message is updated via set_progress."""
         splash_screen.set_progress(50, "Test message")
         assert splash_screen.status == "Test message"
 
-    def test_status_preserved_without_message(
-        self, splash_screen: SplashScreen
-    ) -> None:
+    def test_status_preserved_without_message(self, splash_screen: SplashScreen) -> None:
         """Status message is preserved when not provided."""
         splash_screen.set_progress(25, "First message")
         splash_screen.set_progress(50)
@@ -153,16 +148,12 @@ class TestStatusMessage:
 class TestShowLoadingStep:
     """Tests for show_loading_step method."""
 
-    def test_show_loading_step_updates_progress(
-        self, splash_screen: SplashScreen
-    ) -> None:
+    def test_show_loading_step_updates_progress(self, splash_screen: SplashScreen) -> None:
         """show_loading_step updates progress value."""
         splash_screen.show_loading_step("Loading tools...", 30)
         assert splash_screen.progress == 30
 
-    def test_show_loading_step_updates_status(
-        self, splash_screen: SplashScreen
-    ) -> None:
+    def test_show_loading_step_updates_status(self, splash_screen: SplashScreen) -> None:
         """show_loading_step updates status message."""
         splash_screen.show_loading_step("Loading tools...", 30)
         assert splash_screen.status == "Loading tools..."
@@ -316,9 +307,7 @@ class TestSplashScreenIntegration:
 
         splash.close()
 
-    def test_splash_screen_no_exceptions_on_operations(
-        self, qapp: QApplication
-    ) -> None:
+    def test_splash_screen_no_exceptions_on_operations(self, qapp: QApplication) -> None:
         """Splash screen operations don't raise exceptions."""
         try:
             splash = SplashScreen()

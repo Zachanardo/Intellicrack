@@ -6,12 +6,9 @@ orchestrator, displaying conversation history and tool call information.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -28,6 +25,11 @@ from PyQt6.QtWidgets import (
 
 from ..core.types import Message, ToolCall, ToolResult
 
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+_logger = logging.getLogger(__name__)
 
 _MAX_ARGS_DISPLAY_LEN = 100
 _MAX_RESULT_DISPLAY_LEN = 200
@@ -78,9 +80,7 @@ class MessageBubble(QFrame):
         if self._message.content:
             content_label = QLabel(self._message.content)
             content_label.setWordWrap(True)
-            content_label.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse
-            )
+            content_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             content_label.setFont(QFont("Segoe UI", 10))
             layout.addWidget(content_label)
 
@@ -160,7 +160,7 @@ class MessageBubble(QFrame):
         if call.arguments:
             args_text = ", ".join(f"{k}={v!r}" for k, v in call.arguments.items())
             if len(args_text) > _MAX_ARGS_DISPLAY_LEN:
-                args_text = args_text[:_MAX_ARGS_DISPLAY_LEN - 3] + "..."
+                args_text = args_text[: _MAX_ARGS_DISPLAY_LEN - 3] + "..."
             args_label = QLabel(args_text)
             args_label.setFont(QFont("JetBrains Mono", 8))
             args_label.setObjectName("tool_call_args")
@@ -200,7 +200,7 @@ class MessageBubble(QFrame):
         elif result.result is not None:
             result_text = str(result.result)
             if len(result_text) > _MAX_RESULT_DISPLAY_LEN:
-                result_text = result_text[:_MAX_RESULT_DISPLAY_LEN - 3] + "..."
+                result_text = result_text[: _MAX_RESULT_DISPLAY_LEN - 3] + "..."
             result_label = QLabel(result_text)
             result_label.setFont(QFont("JetBrains Mono", 8))
             result_label.setObjectName("result_text")
@@ -277,6 +277,7 @@ class ChatInput(QFrame):
         """Handle send button click."""
         text = self._text_edit.toPlainText().strip()
         if text and text != self._hint_text:
+            _logger.debug("user_message_submitted", extra={"length": len(text)})
             self.message_submitted.emit(text)
             self._text_edit.clear()
             self._show_hint()
@@ -404,9 +405,7 @@ class ChatPanel(QFrame):
 
         self._scroll_area = QScrollArea()
         self._scroll_area.setWidgetResizable(True)
-        self._scroll_area.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
-        )
+        self._scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._scroll_area.setObjectName("chat_scroll_area")
 
         self._messages_container = QWidget()
@@ -431,6 +430,14 @@ class ChatPanel(QFrame):
             message: Message to add.
         """
         self._messages.append(message)
+        _logger.debug(
+            "chat_message_added",
+            extra={
+                "role": message.role,
+                "has_tool_calls": message.tool_calls is not None,
+                "has_tool_results": message.tool_results is not None,
+            },
+        )
 
         bubble = MessageBubble(message)
         self._messages_layout.insertWidget(
@@ -446,6 +453,7 @@ class ChatPanel(QFrame):
         Returns:
             Function to call with each text chunk.
         """
+        _logger.debug("streaming_message_started")
         message = Message(
             role="assistant",
             content="",
@@ -464,9 +472,7 @@ class ChatPanel(QFrame):
             item = bubble.layout().itemAt(i)
             if item and item.widget():
                 widget = item.widget()
-                if isinstance(widget, QLabel) and not widget.text().startswith(
-                    ("You", "Intellicrack", "System", "Tool")
-                ):
+                if isinstance(widget, QLabel) and not widget.text().startswith(("You", "Intellicrack", "System", "Tool")):
                     content_label = widget
                     break
 
@@ -481,7 +487,9 @@ class ChatPanel(QFrame):
 
     def clear_messages(self) -> None:
         """Clear all messages from the chat."""
+        count = len(self._messages)
         self._messages.clear()
+        _logger.debug("chat_messages_cleared", extra={"count": count})
 
         while self._messages_layout.count() > 1:
             item = self._messages_layout.takeAt(0)

@@ -27,6 +27,7 @@ This plan addresses **11 stubbed/incomplete implementations** across the Intelli
 ## 1. x64dbg Named Pipe IPC Implementation
 
 ### Problem
+
 - `_connect()` (line 439-455): Attempts socket connection to port 27015 - x64dbg doesn't support this
 - `_send_command()` (line 466-497): File-based IPC with no consumer in x64dbg
 - 18+ methods depend on broken transport
@@ -36,6 +37,7 @@ This plan addresses **11 stubbed/incomplete implementations** across the Intelli
 #### 1.1 New Files to Create
 
 **`src/intellicrack/plugins/x64dbg_plugin/` directory:**
+
 ```
 CMakeLists.txt
 intellicrack_x64dbg.cpp    # Plugin entry points
@@ -53,6 +55,7 @@ third_party/nlohmann/json.hpp
 **Pipe Name:** `\\.\pipe\intellicrack_x64dbg`
 
 **Request Format:**
+
 ```json
 {
   "id": "uuid",
@@ -63,6 +66,7 @@ third_party/nlohmann/json.hpp
 ```
 
 **Response Format:**
+
 ```json
 {
   "id": "uuid",
@@ -90,6 +94,7 @@ third_party/nlohmann/json.hpp
 ## 2. x64dbg Watchpoint Tracking
 
 ### Problem
+
 - `remove_watchpoint()` (line 748-758): Logs and returns True without sending command
 - `get_watchpoints()` (line 760-766): Returns hardcoded empty list
 
@@ -98,12 +103,14 @@ third_party/nlohmann/json.hpp
 **File:** `src/intellicrack/bridges/x64dbg.py`
 
 Add instance variables:
+
 ```python
 self._watchpoints: dict[int, WatchpointInfo] = {}
 self._next_wp_id: int = 1
 ```
 
 Implement methods:
+
 - `set_watchpoint()`: Send wp_set command, store in `_watchpoints`
 - `remove_watchpoint()`: Send wp_remove command, delete from `_watchpoints`
 - `get_watchpoints()`: Return `list(self._watchpoints.values())`
@@ -113,6 +120,7 @@ Implement methods:
 ## 3. x64dbg Command Line Retrieval
 
 ### Problem
+
 - `_get_command_line()` (line 1634): Always returns None after querying PEB
 
 ### Solution
@@ -120,6 +128,7 @@ Implement methods:
 **File:** `src/intellicrack/bridges/x64dbg.py`
 
 Fix implementation to:
+
 1. Read ProcessParameters pointer from PEB (offset 0x20 for 64-bit, 0x10 for 32-bit)
 2. Read CommandLine UNICODE_STRING (offset 0x70 for 64-bit, 0x40 for 32-bit)
 3. Read buffer contents and decode UTF-16-LE
@@ -129,6 +138,7 @@ Fix implementation to:
 ## 4. Ghidra Data Type Operations
 
 ### Problem
+
 - Tool schemas defined at lines 268-298 but no implementations exist
 
 ### Solution
@@ -151,6 +161,7 @@ async def set_data_type(self, address: int, data_type: str) -> bool:
 **File:** `src/intellicrack/core/types.py`
 
 Add new dataclass:
+
 ```python
 @dataclass
 class DataTypeInfo:
@@ -169,6 +180,7 @@ class DataTypeInfo:
 ## 5. Ghidra Binary Metadata Enhancement
 
 ### Problem
+
 - `load_binary()` (line 454-508): Returns entry_point=0, empty sections/imports/exports
 
 ### Solution
@@ -176,6 +188,7 @@ class DataTypeInfo:
 **File:** `src/intellicrack/bridges/ghidra.py`
 
 Add new method `_extract_binary_metadata()` that executes Jython to:
+
 1. Get entry point from `currentProgram.getSymbolTable()`
 2. Get sections from `currentProgram.getMemory().getBlocks()`
 3. Get imports from `getExternalSymbols()`
@@ -188,6 +201,7 @@ Modify `load_binary()` to call `_extract_binary_metadata()` when Ghidra is conne
 ## 6. Analysis-Driven Keygen Generation
 
 ### Problem
+
 - `generate_keygen_template()` (line 746-908): Generic template with random generation
 - Line 768: Comment says "This is a template - implement the actual algorithm"
 - Line 805: Uses `random.choices()` for key generation
@@ -197,6 +211,7 @@ Modify `load_binary()` to call `_extract_binary_metadata()` when Ghidra is conne
 **File:** `src/intellicrack/core/types.py`
 
 Add new types:
+
 ```python
 class AlgorithmType(enum.Enum):
     UNKNOWN, MD5, SHA1, SHA256, CRC32, XOR, RSA, AES, DES,
@@ -257,6 +272,7 @@ class LicensingAnalysis:
 **File:** `src/intellicrack/core/script_gen.py`
 
 Add new methods:
+
 ```python
 def generate_keygen_from_analysis(self, analysis: LicensingAnalysis) -> GeneratedScript:
     """Route to algorithm-specific generator based on analysis."""
@@ -276,6 +292,7 @@ def _generate_custom_hash_keygen(self, analysis: LicensingAnalysis) -> Generated
 **New File:** `src/intellicrack/core/license_analyzer.py`
 
 Create `LicenseAnalyzer` class that:
+
 1. Detects crypto API calls from imports
 2. Finds license-related strings and their xrefs
 3. Identifies validation functions
@@ -287,6 +304,7 @@ Create `LicenseAnalyzer` class that:
 ## 7. LLM Dual-Mode Streaming
 
 ### Problem
+
 - `orchestrator.py` line 510: Streaming path always returns `None` for tool_calls
 - Tools are effectively disabled during streaming
 
@@ -295,11 +313,13 @@ Create `LicenseAnalyzer` class that:
 **File:** `src/intellicrack/core/orchestrator.py`
 
 Add to `OrchestratorConfig`:
+
 ```python
 stream_mode: Literal["auto", "always", "never"] = "auto"
 ```
 
 Refactor `_call_llm()` into:
+
 ```python
 def _should_use_streaming(self, tools_available: bool, is_final_response: bool) -> bool:
     """Auto mode: non-streaming when tools available, streaming for final response."""
@@ -321,6 +341,7 @@ Modify `_run_agent_loop()` to detect when final response is expected.
 ## 8. LLM Provider Base Fix
 
 ### Problem
+
 - `base.py` line 206: Abstract method has `yield ""` placeholder
 
 ### Solution
@@ -328,6 +349,7 @@ Modify `_run_agent_loop()` to detect when final response is expected.
 **File:** `src/intellicrack/providers/base.py`
 
 Change from:
+
 ```python
 @abstractmethod
 async def chat_stream(...) -> AsyncIterator[str]:
@@ -335,6 +357,7 @@ async def chat_stream(...) -> AsyncIterator[str]:
 ```
 
 To proper abstract method pattern:
+
 ```python
 @abstractmethod
 def chat_stream(
@@ -365,6 +388,7 @@ Note: The `yield` after `raise` is unreachable but required by Python to make th
 ## 9. Remove Docker Sandbox
 
 ### Problem
+
 - `manager.py` line 28: `SandboxType = Literal["windows", "docker", "qemu"]` includes docker
 - `manager.py` line 187: Docker creation raises "Unsupported sandbox type"
 
@@ -373,6 +397,7 @@ Note: The `yield` after `raise` is unreachable but required by Python to make th
 **File:** `src/intellicrack/sandbox/manager.py`
 
 Change line 28:
+
 ```python
 SandboxType = Literal["windows", "qemu"]
 ```
@@ -382,6 +407,7 @@ SandboxType = Literal["windows", "qemu"]
 ## 10. Ghidra Post-Install Hook
 
 ### Problem
+
 - `tool_config.py` lines 173-177: Empty loop with break, does nothing
 
 ### Solution
@@ -389,6 +415,7 @@ SandboxType = Literal["windows", "qemu"]
 **File:** `src/intellicrack/ui/tool_config.py`
 
 Implement `_post_install_ghidra()`:
+
 1. Locate extracted Ghidra directory
 2. Install ghidra_bridge Python package via pip
 3. Create bridge server installation script in Extensions folder
@@ -401,6 +428,7 @@ Implement `_post_install_ghidra()`:
 ## 11. radare2 Post-Install Hook
 
 ### Problem
+
 - `tool_config.py` lines 179-185: Checks PATH but just `pass`
 
 ### Solution
@@ -408,6 +436,7 @@ Implement `_post_install_ghidra()`:
 **File:** `src/intellicrack/ui/tool_config.py`
 
 Implement `_post_install_radare2()`:
+
 1. Locate bin directory (may be in versioned subdirectory)
 2. Add to Windows user PATH via registry (HKEY_CURRENT_USER\Environment)
 3. Broadcast WM_SETTINGCHANGE to notify running processes
@@ -438,6 +467,7 @@ Implement `_post_install_radare2()`:
 ## Verification Plan
 
 ### Linting
+
 ```bash
 pixi run ruff check src/intellicrack/bridges/x64dbg.py
 pixi run ruff check src/intellicrack/bridges/ghidra.py
@@ -450,6 +480,7 @@ pixi run ruff check src/intellicrack/ui/tool_config.py
 ```
 
 ### Type Checking
+
 ```bash
 pixi run mypy --strict src/intellicrack/bridges/x64dbg.py
 pixi run mypy --strict src/intellicrack/bridges/ghidra.py
@@ -459,6 +490,7 @@ pixi run mypy --strict src/intellicrack/core/orchestrator.py
 ```
 
 ### Docstring Validation
+
 ```bash
 pixi run darglint src/intellicrack/bridges/x64dbg.py
 pixi run darglint src/intellicrack/bridges/ghidra.py
@@ -466,6 +498,7 @@ pixi run darglint src/intellicrack/core/script_gen.py
 ```
 
 ### Integration Testing
+
 1. **x64dbg**: Load x64dbg with plugin, verify pipe connection, test breakpoints/stepping
 2. **Ghidra**: Connect to Ghidra bridge, test data type operations, verify binary metadata
 3. **Keygen**: Generate keygens from sample analysis, verify output validity

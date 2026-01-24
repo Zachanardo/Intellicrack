@@ -25,6 +25,7 @@ class ToolName(enum.Enum):
     RADARE2 = "radare2"
     PROCESS = "process"
     BINARY = "binary"
+    SANDBOX = "sandbox"
 
 
 class ProviderName(enum.Enum):
@@ -868,9 +869,7 @@ class RateLimitError(ProviderError):
             error_code: Optional numeric error code.
             details: Optional dictionary with additional context.
         """
-        super().__init__(
-            message, provider_name, status_code, response_body, error_code, details
-        )
+        super().__init__(message, provider_name, status_code, response_body, error_code, details)
         self.retry_after = retry_after
         self.limit_type = limit_type
 
@@ -906,9 +905,7 @@ class ModelNotFoundError(ProviderError):
             error_code: Optional numeric error code.
             details: Optional dictionary with additional context.
         """
-        super().__init__(
-            message, provider_name, status_code, response_body, error_code, details
-        )
+        super().__init__(message, provider_name, status_code, response_body, error_code, details)
         self.model_name = model_name
         self.available_models = available_models or []
 

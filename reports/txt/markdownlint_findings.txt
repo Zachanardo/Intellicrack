@@ -1,0 +1,208 @@
+48 findings in IMPLEMENTATION_PLAN.md
+
+IMPLEMENTATION_PLAN.md:5:81 error MD013/line-length Line length [Expected: 80; Actual: 188]
+
+IMPLEMENTATION_PLAN.md:12:5 error MD060/table-column-style Table column style [Table pipe is missing space to the left for style "compact"]
+
+IMPLEMENTATION_PLAN.md:12:17 error MD060/table-column-style Table column style [Table pipe is missing space to the left for style "compact"]
+
+IMPLEMENTATION_PLAN.md:12:24 error MD060/table-column-style Table column style [Table pipe is missing space to the left for style "compact"]
+
+IMPLEMENTATION_PLAN.md:12:35 error MD060/table-column-style Table column style [Table pipe is missing space to the left for style "compact"]
+
+IMPLEMENTATION_PLAN.md:12:44 error MD060/table-column-style Table column style [Table pipe is missing space to the left for style "compact"]
+
+IMPLEMENTATION_PLAN.md:12:1 error MD060/table-column-style Table column style [Table pipe is missing space to the right for style "compact"]
+
+IMPLEMENTATION_PLAN.md:12:5 error MD060/table-column-style Table column style [Table pipe is missing space to the right for style "compact"]
+
+IMPLEMENTATION_PLAN.md:12:17 error MD060/table-column-style Table column style [Table pipe is missing space to the right for style "compact"]
+
+IMPLEMENTATION_PLAN.md:12:24 error MD060/table-column-style Table column style [Table pipe is missing space to the right for style "compact"]
+
+IMPLEMENTATION_PLAN.md:12:35 error MD060/table-column-style Table column style [Table pipe is missing space to the right for style "compact"]
+
+IMPLEMENTATION_PLAN.md:18:81 error MD013/line-length Line length [Expected: 80; Actual: 85]
+
+IMPLEMENTATION_PLAN.md:31:81 error MD013/line-length Line length [Expected: 80; Actual: 101]
+
+IMPLEMENTATION_PLAN.md:41 error MD040/fenced-code-language Fenced code blocks should have a language specified [Context: "```"]
+
+IMPLEMENTATION_PLAN.md:79:81 error MD013/line-length Line length [Expected: 80; Actual: 164]
+
+IMPLEMENTATION_PLAN.md:90:81 error MD013/line-length Line length [Expected: 80; Actual: 88]
+
+IMPLEMENTATION_PLAN.md:96 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Problem"]
+
+IMPLEMENTATION_PLAN.md:122 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Problem"]
+
+IMPLEMENTATION_PLAN.md:126 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Solution"]
+
+IMPLEMENTATION_PLAN.md:140 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Problem"]
+
+IMPLEMENTATION_PLAN.md:144 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Solution"]
+
+IMPLEMENTATION_PLAN.md:182 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Problem"]
+
+IMPLEMENTATION_PLAN.md:186 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Solution"]
+
+IMPLEMENTATION_PLAN.md:203 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Problem"]
+
+IMPLEMENTATION_PLAN.md:209 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Solution"]
+
+IMPLEMENTATION_PLAN.md:306 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Problem"]
+
+IMPLEMENTATION_PLAN.md:311 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Solution"]
+
+IMPLEMENTATION_PLAN.md:324:81 error MD013/line-length Line length [Expected: 80; Actual: 88]
+
+IMPLEMENTATION_PLAN.md:343 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Problem"]
+
+IMPLEMENTATION_PLAN.md:347 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Solution"]
+
+IMPLEMENTATION_PLAN.md:384:81 error MD013/line-length Line length [Expected: 80; Actual: 262]
+
+IMPLEMENTATION_PLAN.md:390 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Problem"]
+
+IMPLEMENTATION_PLAN.md:392:81 error MD013/line-length Line length [Expected: 80; Actual: 92]
+
+IMPLEMENTATION_PLAN.md:395 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Solution"]
+
+IMPLEMENTATION_PLAN.md:409 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Problem"]
+
+IMPLEMENTATION_PLAN.md:413 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Solution"]
+
+IMPLEMENTATION_PLAN.md:430 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Problem"]
+
+IMPLEMENTATION_PLAN.md:434 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Solution"]
+
+IMPLEMENTATION_PLAN.md:452:8 error MD060/table-column-style Table column style [Table pipe is missing space to the left for style "compact"]
+
+IMPLEMENTATION_PLAN.md:452:18 error MD060/table-column-style Table column style [Table pipe is missing space to the left for style "compact"]
+
+IMPLEMENTATION_PLAN.md:452:1 error MD060/table-column-style Table column style [Table pipe is missing space to the right for style "compact"]
+
+IMPLEMENTATION_PLAN.md:452:8 error MD060/table-column-style Table column style [Table pipe is missing space to the right for style "compact"]
+
+IMPLEMENTATION_PLAN.md:453:81 error MD013/line-length Line length [Expected: 80; Actual: 91]
+
+IMPLEMENTATION_PLAN.md:454:81 error MD013/line-length Line length [Expected: 80; Actual: 91]
+
+IMPLEMENTATION_PLAN.md:455:81 error MD013/line-length Line length [Expected: 80; Actual: 83]
+
+IMPLEMENTATION_PLAN.md:456:81 error MD013/line-length Line length [Expected: 80; Actual: 97]
+
+IMPLEMENTATION_PLAN.md:457:81 error MD013/line-length Line length [Expected: 80; Actual: 91]
+
+IMPLEMENTATION_PLAN.md:503:81 error MD013/line-length Line length [Expected: 80; Actual: 90]
+
+
+29 findings in GEMINI.md
+
+GEMINI.md:1:81 error MD013/line-length Line length [Expected: 80; Actual: 158]
+
+GEMINI.md:1 error MD041/first-line-heading/first-line-h1 First line in a file should be a top-level heading [Context: "This document provides an over..."]
+
+GEMINI.md:5:81 error MD013/line-length Line length [Expected: 80; Actual: 296]
+
+GEMINI.md:11:81 error MD013/line-length Line length [Expected: 80; Actual: 109]
+
+GEMINI.md:12:81 error MD013/line-length Line length [Expected: 80; Actual: 111]
+
+GEMINI.md:13:81 error MD013/line-length Line length [Expected: 80; Actual: 91]
+
+GEMINI.md:18:81 error MD013/line-length Line length [Expected: 80; Actual: 93]
+
+GEMINI.md:19:81 error MD013/line-length Line length [Expected: 80; Actual: 101]
+
+GEMINI.md:20:81 error MD013/line-length Line length [Expected: 80; Actual: 96]
+
+GEMINI.md:21:81 error MD013/line-length Line length [Expected: 80; Actual: 98]
+
+GEMINI.md:23:81 error MD013/line-length Line length [Expected: 80; Actual: 225]
+
+GEMINI.md:29:81 error MD013/line-length Line length [Expected: 80; Actual: 221]
+
+GEMINI.md:30:81 error MD013/line-length Line length [Expected: 80; Actual: 99]
+
+GEMINI.md:31:81 error MD013/line-length Line length [Expected: 80; Actual: 96]
+
+GEMINI.md:32:81 error MD013/line-length Line length [Expected: 80; Actual: 102]
+
+GEMINI.md:34:81 error MD013/line-length Line length [Expected: 80; Actual: 347]
+
+GEMINI.md:36:81 error MD013/line-length Line length [Expected: 80; Actual: 220]
+
+GEMINI.md:40:1 error MD033/no-inline-html Inline HTML [Element: system-reminder]
+
+GEMINI.md:41:81 error MD013/line-length Line length [Expected: 80; Actual: 211]
+
+GEMINI.md:42:81 error MD013/line-length Line length [Expected: 80; Actual: 192]
+
+GEMINI.md:43:81 error MD013/line-length Line length [Expected: 80; Actual: 191]
+
+GEMINI.md:45:81 error MD013/line-length Line length [Expected: 80; Actual: 164]
+
+GEMINI.md:48:81 error MD013/line-length Line length [Expected: 80; Actual: 316]
+
+GEMINI.md:92:81 error MD013/line-length Line length [Expected: 80; Actual: 94]
+
+GEMINI.md:95:81 error MD013/line-length Line length [Expected: 80; Actual: 91]
+
+GEMINI.md:96:81 error MD013/line-length Line length [Expected: 80; Actual: 102]
+
+GEMINI.md:119:81 error MD013/line-length Line length [Expected: 80; Actual: 90]
+
+GEMINI.md:127:81 error MD013/line-length Line length [Expected: 80; Actual: 94]
+
+GEMINI.md:133:81 error MD013/line-length Line length [Expected: 80; Actual: 92]
+
+
+10 findings in QWEN.md
+
+QWEN.md:1:81 error MD013/line-length Line length [Expected: 80; Actual: 156]
+
+QWEN.md:1 error MD041/first-line-heading/first-line-h1 First line in a file should be a top-level heading [Context: "This document provides an over..."]
+
+QWEN.md:5:81 error MD013/line-length Line length [Expected: 80; Actual: 438]
+
+QWEN.md:9:1 error MD033/no-inline-html Inline HTML [Element: system-reminder]
+
+QWEN.md:10:81 error MD013/line-length Line length [Expected: 80; Actual: 223]
+
+QWEN.md:11:81 error MD013/line-length Line length [Expected: 80; Actual: 192]
+
+QWEN.md:12:81 error MD013/line-length Line length [Expected: 80; Actual: 191]
+
+QWEN.md:14:81 error MD013/line-length Line length [Expected: 80; Actual: 164]
+
+QWEN.md:17:81 error MD013/line-length Line length [Expected: 80; Actual: 316]
+
+QWEN.md:40:81 error MD013/line-length Line length [Expected: 80; Actual: 91]
+
+
+7 findings in AGENTS.md
+
+AGENTS.md:5:1 error MD033/no-inline-html Inline HTML [Element: system-reminder]
+
+AGENTS.md:6:81 error MD013/line-length Line length [Expected: 80; Actual: 211]
+
+AGENTS.md:7:81 error MD013/line-length Line length [Expected: 80; Actual: 192]
+
+AGENTS.md:8:81 error MD013/line-length Line length [Expected: 80; Actual: 191]
+
+AGENTS.md:10:81 error MD013/line-length Line length [Expected: 80; Actual: 164]
+
+AGENTS.md:13:81 error MD013/line-length Line length [Expected: 80; Actual: 316]
+
+AGENTS.md:76 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Build, Lint, and Test Commands"]
+
+
+1 findings in CLAUDE.md
+
+CLAUDE.md:64 error MD036/no-emphasis-as-heading Emphasis used instead of a heading [Context: "TOOLS"]
+
+
+1 findings in README.md
+
+README.md:213 error MD024/no-duplicate-heading Multiple headings with the same content [Context: "Features"]

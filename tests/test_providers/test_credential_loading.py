@@ -52,9 +52,7 @@ class TestCredentialValidation:
             assert isinstance(result, tuple), f"Expected tuple for {provider}"
             assert len(result) == 2, f"Expected 2-tuple for {provider}"
             assert isinstance(result[0], bool), f"Expected bool first element for {provider}"
-            assert result[1] is None or isinstance(result[1], str), (
-                f"Expected None or str second element for {provider}"
-            )
+            assert result[1] is None or isinstance(result[1], str), f"Expected None or str second element for {provider}"
 
     def test_get_credentials_returns_credentials_or_none(
         self,
@@ -64,9 +62,7 @@ class TestCredentialValidation:
         for provider in ProviderName:
             creds = credential_loader.get_credentials(provider)
             if creds is not None:
-                assert isinstance(creds, ProviderCredentials), (
-                    f"Expected ProviderCredentials for {provider}, got {type(creds)}"
-                )
+                assert isinstance(creds, ProviderCredentials), f"Expected ProviderCredentials for {provider}, got {type(creds)}"
 
 
 class TestProviderListing:
@@ -80,9 +76,7 @@ class TestProviderListing:
         configured = credential_loader.list_configured_providers()
         assert isinstance(configured, list)
         for provider in configured:
-            assert isinstance(provider, ProviderName), (
-                f"Expected ProviderName, got {type(provider)}"
-            )
+            assert isinstance(provider, ProviderName), f"Expected ProviderName, got {type(provider)}"
 
     def test_list_missing_providers_returns_list(
         self,
@@ -92,9 +86,7 @@ class TestProviderListing:
         missing = credential_loader.list_missing_providers()
         assert isinstance(missing, list)
         for provider in missing:
-            assert isinstance(provider, ProviderName), (
-                f"Expected ProviderName, got {type(provider)}"
-            )
+            assert isinstance(provider, ProviderName), f"Expected ProviderName, got {type(provider)}"
 
     def test_configured_and_missing_cover_all_providers(
         self,
@@ -108,8 +100,7 @@ class TestProviderListing:
         covered = configured.union(missing)
 
         assert covered == all_providers, (
-            f"Configured + missing should cover all providers. "
-            f"Missing from coverage: {all_providers - covered}"
+            f"Configured + missing should cover all providers. Missing from coverage: {all_providers - covered}"
         )
 
 
@@ -128,9 +119,7 @@ class TestApiKeyFormatValidation:
         creds = credential_loader.get_credentials(ProviderName.ANTHROPIC)
         assert creds is not None, "Expected credentials after validation"
         assert creds.api_key is not None, "Expected api_key to be set"
-        assert creds.api_key.startswith("sk-ant-"), (
-            f"Anthropic key should start with 'sk-ant-', got prefix: {creds.api_key[:10]}..."
-        )
+        assert creds.api_key.startswith("sk-ant-"), f"Anthropic key should start with 'sk-ant-', got prefix: {creds.api_key[:10]}..."
 
     def test_openai_key_format_validation(
         self,
@@ -144,9 +133,7 @@ class TestApiKeyFormatValidation:
         creds = credential_loader.get_credentials(ProviderName.OPENAI)
         assert creds is not None, "Expected credentials after validation"
         assert creds.api_key is not None, "Expected api_key to be set"
-        assert creds.api_key.startswith("sk-"), (
-            f"OpenAI key should start with 'sk-', got prefix: {creds.api_key[:10]}..."
-        )
+        assert creds.api_key.startswith("sk-"), f"OpenAI key should start with 'sk-', got prefix: {creds.api_key[:10]}..."
 
     def test_openrouter_key_format_validation(
         self,
@@ -160,9 +147,7 @@ class TestApiKeyFormatValidation:
         creds = credential_loader.get_credentials(ProviderName.OPENROUTER)
         assert creds is not None, "Expected credentials after validation"
         assert creds.api_key is not None, "Expected api_key to be set"
-        assert creds.api_key.startswith("sk-or-"), (
-            f"OpenRouter key should start with 'sk-or-', got prefix: {creds.api_key[:10]}..."
-        )
+        assert creds.api_key.startswith("sk-or-"), f"OpenRouter key should start with 'sk-or-', got prefix: {creds.api_key[:10]}..."
 
     def test_google_key_exists_when_configured(
         self,
@@ -224,7 +209,4 @@ class TestReload:
         credential_loader.reload()
         after = set(credential_loader.list_configured_providers())
 
-        assert before == after, (
-            f"Configured providers changed after reload. "
-            f"Before: {before}, After: {after}"
-        )
+        assert before == after, f"Configured providers changed after reload. Before: {before}, After: {after}"

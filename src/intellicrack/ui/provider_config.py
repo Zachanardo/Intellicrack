@@ -7,12 +7,14 @@ API key management, model selection, and connection settings.
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import httpx
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -38,13 +40,131 @@ from PyQt6.QtWidgets import (
 from .resources import IconManager
 
 
+_logger = logging.getLogger(__name__)
+
 if TYPE_CHECKING:
     from intellicrack.core.types import ModelInfo
+    from intellicrack.providers.discovery import ModelDiscovery
     from intellicrack.providers.registry import ProviderRegistry
 
 HTTP_OK = 200
 HTTP_BAD_REQUEST = 400
 HTTP_UNAUTHORIZED = 401
+
+
+class CredentialSource:
+    """Constants for credential source identification."""
+
+    ENV_FILE = ".env file"
+    ENVIRONMENT = "environment"
+    MANUAL = "manual entry"
+    NOT_CONFIGURED = "not configured"
+
+
+class CredentialSourceDetector:
+    """Detects where credentials were loaded from.
+
+    Identifies whether API credentials came from a .env file, environment
+    variables, manual configuration, or are not configured at all.
+    """
+
+    ENV_VAR_MAPPING: ClassVar[dict[str, str]] = {
+        "anthropic": "ANTHROPIC_API_KEY",
+        "openai": "OPENAI_API_KEY",
+        "google": "GOOGLE_API_KEY",
+        "ollama": "OLLAMA_API_KEY",
+        "openrouter": "OPENROUTER_API_KEY",
+        "huggingface": "HUGGINGFACE_API_TOKEN",
+        "grok": "XAI_API_KEY",
+    }
+
+    def __init__(self, config_path: Path) -> None:
+        """Initialize the credential source detector.
+
+        Args:
+            config_path: Path to the saved configuration file.
+        """
+        self._config_path = config_path
+        self._env_file_vars: set[str] = set()
+        self._load_env_file_vars()
+
+    def _load_env_file_vars(self) -> None:
+        """Load variable names present in .env file."""
+        env_paths = [
+            Path.cwd() / ".env",
+            Path("D:/Intellicrack/.env"),
+            Path.home() / ".env",
+        ]
+
+        for env_path in env_paths:
+            if env_path.exists():
+                try:
+                    with env_path.open("r", encoding="utf-8") as f:
+                        for line in f:
+                            stripped = line.strip()
+                            if stripped and not stripped.startswith("#") and "=" in stripped:
+                                key = stripped.split("=", 1)[0].strip()
+                                if key.startswith("export "):
+                                    key = key[7:].strip()
+                                if key:
+                                    self._env_file_vars.add(key)
+                    break
+                except OSError:
+                    continue
+
+    def detect_source(self, provider_id: str, current_key: str) -> str:
+        """Detect the source of credentials for a provider.
+
+        Args:
+            provider_id: The provider identifier.
+            current_key: The currently configured API key.
+
+        Returns:
+            Credential source string from CredentialSource constants.
+        """
+        if not current_key:
+            return CredentialSource.NOT_CONFIGURED
+
+        env_var = self.ENV_VAR_MAPPING.get(provider_id)
+        if not env_var:
+            return CredentialSource.MANUAL
+
+        if env_var in self._env_file_vars:
+            env_value = os.environ.get(env_var, "")
+            if env_value == current_key:
+                return CredentialSource.ENV_FILE
+
+        if os.environ.get(env_var) == current_key:
+            return CredentialSource.ENVIRONMENT
+
+        if self._config_path.exists():
+            try:
+                with self._config_path.open("r", encoding="utf-8") as f:
+                    config = json.load(f)
+                    if provider_id in config and config[provider_id].get("api_key") == current_key:
+                        return CredentialSource.MANUAL
+            except (OSError, json.JSONDecodeError):
+                pass
+
+        return CredentialSource.MANUAL
+
+    @staticmethod
+    def get_source_color(source: str) -> QColor:
+        """Get the display color for a credential source.
+
+        Args:
+            source: The credential source string.
+
+        Returns:
+            QColor for the source indicator.
+        """
+        color_map = {
+            CredentialSource.ENV_FILE: QColor(34, 139, 34),
+            CredentialSource.ENVIRONMENT: QColor(70, 130, 180),
+            CredentialSource.MANUAL: QColor(218, 165, 32),
+            CredentialSource.NOT_CONFIGURED: QColor(178, 34, 34),
+        }
+        return color_map.get(source, QColor(128, 128, 128))
 
 
 class ConnectionTestWorker(QThread):
@@ -460,11 +580,7 @@ class ModelRefreshWorker(QThread):
                 )
                 if response.status_code == HTTP_OK:
                     data = response.json()
-                    models = [
-                        m["id"]
-                        for m in data
-                        if m.get("pipeline_tag") in {"text-generation", "conversational"}
-                    ]
+                    models = [m["id"] for m in data if m.get("pipeline_tag") in {"text-generation", "conversational"}]
                     return (
                         True,
                         models[:30],
@@ -483,57 +599,97 @@ class ProviderConfigDialog(QDialog):
     - Select default models
     - Configure timeout and retry settings
     - Test provider connections
+    - Set active provider for analysis
+    - View connection status and model counts
 
     Attributes:
         provider_updated: Signal emitted when a provider config changes.
+        active_provider_changed: Signal emitted when active provider changes.
     """
 
     provider_updated: pyqtSignal = pyqtSignal(str)
+    active_provider_changed: pyqtSignal = pyqtSignal(str)
 
     def __init__(
         self,
         provider_registry: ProviderRegistry | None = None,
+        model_discovery: ModelDiscovery | None = None,
         parent: QWidget | None = None,
     ) -> None:
         """Initialize the provider configuration dialog.
 
         Args:
             provider_registry: Registry containing provider instances.
+            model_discovery: Discovery service for model information.
             parent: Parent widget.
         """
         super().__init__(parent)
         self._registry = provider_registry
+        self._discovery = model_discovery
         self._provider_widgets: dict[str, ProviderSettingsWidget] = {}
+        self._provider_items: dict[str, QListWidgetItem] = {}
         self._current_provider: str | None = None
         self._config_path = Path.home() / ".intellicrack" / "providers.json"
+        self._credential_detector = CredentialSourceDetector(self._config_path)
 
         self._setup_ui()
         self._load_providers()
+        self._update_status_timer = QTimer(self)
+        self._update_status_timer.timeout.connect(self._refresh_provider_status)
+        self._update_status_timer.start(30000)
 
         self.setWindowTitle("Provider Settings")
-        self.resize(700, 500)
+        self.resize(800, 550)
 
     def _setup_ui(self) -> None:
         """Set up the dialog UI layout."""
-        layout = QHBoxLayout(self)
+        main_layout = QVBoxLayout(self)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+
         self._provider_list = QListWidget()
-        self._provider_list.setMaximumWidth(180)
+        self._provider_list.setMinimumWidth(200)
+        self._provider_list.setMaximumWidth(250)
         self._provider_list.currentRowChanged.connect(self._on_provider_selected)
+        left_layout.addWidget(self._provider_list)
+
+        self._active_label = QLabel()
+        self._active_label.setWordWrap(True)
+        self._active_label.setStyleSheet(
+            "QLabel { padding: 8px; background-color: #2d2d2d; border-radius: 4px; }"
+        )
+        self._update_active_label()
+        left_layout.addWidget(self._active_label)
+
+        action_layout = QHBoxLayout()
+        self._set_active_btn = QPushButton("Set Active")
+        self._set_active_btn.setToolTip("Set the selected provider as active for analysis")
+        self._set_active_btn.clicked.connect(self._on_set_active)
+        action_layout.addWidget(self._set_active_btn)
+
+        self._refresh_status_btn = QPushButton("Refresh")
+        self._refresh_status_btn.setToolTip("Refresh connection status for all providers")
+        self._refresh_status_btn.clicked.connect(self._refresh_provider_status)
+        action_layout.addWidget(self._refresh_status_btn)
+
+        left_layout.addLayout(action_layout)
 
         self._settings_stack = QStackedWidget()
 
-        splitter.addWidget(self._provider_list)
+        splitter.addWidget(left_panel)
         splitter.addWidget(self._settings_stack)
-        splitter.setSizes([180, 520])
+        splitter.setSizes([220, 580])
 
-        layout.addWidget(splitter)
+        main_layout.addWidget(splitter, stretch=1)
 
-        button_layout = QVBoxLayout()
         button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Apply
+            QDialogButtonBox.StandardButton.Ok
+            | QDialogButtonBox.StandardButton.Cancel
+            | QDialogButtonBox.StandardButton.Apply
         )
         button_box.accepted.connect(self._on_accept)
         button_box.rejected.connect(self.reject)
@@ -542,34 +698,219 @@ class ProviderConfigDialog(QDialog):
         if apply_button:
             apply_button.clicked.connect(self._on_apply)
 
-        button_layout.addWidget(button_box)
-
-        main_layout = QVBoxLayout()
-        main_layout.addWidget(splitter, stretch=1)
-        main_layout.addLayout(button_layout)
-        self.setLayout(main_layout)
+        main_layout.addWidget(button_box)
 
     def _load_providers(self) -> None:
-        """Load provider configurations into the list."""
+        """Load provider configurations into the list with status indicators."""
         providers = [
             ("Anthropic", "anthropic"),
             ("OpenAI", "openai"),
             ("Google Gemini", "google"),
             ("Ollama", "ollama"),
             ("OpenRouter", "openrouter"),
+            ("HuggingFace", "huggingface"),
         ]
 
-        for display_name, provider_id in providers:
-            item = QListWidgetItem(display_name)
-            item.setData(Qt.ItemDataRole.UserRole, provider_id)
-            self._provider_list.addItem(item)
+        active_name = self._get_active_provider_name()
 
-            widget = ProviderSettingsWidget(provider_id, self._registry, self._config_path)
+        for display_name, provider_id in providers:
+            item = QListWidgetItem()
+            item.setData(Qt.ItemDataRole.UserRole, provider_id)
+
+            is_active = provider_id == active_name
+            is_connected = self._is_provider_connected(provider_id)
+            model_count = self._get_model_count(provider_id)
+
+            self._update_provider_item_display(
+                item, display_name, is_active, is_connected, model_count
+            )
+
+            self._provider_list.addItem(item)
+            self._provider_items[provider_id] = item
+
+            widget = ProviderSettingsWidget(
+                provider_id,
+                self._registry,
+                self._config_path,
+                self._credential_detector,
+                self._discovery,
+            )
+            widget.connection_tested.connect(self._on_widget_connection_tested)
             self._settings_stack.addWidget(widget)
             self._provider_widgets[provider_id] = widget
 
         if self._provider_list.count() > 0:
             self._provider_list.setCurrentRow(0)
+
+    @staticmethod
+    def _update_provider_item_display(
+        item: QListWidgetItem,
+        display_name: str,
+        is_active: bool,
+        is_connected: bool,
+        model_count: int,
+    ) -> None:
+        """Update the display text and styling for a provider list item.
+
+        Args:
+            item: The list widget item to update.
+            display_name: Human-readable provider name.
+            is_active: Whether this is the active provider.
+            is_connected: Whether the provider is connected.
+            model_count: Number of available models.
+        """
+        status_indicator = "●" if is_connected else "○"
+        active_marker = " ★" if is_active else ""
+        model_info = f" ({model_count})" if model_count > 0 else ""
+
+        item.setText(f"{status_indicator} {display_name}{active_marker}{model_info}")
+
+        font = item.font()
+        font.setBold(is_active)
+        item.setFont(font)
+
+        if is_connected:
+            item.setForeground(QColor(34, 139, 34))
+        else:
+            item.setForeground(QColor(169, 169, 169))
+
+    def _get_active_provider_name(self) -> str | None:
+        """Get the name of the currently active provider.
+
+        Returns:
+            Provider ID of the active provider or None.
+        """
+        if self._registry is None:
+            return None
+        try:
+            active = self._registry.active_name
+        except Exception:
+            return None
+        else:
+            return active.value if active is not None else None
+
+    def _is_provider_connected(self, provider_id: str) -> bool:
+        """Check if a provider is connected.
+
+        Args:
+            provider_id: The provider identifier.
+
+        Returns:
+            True if the provider is connected.
+        """
+        if self._registry is None:
+            return False
+        try:
+            from intellicrack.core.types import ProviderName  # noqa: PLC0415
+
+            provider_name = ProviderName(provider_id.upper())
+            provider = self._registry.get(provider_name)
+            return provider is not None and getattr(provider, "is_connected", False)
+        except (ValueError, Exception):
+            return False
+
+    def _get_model_count(self, provider_id: str) -> int:
+        """Get the number of available models for a provider.
+
+        Args:
+            provider_id: The provider identifier.
+
+        Returns:
+            Number of available models.
+        """
+        if self._discovery is None:
+            return 0
+        try:
+            from intellicrack.core.types import ProviderName  # noqa: PLC0415
+
+            provider_name = ProviderName(provider_id.upper())
+            counts = self._discovery.get_provider_model_count()
+            return counts.get(provider_name, 0)
+        except (ValueError, Exception):
+            return 0
+
+    def _update_active_label(self) -> None:
+        """Update the active provider display label."""
+        active_name = self._get_active_provider_name()
+        if active_name:
+            display_names = {
+                "anthropic": "Anthropic",
+                "openai": "OpenAI",
+                "google": "Google Gemini",
+                "ollama": "Ollama",
+                "openrouter": "OpenRouter",
+                "huggingface": "HuggingFace",
+            }
+            display = display_names.get(active_name, active_name)
+            self._active_label.setText(f"<b>Active:</b> {display}")
+        else:
+            self._active_label.setText("<b>Active:</b> None selected")
+
+    def _on_set_active(self) -> None:
+        """Handle set active button click."""
+        if self._current_provider is None:
+            QMessageBox.warning(self, "No Selection", "Please select a provider first.")
+            return
+
+        if self._registry is None:
+            QMessageBox.warning(
+                self, "Registry Error", "Provider registry not available."
+            )
+            return
+
+        try:
+            from intellicrack.core.types import ProviderName  # noqa: PLC0415
+
+            provider_name = ProviderName(self._current_provider.upper())
+            self._registry.set_active(provider_name)
+            self._update_active_label()
+            self._refresh_provider_status()
+            self.active_provider_changed.emit(self._current_provider)
+            _logger.info(
+                "active_provider_changed",
+                extra={"provider": self._current_provider},
+            )
+        except ValueError:
+            QMessageBox.critical(
+                self, "Error", f"Unknown provider: {self._current_provider}"
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Error", f"Failed to set active provider: {e}"
+            )
+
+    def _refresh_provider_status(self) -> None:
+        """Refresh the connection status for all providers."""
+        active_name = self._get_active_provider_name()
+
+        for provider_id, item in self._provider_items.items():
+            is_active = provider_id == active_name
+            is_connected = self._is_provider_connected(provider_id)
+            model_count = self._get_model_count(provider_id)
+
+            display_names = {
+                "anthropic": "Anthropic",
+                "openai": "OpenAI",
+                "google": "Google Gemini",
+                "ollama": "Ollama",
+                "openrouter": "OpenRouter",
+                "huggingface": "HuggingFace",
+            }
+            display_name = display_names.get(provider_id, provider_id.title())
+
+            self._update_provider_item_display(
+                item, display_name, is_active, is_connected, model_count
+            )
+
+    def _on_widget_connection_tested(self, success: bool, _message: str) -> None:
+        """Handle connection test completion from a widget.
+
+        Args:
+            success: Whether the connection test succeeded.
+            _message: Status message (unused, logged by widget).
+        """
+        if success:
+            self._refresh_provider_status()
 
     def _on_provider_selected(self, index: int) -> None:
         """Handle provider selection change.
@@ -614,8 +955,8 @@ class ProviderConfigDialog(QDialog):
 class ProviderSettingsWidget(QFrame):
     """Widget for configuring a single provider.
 
-    Displays API key input, model selection, and connection settings
-    for a specific LLM provider.
+    Displays API key input, model selection, connection settings,
+    and credential source information for a specific LLM provider.
 
     Attributes:
         connection_tested: Signal emitted after connection test.
@@ -628,6 +969,8 @@ class ProviderSettingsWidget(QFrame):
         provider_id: str,
         registry: ProviderRegistry | None = None,
         config_path: Path | None = None,
+        credential_detector: CredentialSourceDetector | None = None,
+        model_discovery: ModelDiscovery | None = None,
         parent: QWidget | None = None,
     ) -> None:
         """Initialize the provider settings widget.
@@ -636,12 +979,16 @@ class ProviderSettingsWidget(QFrame):
             provider_id: The provider identifier.
             registry: Provider registry for connection testing.
             config_path: Path to configuration file.
+            credential_detector: Detector for credential source identification.
+            model_discovery: Discovery service for model recommendations.
             parent: Parent widget.
         """
         super().__init__(parent)
         self._provider_id = provider_id
         self._registry = registry
         self._config_path = config_path or Path.home() / ".intellicrack" / "providers.json"
+        self._credential_detector = credential_detector
+        self._discovery = model_discovery
         self._models: list[ModelInfo] = []
         self._test_worker: ConnectionTestWorker | None = None
         self._refresh_worker: ModelRefreshWorker | None = None
@@ -660,10 +1007,26 @@ class ProviderSettingsWidget(QFrame):
         credentials_group = QGroupBox("Credentials")
         credentials_layout = QFormLayout()
 
+        api_key_row = QHBoxLayout()
         self._api_key_input = QLineEdit()
         self._api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self._api_key_input.setMinimumWidth(300)
-        credentials_layout.addRow("API Key:", self._api_key_input)
+        self._api_key_input.setMinimumWidth(280)
+        self._api_key_input.textChanged.connect(self._on_api_key_changed)
+        api_key_row.addWidget(self._api_key_input)
+
+        self._show_key_btn = QPushButton("Show")
+        self._show_key_btn.setMaximumWidth(60)
+        self._show_key_btn.setCheckable(True)
+        self._show_key_btn.toggled.connect(self._toggle_key_visibility)
+        api_key_row.addWidget(self._show_key_btn)
+
+        credentials_layout.addRow("API Key:", api_key_row)
+
+        self._credential_source_label = QLabel()
+        self._credential_source_label.setStyleSheet(
+            "QLabel { padding: 4px 8px; border-radius: 3px; font-size: 11px; }"
+        )
+        credentials_layout.addRow("Source:", self._credential_source_label)
 
         self._api_base_input: QLineEdit | None
         self._org_id_input: QLineEdit | None
@@ -701,6 +1064,13 @@ class ProviderSettingsWidget(QFrame):
         model_row.addStretch()
 
         model_layout.addRow("Default Model:", model_row)
+
+        self._recommended_label = QLabel()
+        self._recommended_label.setWordWrap(True)
+        self._recommended_label.setStyleSheet(
+            "QLabel { color: #6a9fb5; font-style: italic; font-size: 11px; }"
+        )
+        model_layout.addRow("", self._recommended_label)
 
         model_group.setLayout(model_layout)
         layout.addWidget(model_group)
@@ -755,26 +1125,89 @@ class ProviderSettingsWidget(QFrame):
             "google": "Google Gemini",
             "ollama": "Ollama",
             "openrouter": "OpenRouter",
+            "huggingface": "HuggingFace",
         }
         return names.get(self._provider_id, self._provider_id.title())
+
+    def _toggle_key_visibility(self, show: bool) -> None:
+        """Toggle API key visibility.
+
+        Args:
+            show: Whether to show the key in plain text.
+        """
+        if show:
+            self._api_key_input.setEchoMode(QLineEdit.EchoMode.Normal)
+            self._show_key_btn.setText("Hide")
+        else:
+            self._api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+            self._show_key_btn.setText("Show")
+
+    def _on_api_key_changed(self, text: str) -> None:
+        """Handle API key text changes.
+
+        Args:
+            text: The current API key text.
+        """
+        self._update_credential_source_display(text)
+
+    def _update_credential_source_display(self, api_key: str) -> None:
+        """Update the credential source label based on current key.
+
+        Args:
+            api_key: The current API key value.
+        """
+        if self._credential_detector is None:
+            self._credential_source_label.setText(CredentialSource.NOT_CONFIGURED)
+            return
+
+        source = self._credential_detector.detect_source(self._provider_id, api_key)
+        color = self._credential_detector.get_source_color(source)
+
+        self._credential_source_label.setText(source)
+        self._credential_source_label.setStyleSheet(
+            f"QLabel {{ padding: 4px 8px; border-radius: 3px; font-size: 11px; "
+            f"background-color: rgba({color.red()}, {color.green()}, {color.blue()}, 0.2); "
+            f"color: rgb({color.red()}, {color.green()}, {color.blue()}); }}"
+        )
+
+    def _update_recommended_model(self) -> None:
+        """Update the recommended model label based on discovery."""
+        if self._discovery is None:
+            self._recommended_label.setText("")
+            return
+
+        try:
+            recommended = self._discovery.get_recommended_model(self._provider_id)
+            if recommended:
+                self._recommended_label.setText(f"Recommended: {recommended}")
+            else:
+                self._recommended_label.setText("")
+        except Exception:
+            self._recommended_label.setText("")
 
     def _load_settings(self) -> None:
         """Load settings from config file and environment."""
         saved_settings = self._load_from_config()
+        _logger.info(
+            "provider_settings_loaded",
+            extra={"provider": self._provider_id},
+        )
 
         env_vars = {
             "anthropic": "ANTHROPIC_API_KEY",
             "openai": "OPENAI_API_KEY",
             "google": "GOOGLE_API_KEY",
             "openrouter": "OPENROUTER_API_KEY",
+            "huggingface": "HUGGINGFACE_API_TOKEN",
         }
 
+        api_key = ""
         if self._provider_id in env_vars:
             env_key = os.environ.get(env_vars[self._provider_id], "")
             config_key = saved_settings.get("api_key", "")
-            key = config_key or env_key
-            if key:
-                self._api_key_input.setText(key)
+            api_key = config_key or env_key
+            if api_key:
+                self._api_key_input.setText(api_key)
 
         if self._provider_id == "ollama":
             base_url = saved_settings.get("api_base", os.environ.get("OLLAMA_HOST", "http://localhost:11434"))
@@ -798,6 +1231,9 @@ class ProviderSettingsWidget(QFrame):
             idx = self._model_combo.findText(saved_model)
             if idx >= 0:
                 self._model_combo.setCurrentIndex(idx)
+
+        self._update_credential_source_display(api_key)
+        self._update_recommended_model()
 
     def _load_from_config(self) -> dict[str, Any]:
         """Load settings from the config file.
@@ -898,6 +1334,10 @@ class ProviderSettingsWidget(QFrame):
         icon_manager = IconManager.get_instance()
 
         if success and models:
+            _logger.info(
+                "provider_models_refreshed",
+                extra={"provider": self._provider_id, "model_count": len(models)},
+            )
             current_model = self._model_combo.currentText()
             self._model_combo.clear()
             self._model_combo.addItems(models)
@@ -907,11 +1347,20 @@ class ProviderSettingsWidget(QFrame):
             self._status_icon.setPixmap(icon_manager.get_pixmap("status_success", 16))
             self._status_label.setText(message)
         else:
+            _logger.warning(
+                "provider_models_refresh_failed",
+                extra={"provider": self._provider_id, "error": message or "Failed to refresh models"},
+            )
             self._status_icon.setPixmap(icon_manager.get_pixmap("status_error", 16))
             self._status_label.setText(message or "Failed to refresh models")
 
     def _test_connection(self) -> None:
         """Test the provider connection."""
+        _logger.info(
+            "provider_connection_test_started",
+            extra={"provider": self._provider_id},
+        )
+
         icon_manager = IconManager.get_instance()
         self._status_icon.setPixmap(icon_manager.get_pixmap("status_loading", 16))
         self._status_label.setText("Testing connection...")
@@ -921,6 +1370,10 @@ class ProviderSettingsWidget(QFrame):
         api_base = self._api_base_input.text().strip() if self._api_base_input else None
 
         if not api_key and self._provider_id != "ollama":
+            _logger.warning(
+                "provider_connection_test_failed",
+                extra={"provider": self._provider_id, "error": "API key required"},
+            )
             self._status_icon.setPixmap(icon_manager.get_pixmap("status_error", 16))
             self._status_label.setText("API key required")
             self._test_btn.setEnabled(True)
@@ -941,9 +1394,17 @@ class ProviderSettingsWidget(QFrame):
         icon_manager = IconManager.get_instance()
 
         if success:
+            _logger.info(
+                "provider_connection_test_succeeded",
+                extra={"provider": self._provider_id, "status_message": message},
+            )
             self._status_icon.setPixmap(icon_manager.get_pixmap("status_success", 16))
             self._status_label.setText(message)
         else:
+            _logger.warning(
+                "provider_connection_test_failed",
+                extra={"provider": self._provider_id, "error": message},
+            )
             self._status_icon.setPixmap(icon_manager.get_pixmap("status_error", 16))
             self._status_label.setText(message)
 
@@ -992,7 +1453,15 @@ class ProviderSettingsWidget(QFrame):
         try:
             with open(self._config_path, "w", encoding="utf-8") as f:
                 json.dump(all_settings, f, indent=2)
+            _logger.info(
+                "provider_settings_saved",
+                extra={"provider": self._provider_id},
+            )
         except OSError as e:
+            _logger.exception(
+                "provider_settings_save_failed",
+                extra={"provider": self._provider_id, "error": str(e)},
+            )
             QMessageBox.warning(
                 self,
                 "Save Error",
@@ -1013,6 +1482,7 @@ class ProviderSettingsWidget(QFrame):
             "google": "GOOGLE_API_KEY",
             "openrouter": "OPENROUTER_API_KEY",
             "ollama": "OLLAMA_API_KEY",
+            "huggingface": "HUGGINGFACE_API_TOKEN",
             "grok": "XAI_API_KEY",
         }
 

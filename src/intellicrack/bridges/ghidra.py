@@ -346,17 +346,15 @@ class GhidraBridge(StaticAnalysisBridge):
                 connect_to_port=self._port,
             )
             self._state = BridgeState(connected=True, tool_running=True)
-            _logger.info("Connected to Ghidra bridge on port %d", self._port)
+            _logger.info("ghidra_bridge_connected", extra={"port": self._port})
 
         except ImportError:
-            _logger.warning(
-                "ghidra_bridge not installed - install with 'pip install ghidra_bridge'"
-            )
+            _logger.warning("ghidra_bridge_not_installed")
             self._bridge = None
             self._state = BridgeState(connected=False, tool_running=False)
 
         except Exception as e:
-            _logger.warning("Failed to connect to Ghidra: %s", e)
+            _logger.warning("ghidra_connect_failed", extra={"error": str(e)})
             self._bridge = None
             self._state = BridgeState(connected=True, tool_running=False)
 
@@ -380,7 +378,7 @@ class GhidraBridge(StaticAnalysisBridge):
         self._bridge = None
         self._binary_path = None
         await super().shutdown()
-        _logger.info("Ghidra bridge shutdown")
+        _logger.info("ghidra_bridge_shutdown")
 
     async def is_available(self) -> bool:
         """Check if Ghidra is available.
@@ -433,7 +431,7 @@ class GhidraBridge(StaticAnalysisBridge):
             bridge_script.name,
         ]
 
-        _logger.info("Starting Ghidra headless: %s", " ".join(cmd))
+        _logger.info("ghidra_headless_starting", extra={"command": " ".join(cmd)})
 
         self._process = await asyncio.to_thread(
             subprocess.Popen,
@@ -464,7 +462,7 @@ class GhidraBridge(StaticAnalysisBridge):
                 connect_to_port=self._port,
             )
             self._state = BridgeState(connected=True, tool_running=True)
-            _logger.info("Connected to Ghidra headless")
+            _logger.info("ghidra_headless_connected")
         except Exception as e:
             error_message = f"Failed to connect to Ghidra: {e}"
             raise ToolError(error_message) from e
@@ -513,11 +511,9 @@ ghidra_bridge_server.GhidraBridgeServer(
 
         if self._bridge is not None:
             try:
-                await self._execute_remote(
-                    f'importFile(java.io.File("{path.as_posix()}"))'
-                )
+                await self._execute_remote(f'importFile(java.io.File("{path.as_posix()}"))')
             except Exception as e:
-                _logger.warning("Remote import failed: %s", e)
+                _logger.warning("ghidra_remote_import_failed", extra={"error": str(e)})
 
         data = path.read_bytes()
         md5 = hashlib.md5(data, usedforsecurity=False).hexdigest()
@@ -533,7 +529,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             target_path=self._binary_path,
         )
 
-        _logger.info("Loaded binary: %s", path.name)
+        _logger.info("binary_loaded", extra={"path": path.name})
 
         entry_point = 0
         sections: list[SectionInfo] = []
@@ -544,7 +540,7 @@ ghidra_bridge_server.GhidraBridgeServer(
             try:
                 entry_point, sections, imports, exports = await self._extract_binary_metadata()
             except Exception as e:
-                _logger.warning("Failed to extract Ghidra metadata: %s", e)
+                _logger.warning("ghidra_metadata_extraction_failed", extra={"error": str(e)})
 
         return BinaryInfo(
             path=self._binary_path,
@@ -744,7 +740,7 @@ metadata
             )
             if len(data) > pe_offset + _PE_HEADER_MIN:
                 machine = int.from_bytes(
-                    data[pe_offset + 4:pe_offset + 6],
+                    data[pe_offset + 4 : pe_offset + 6],
                     "little",
                 )
                 if machine == _MACHINE_AMD64:
@@ -766,12 +762,12 @@ metadata
             ToolError: If analysis fails.
         """
         if self._bridge is None:
-            _logger.warning("No Ghidra connection, skipping analysis")
+            _logger.warning("ghidra_analysis_skipped_no_connection")
             return
 
         try:
             await self._execute_remote("analyzeAll(currentProgram)")
-            _logger.info("Ghidra analysis complete")
+            _logger.info("ghidra_analysis_complete")
         except Exception as e:
             error_message = f"Analysis failed: {e}"
             raise ToolError(error_message) from e
@@ -789,7 +785,7 @@ metadata
             List of function information. Returns empty list on error.
         """
         if self._bridge is None:
-            _logger.warning("Ghidra bridge not available for get_functions")
+            _logger.warning("ghidra_bridge_unavailable", extra={"operation": "get_functions"})
             return []
 
         try:
@@ -829,7 +825,7 @@ metadata
                 )
 
         except Exception as e:
-            _logger.warning("Failed to get functions: %s", e)
+            _logger.warning("get_functions_failed", extra={"error": str(e)})
             return []
 
         return functions
@@ -844,7 +840,7 @@ metadata
             Function info or None if not found or on error.
         """
         if self._bridge is None:
-            _logger.warning("Ghidra bridge not available for get_function")
+            _logger.warning("ghidra_bridge_unavailable", extra={"operation": "get_function"})
             return None
 
         try:
@@ -915,7 +911,7 @@ metadata
             )
 
         except Exception as e:
-            _logger.warning("Failed to get function: %s", e)
+            _logger.warning("get_function_failed", extra={"error": str(e)})
             return None
 
     async def decompile(self, address: int) -> str:
@@ -975,7 +971,7 @@ metadata
             List of disassembly lines. Returns empty list on error.
         """
         if self._bridge is None:
-            _logger.warning("Ghidra bridge not available for disassemble")
+            _logger.warning("ghidra_bridge_unavailable", extra={"operation": "disassemble"})
             return []
 
         try:
@@ -1014,7 +1010,7 @@ metadata
             ]
 
         except Exception as e:
-            _logger.warning("Disassembly failed: %s", e)
+            _logger.warning("disassembly_failed", extra={"error": str(e)})
             return []
 
     async def get_xrefs_to(self, address: int) -> list[CrossReference]:
@@ -1027,7 +1023,7 @@ metadata
             List of cross-references. Returns empty list on error.
         """
         if self._bridge is None:
-            _logger.warning("Ghidra bridge not available for get_xrefs_to")
+            _logger.warning("ghidra_bridge_unavailable", extra={"operation": "get_xrefs_to"})
             return []
 
         try:
@@ -1058,7 +1054,7 @@ metadata
             ]
 
         except Exception as e:
-            _logger.warning("Failed to get xrefs: %s", e)
+            _logger.warning("get_xrefs_to_failed", extra={"error": str(e)})
             return []
 
     async def get_xrefs_from(self, address: int) -> list[CrossReference]:
@@ -1071,7 +1067,7 @@ metadata
             List of cross-references. Returns empty list on error.
         """
         if self._bridge is None:
-            _logger.warning("Ghidra bridge not available for get_xrefs_from")
+            _logger.warning("ghidra_bridge_unavailable", extra={"operation": "get_xrefs_from"})
             return []
 
         try:
@@ -1102,7 +1098,7 @@ metadata
             ]
 
         except Exception as e:
-            _logger.warning("Failed to get xrefs: %s", e)
+            _logger.warning("get_xrefs_from_failed", extra={"error": str(e)})
             return []
 
     async def search_strings(self, pattern: str) -> list[StringInfo]:
@@ -1115,7 +1111,7 @@ metadata
             List of matching strings. Returns empty list on error.
         """
         if self._bridge is None:
-            _logger.warning("Ghidra bridge not available for search_strings")
+            _logger.warning("ghidra_bridge_unavailable", extra={"operation": "search_strings"})
             return []
 
         try:
@@ -1148,7 +1144,7 @@ metadata
             ]
 
         except Exception as e:
-            _logger.warning("String search failed: %s", e)
+            _logger.warning("string_search_failed", extra={"error": str(e)})
             return []
 
     async def search_bytes(self, pattern: bytes) -> list[int]:
@@ -1161,7 +1157,7 @@ metadata
             List of addresses. Returns empty list on error.
         """
         if self._bridge is None:
-            _logger.warning("Ghidra bridge not available for search_bytes")
+            _logger.warning("ghidra_bridge_unavailable", extra={"operation": "search_bytes"})
             return []
 
         try:
@@ -1186,7 +1182,7 @@ metadata
             if isinstance(result, list):
                 return [int(addr) for addr in result]
         except Exception as e:
-            _logger.warning("Byte search failed: %s", e)
+            _logger.warning("byte_search_failed", extra={"error": str(e)})
         return []
 
     async def rename_function(self, address: int, new_name: str) -> bool:
@@ -1220,7 +1216,7 @@ metadata
             error_message = f"Rename failed: {e}"
             raise ToolError(error_message) from e
 
-        _logger.info("Renamed function at 0x%X to %s", address, new_name)
+        _logger.info("function_renamed", extra={"address": hex(address), "new_name": new_name})
         return True
 
     async def add_comment(
@@ -1268,7 +1264,7 @@ metadata
             error_message = f"Add comment failed: {e}"
             raise ToolError(error_message) from e
 
-        _logger.info("Added comment at 0x%X", address)
+        _logger.info("comment_added", extra={"address": hex(address)})
         return True
 
     async def get_imports(self) -> list[ImportInfo]:
@@ -1278,7 +1274,7 @@ metadata
             List of imports. Returns empty list on error.
         """
         if self._bridge is None:
-            _logger.warning("Ghidra bridge not available for get_imports")
+            _logger.warning("ghidra_bridge_unavailable", extra={"operation": "get_imports"})
             return []
 
         try:
@@ -1308,7 +1304,7 @@ metadata
             ]
 
         except Exception as e:
-            _logger.warning("Failed to get imports: %s", e)
+            _logger.warning("get_imports_failed", extra={"error": str(e)})
             return []
 
     async def get_exports(self) -> list[ExportInfo]:
@@ -1318,7 +1314,7 @@ metadata
             List of exports. Returns empty list on error.
         """
         if self._bridge is None:
-            _logger.warning("Ghidra bridge not available for get_exports")
+            _logger.warning("ghidra_bridge_unavailable", extra={"operation": "get_exports"})
             return []
 
         try:
@@ -1347,7 +1343,7 @@ metadata
             ]
 
         except Exception as exc:
-            _logger.warning("Failed to get exports: %s", exc)
+            _logger.warning("get_exports_failed", extra={"error": str(exc)})
             return []
 
     async def get_data_type(self, address: int) -> DataTypeInfo | None:
@@ -1360,7 +1356,7 @@ metadata
             DataTypeInfo if data is defined, otherwise None.
         """
         if self._bridge is None:
-            _logger.warning("Ghidra bridge not available for get_data_type")
+            _logger.warning("ghidra_bridge_unavailable", extra={"operation": "get_data_type"})
             return None
 
         try:
@@ -1405,20 +1401,12 @@ metadata
                 size=int(result_dict.get("size", 0)),
                 is_pointer=bool(result_dict.get("is_pointer", False)),
                 is_array=bool(result_dict.get("is_array", False)),
-                array_length=(
-                    int(result_dict["array_length"])
-                    if result_dict.get("array_length") is not None
-                    else None
-                ),
-                base_type=(
-                    str(result_dict["base_type"])
-                    if result_dict.get("base_type") is not None
-                    else None
-                ),
+                array_length=(int(result_dict["array_length"]) if result_dict.get("array_length") is not None else None),
+                base_type=(str(result_dict["base_type"]) if result_dict.get("base_type") is not None else None),
             )
 
         except Exception as e:
-            _logger.warning("Failed to get data type: %s", e)
+            _logger.warning("get_data_type_failed", extra={"error": str(e)})
             return None
 
     async def set_data_type(self, address: int, data_type: str) -> bool:

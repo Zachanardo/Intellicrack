@@ -294,11 +294,21 @@ dummy-variable-rgx = "^(_+|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.lint.per-file-ignores]
 "src/intellicrack/ui/highlighter.py" = ["N802"]
-"src/intellicrack/bridges/*.py" = ["S404"]
+"src/intellicrack/bridges/*.py" = ["S404", "TRY003", "TRY300", "TRY400", "PLR6301"]
 "src/intellicrack/sandbox/*.py" = ["S404"]
 "src/intellicrack/ui/tool_config.py" = ["S404"]
 "src/intellicrack/ui/sandbox_config.py" = ["S404"]
+"src/intellicrack/ui/app.py" = ["SIM105"]
 "src/intellicrack/core/process_manager.py" = ["S404"]
+"src/intellicrack/ui/embedding/*.py" = [
+    "S404",     # subprocess module - needed for launching external tools
+    "N802",     # Qt method names (resizeEvent, closeEvent, etc.) - framework requirement
+    "PLR6301",  # Methods could be static - designed as template methods for subclasses
+    "TC003",    # Path import - used at runtime, not just type hints
+]
+"src/intellicrack/ui/panels/*.py" = [
+    "PLR6301",  # Methods could be static - designed for subclass implementation
+]
 "src/intellicrack/providers/base.py" = ["TC001"]
 "src/intellicrack/providers/*.py" = ["TC003", "TRY003", "PLR6301", "TRY300", "PLR0914"]
 "tests/**/*.py" = [

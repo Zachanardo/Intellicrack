@@ -1,0 +1,203 @@
+{
+  "tool": "bandit",
+  "generated": "2026-01-18T15:56:35.787910",
+  "total_findings": 15,
+  "total_files": 10,
+  "files": [
+    {
+      "path": "src/intellicrack/ui\\sandbox_config.py",
+      "count": 3,
+      "findings": [
+        {
+          "line": 13,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B404:blacklist",
+          "message": "Consider possible security implications associated with the subprocess module.",
+          "raw": "src/intellicrack/ui\\sandbox_config.py:13: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+        },
+        {
+          "line": 110,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B607:start_process_with_partial_path",
+          "message": "Starting a process with a partial executable path",
+          "raw": "src/intellicrack/ui\\sandbox_config.py:110: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path"
+        },
+        {
+          "line": 110,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B603:subprocess_without_shell_equals_true",
+          "message": "subprocess call - check for execution of untrusted input.",
+          "raw": "src/intellicrack/ui\\sandbox_config.py:110: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack/core\\process_manager.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 15,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B404:blacklist",
+          "message": "Consider possible security implications associated with the subprocess module.",
+          "raw": "src/intellicrack/core\\process_manager.py:15: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+        },
+        {
+          "line": 670,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B603:subprocess_without_shell_equals_true",
+          "message": "subprocess call - check for execution of untrusted input.",
+          "raw": "src/intellicrack/core\\process_manager.py:670: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack/credentials\\oauth.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 222,
+          "column": null,
+          "severity": "Low",
+          "confidence": "Medium",
+          "code": "B106:hardcoded_password_funcarg",
+          "message": "Possible hardcoded password: 'https://oauth2.googleapis.com/token'",
+          "raw": "src/intellicrack/credentials\\oauth.py:222: [Low] B106:hardcoded_password_funcarg: Possible hardcoded password: 'https://oauth2.googleapis.com/token'"
+        },
+        {
+          "line": 810,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B110:try_except_pass",
+          "message": "Try, Except, Pass detected.",
+          "raw": "src/intellicrack/credentials\\oauth.py:810: [Low] B110:try_except_pass: Try, Except, Pass detected."
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack/sandbox\\windows.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 11,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B404:blacklist",
+          "message": "Consider possible security implications associated with the subprocess module.",
+          "raw": "src/intellicrack/sandbox\\windows.py:11: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+        },
+        {
+          "line": 14,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B405:blacklist",
+          "message": "Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called.",
+          "raw": "src/intellicrack/sandbox\\windows.py:14: [Low] B405:blacklist: Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called."
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack/bridges\\ghidra.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 13,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B404:blacklist",
+          "message": "Consider possible security implications associated with the subprocess module.",
+          "raw": "src/intellicrack/bridges\\ghidra.py:13: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack/bridges\\installer.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 13,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B404:blacklist",
+          "message": "Consider possible security implications associated with the subprocess module.",
+          "raw": "src/intellicrack/bridges\\installer.py:13: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack/bridges\\x64dbg.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 10,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B404:blacklist",
+          "message": "Consider possible security implications associated with the subprocess module.",
+          "raw": "src/intellicrack/bridges\\x64dbg.py:10: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack/core\\script_gen.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 22,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B404:blacklist",
+          "message": "Consider possible security implications associated with the subprocess module.",
+          "raw": "src/intellicrack/core\\script_gen.py:22: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack/credentials\\store.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 412,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B110:try_except_pass",
+          "message": "Try, Except, Pass detected.",
+          "raw": "src/intellicrack/credentials\\store.py:412: [Low] B110:try_except_pass: Try, Except, Pass detected."
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack/ui\\tool_config.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 14,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B404:blacklist",
+          "message": "Consider possible security implications associated with the subprocess module.",
+          "raw": "src/intellicrack/ui\\tool_config.py:14: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+        }
+      ]
+    }
+  ]
+}

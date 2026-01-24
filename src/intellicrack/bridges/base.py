@@ -6,6 +6,7 @@ radare2, and other reverse engineering tools.
 """
 # ruff: noqa: PLR6301
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, TypedDict
@@ -134,12 +135,16 @@ class ToolBridgeBase:
     Attributes:
         _state: Current state of the bridge.
         _capabilities: Capabilities of the tool.
+        _logger: Logger instance for this bridge.
     """
 
     def __init__(self) -> None:
         """Initialize the base bridge."""
         self._state: BridgeState = BridgeState()
         self._capabilities: BridgeCapabilities = BridgeCapabilities()
+        self._logger: logging.Logger = logging.getLogger(
+            f"{__name__}.{self.__class__.__name__}"
+        )
 
     @property
     def name(self) -> ToolName:
@@ -199,6 +204,7 @@ class ToolBridgeBase:
 
     async def shutdown(self) -> None:
         """Shutdown the tool and cleanup resources."""
+        self._logger.info("bridge_shutdown", extra={"bridge_class": self.__class__.__name__})
         self._state = BridgeState()
 
     async def is_available(self) -> bool:

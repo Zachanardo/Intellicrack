@@ -107,7 +107,7 @@ class GrokProvider(LLMProviderBase):
             await self._client.models.list()
             self._credentials = credentials
             self._connected = True
-            self._logger.info("Connected to Grok API at %s", base_url)
+            self._logger.info("grok_api_connected", extra={"base_url": base_url})
         except openai.AuthenticationError as e:
             raise AuthenticationError(f"Invalid Grok API key: {e}") from e
         except openai.BadRequestError as e:

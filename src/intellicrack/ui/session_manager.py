@@ -7,6 +7,7 @@ including listing, loading, saving, and deleting sessions.
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -33,6 +34,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+
+_logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from intellicrack.core.session import SessionManager, SessionMetadata
@@ -114,18 +117,10 @@ class SessionManagerDialog(QDialog):
         """Initialize and configure the session table widget."""
         self._session_table = QTableWidget()
         self._session_table.setColumnCount(4)
-        self._session_table.setHorizontalHeaderLabels([
-            "Name", "Created", "Modified", "Messages"
-        ])
-        self._session_table.setSelectionBehavior(
-            QAbstractItemView.SelectionBehavior.SelectRows
-        )
-        self._session_table.setSelectionMode(
-            QAbstractItemView.SelectionMode.SingleSelection
-        )
-        self._session_table.setEditTriggers(
-            QAbstractItemView.EditTrigger.NoEditTriggers
-        )
+        self._session_table.setHorizontalHeaderLabels(["Name", "Created", "Modified", "Messages"])
+        self._session_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self._session_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self._session_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self._session_table.verticalHeader().setVisible(False)
         self._session_table.horizontalHeader().setStretchLastSection(True)
         header = self._session_table.horizontalHeader()
@@ -175,9 +170,7 @@ class SessionManagerDialog(QDialog):
         group = QGroupBox("Session Details")
         form = QFormLayout()
         self._id_label = QLabel("-")
-        self._id_label.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse
-        )
+        self._id_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         form.addRow("ID:", self._id_label)
         self._created_label = QLabel("-")
         form.addRow("Created:", self._created_label)
@@ -204,9 +197,7 @@ class SessionManagerDialog(QDialog):
         layout = QVBoxLayout()
         self._preview_text = QTextEdit()
         self._preview_text.setReadOnly(True)
-        self._preview_text.setStyleSheet(
-            "font-family: 'Consolas', 'Courier New', monospace; font-size: 10px;"
-        )
+        self._preview_text.setStyleSheet("font-family: 'Consolas', 'Courier New', monospace; font-size: 10px;")
         layout.addWidget(self._preview_text)
         group.setLayout(layout)
         return group
@@ -287,6 +278,8 @@ class SessionManagerDialog(QDialog):
                         font.setBold(True)
                         item.setFont(font)
 
+        _logger.info("session_list_refreshed", extra={"count": len(self._sessions)})
+
     def _load_sessions_from_disk(self) -> None:
         """Load sessions from disk storage."""
         if not self.SESSIONS_DIR.exists():
@@ -305,17 +298,13 @@ class SessionManagerDialog(QDialog):
 
                 if "created_at" in session_data and isinstance(session_data["created_at"], str):
                     try:
-                        session_data["created_at"] = datetime.fromisoformat(
-                            session_data["created_at"]
-                        )
+                        session_data["created_at"] = datetime.fromisoformat(session_data["created_at"])
                     except ValueError:
                         session_data["created_at"] = datetime.now()
 
                 if "updated_at" in session_data and isinstance(session_data["updated_at"], str):
                     try:
-                        session_data["updated_at"] = datetime.fromisoformat(
-                            session_data["updated_at"]
-                        )
+                        session_data["updated_at"] = datetime.fromisoformat(session_data["updated_at"])
                     except ValueError:
                         session_data["updated_at"] = datetime.now()
 
@@ -370,9 +359,7 @@ class SessionManagerDialog(QDialog):
 
         if selected_rows:
             row = selected_rows[0].row()
-            session_id = self._session_table.item(row, 0).data(
-                Qt.ItemDataRole.UserRole
-            )
+            session_id = self._session_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
 
             session = None
             for s in self._sessions:
@@ -383,9 +370,8 @@ class SessionManagerDialog(QDialog):
             if session:
                 self._update_details(session)
                 self._load_btn.setEnabled(True)
-                self._delete_btn.setEnabled(
-                    session["id"] != self._current_session_id
-                )
+                self._delete_btn.setEnabled(session["id"] != self._current_session_id)
+                _logger.info("session_selected", extra={"session_id": session_id})
         else:
             self._clear_details()
             self._load_btn.setEnabled(False)
@@ -468,9 +454,7 @@ class SessionManagerDialog(QDialog):
             return
 
         row = selected_rows[0].row()
-        session_id = self._session_table.item(row, 0).data(
-            Qt.ItemDataRole.UserRole
-        )
+        session_id = self._session_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
 
         if session_id == self._current_session_id:
             QMessageBox.information(
@@ -498,9 +482,7 @@ class SessionManagerDialog(QDialog):
             return
 
         row = selected_rows[0].row()
-        session_id = self._session_table.item(row, 0).data(
-            Qt.ItemDataRole.UserRole
-        )
+        session_id = self._session_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
         session_name = self._session_table.item(row, 0).text()
 
         if session_id == self._current_session_id:
@@ -522,6 +504,7 @@ class SessionManagerDialog(QDialog):
             deleted = self._delete_session_sync(session_id)
 
             if deleted:
+                _logger.info("session_deleted", extra={"session_id": session_id})
                 self.session_deleted.emit(session_id)
                 self._load_sessions()
 
@@ -561,9 +544,7 @@ class SessionManagerDialog(QDialog):
             return
 
         row = selected_rows[0].row()
-        session_id = self._session_table.item(row, 0).data(
-            Qt.ItemDataRole.UserRole
-        )
+        session_id = self._session_table.item(row, 0).data(Qt.ItemDataRole.UserRole)
         session_name = self._session_table.item(row, 0).text()
 
         session_data = None
@@ -691,8 +672,7 @@ class SessionManagerDialog(QDialog):
                 reply = QMessageBox.question(
                     self,
                     "Session Exists",
-                    f"A session with ID '{import_data['id']}' already exists.\n\n"
-                    "Do you want to replace it?",
+                    f"A session with ID '{import_data['id']}' already exists.\n\nDo you want to replace it?",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 )
                 if reply != QMessageBox.StandardButton.Yes:
@@ -787,13 +767,16 @@ class NewSessionDialog(QDialog):
         layout.addLayout(form_layout)
         layout.addStretch()
 
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok
-            | QDialogButtonBox.StandardButton.Cancel
-        )
-        button_box.accepted.connect(self.accept)
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(self._on_accepted)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
+
+    def _on_accepted(self) -> None:
+        """Handle dialog acceptance and log session creation."""
+        session_name = self.get_session_name()
+        _logger.info("session_created", extra={"session_id": session_name})
+        self.accept()
 
     def get_session_name(self) -> str:
         """Get the entered session name.

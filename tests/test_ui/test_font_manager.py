@@ -22,6 +22,10 @@ from intellicrack.ui.resources.font_manager import (
 from intellicrack.ui.resources.resource_helper import get_assets_path
 
 
+_STYLE_HINT_MONOSPACE_VALUE: int = 7
+_STYLE_HINT_SANS_SERIF_VALUE: int = 0
+
+
 @pytest.fixture
 def font_manager(
     qapp: QApplication,  # noqa: ARG001
@@ -38,9 +42,7 @@ def font_manager(
 class TestFontManagerSingleton:
     """Tests for singleton pattern implementation."""
 
-    def test_get_instance_returns_same_object(
-        self, qapp: QApplication
-    ) -> None:
+    def test_get_instance_returns_same_object(self, qapp: QApplication) -> None:
         """Singleton returns the same instance."""
         FontManager.reset_instance()
         instance1 = FontManager.get_instance()
@@ -48,9 +50,7 @@ class TestFontManagerSingleton:
         assert instance1 is instance2
         FontManager.reset_instance()
 
-    def test_reset_instance_clears_singleton(
-        self, qapp: QApplication
-    ) -> None:
+    def test_reset_instance_clears_singleton(self, qapp: QApplication) -> None:
         """Reset clears the singleton instance."""
         FontManager.reset_instance()
         instance1 = FontManager.get_instance()
@@ -109,7 +109,7 @@ class TestCodeFont:
     def test_code_font_is_monospace(self, font_manager: FontManager) -> None:
         """Code font has monospace style hint."""
         font = font_manager.get_code_font()
-        assert font.styleHint() == QFont.StyleHint.Monospace
+        assert font.styleHint().value == _STYLE_HINT_MONOSPACE_VALUE
 
     def test_code_font_is_fixed_pitch(self, font_manager: FontManager) -> None:
         """Code font is fixed pitch."""
@@ -144,7 +144,7 @@ class TestUIFont:
     def test_ui_font_is_sans_serif(self, font_manager: FontManager) -> None:
         """UI font has sans-serif style hint."""
         font = font_manager.get_ui_font()
-        assert font.styleHint() == QFont.StyleHint.SansSerif
+        assert font.styleHint().value == _STYLE_HINT_SANS_SERIF_VALUE
 
     def test_ui_font_respects_size(self, font_manager: FontManager) -> None:
         """UI font uses requested size."""
@@ -185,18 +185,14 @@ class TestHeadingFont:
 class TestFontFamilyProperties:
     """Tests for font family properties."""
 
-    def test_code_font_family_auto_loads(
-        self, font_manager: FontManager
-    ) -> None:
+    def test_code_font_family_auto_loads(self, font_manager: FontManager) -> None:
         """Accessing code_font_family triggers font loading."""
         FontManager.reset_instance()
         manager = FontManager.get_instance()
         _ = manager.code_font_family
         assert manager._fonts_loaded
 
-    def test_ui_font_family_auto_loads(
-        self, font_manager: FontManager
-    ) -> None:
+    def test_ui_font_family_auto_loads(self, font_manager: FontManager) -> None:
         """Accessing ui_font_family triggers font loading."""
         FontManager.reset_instance()
         manager = FontManager.get_instance()
@@ -215,16 +211,12 @@ class TestFontFamilyProperties:
 class TestCustomFontStatus:
     """Tests for custom font status checking."""
 
-    def test_is_custom_font_loaded_after_load(
-        self, font_manager: FontManager
-    ) -> None:
+    def test_is_custom_font_loaded_after_load(self, font_manager: FontManager) -> None:
         """is_custom_font_loaded returns True after successful loading."""
         font_manager.load_fonts()
         assert font_manager.is_custom_font_loaded()
 
-    def test_is_custom_font_loaded_before_load(
-        self, qapp: QApplication
-    ) -> None:
+    def test_is_custom_font_loaded_before_load(self, qapp: QApplication) -> None:
         """is_custom_font_loaded returns False before loading."""
         FontManager.reset_instance()
         manager = FontManager()
@@ -240,9 +232,7 @@ class TestFontInfo:
         info = font_manager.get_font_info()
         assert isinstance(info, dict)
 
-    def test_font_info_contains_required_keys(
-        self, font_manager: FontManager
-    ) -> None:
+    def test_font_info_contains_required_keys(self, font_manager: FontManager) -> None:
         """Font info contains all required keys."""
         font_manager.load_fonts()
         info = font_manager.get_font_info()
@@ -258,9 +248,7 @@ class TestFontInfo:
         for key in required_keys:
             assert key in info, f"Missing key in font info: {key}"
 
-    def test_font_info_values_correct_types(
-        self, font_manager: FontManager
-    ) -> None:
+    def test_font_info_values_correct_types(self, font_manager: FontManager) -> None:
         """Font info values have correct types."""
         font_manager.load_fonts()
         info = font_manager.get_font_info()

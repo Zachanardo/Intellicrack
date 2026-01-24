@@ -20,6 +20,7 @@ from uuid import uuid4
 from .logging import get_logger
 from .types import (
     BinaryInfo,
+    LicensingAnalysis,
     Message,
     PatchInfo,
     ProviderName,
@@ -82,6 +83,7 @@ class Session:
         messages: Conversation history.
         tool_states: State of each tool bridge.
         patches: Applied patches.
+        licensing_analyses: Mapping of binary names to their licensing analysis.
         notes: User notes.
         tags: Session tags.
     """
@@ -97,6 +99,7 @@ class Session:
     messages: list[Message] = field(default_factory=list)
     tool_states: dict[ToolName, ToolState] = field(default_factory=dict)
     patches: list[PatchInfo] = field(default_factory=list)
+    licensing_analyses: dict[str, LicensingAnalysis] = field(default_factory=dict)
     notes: str = ""
     tags: list[str] = field(default_factory=list)
 
@@ -167,6 +170,27 @@ class Session:
         """
         self.patches.append(patch)
         self.updated_at = datetime.now()
+
+    def add_licensing_analysis(self, binary_name: str, analysis: LicensingAnalysis) -> None:
+        """Add licensing analysis for a binary.
+
+        Args:
+            binary_name: Name of the analyzed binary.
+            analysis: Licensing analysis results.
+        """
+        self.licensing_analyses[binary_name] = analysis
+        self.updated_at = datetime.now()
+
+    def get_licensing_analysis(self, binary_name: str) -> LicensingAnalysis | None:
+        """Get licensing analysis for a binary.
+
+        Args:
+            binary_name: Name of the binary.
+
+        Returns:
+            LicensingAnalysis if available, None otherwise.
+        """
+        return self.licensing_analyses.get(binary_name)
 
     def to_metadata(self) -> SessionMetadata:
         """Convert to metadata for listing.
@@ -257,7 +281,7 @@ class SessionStore:
                 )
             """)
 
-            _logger.debug("Database schema initialized")
+            _logger.debug("database_schema_initialized")
 
     def save(self, session: Session) -> None:
         """Save a session to the database.
@@ -268,29 +292,29 @@ class SessionStore:
         session_data = {
             "binaries": [self._serialize_binary(b) for b in session.binaries],
             "messages": [self._serialize_message(m) for m in session.messages],
-            "tool_states": {
-                k.value: self._serialize_tool_state(v)
-                for k, v in session.tool_states.items()
-            },
+            "tool_states": {k.value: self._serialize_tool_state(v) for k, v in session.tool_states.items()},
             "patches": [self._serialize_patch(p) for p in session.patches],
         }
 
         with self._connection() as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO sessions
                 (id, name, created_at, updated_at, provider, model, active_binary_index, notes, data)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                session.id,
-                session.name,
-                session.created_at.isoformat(),
-                session.updated_at.isoformat(),
-                session.provider.value,
-                session.model,
-                session.active_binary_index,
-                session.notes,
-                json.dumps(session_data),
-            ))
+            """,
+                (
+                    session.id,
+                    session.name,
+                    session.created_at.isoformat(),
+                    session.updated_at.isoformat(),
+                    session.provider.value,
+                    session.model,
+                    session.active_binary_index,
+                    session.notes,
+                    json.dumps(session_data),
+                ),
+            )
 
             conn.execute(
                 "DELETE FROM session_tags WHERE session_id = ?",
@@ -303,7 +327,7 @@ class SessionStore:
                     (session.id, tag),
                 )
 
-        _logger.debug("Saved session: %s", session.id)
+        _logger.debug("session_saved", extra={"session_id": session.id})
 
     def load(self, session_id: str) -> Session | None:
         """Load a session from the database.
@@ -344,14 +368,11 @@ class SessionStore:
                 tags=tags,
                 binaries=[self._deserialize_binary(b) for b in data.get("binaries", [])],
                 messages=[self._deserialize_message(m) for m in data.get("messages", [])],
-                tool_states={
-                    ToolName(k): self._deserialize_tool_state(v)
-                    for k, v in data.get("tool_states", {}).items()
-                },
+                tool_states={ToolName(k): self._deserialize_tool_state(v) for k, v in data.get("tool_states", {}).items()},
                 patches=[self._deserialize_patch(p) for p in data.get("patches", [])],
             )
 
-            _logger.debug("Loaded session: %s", session_id)
+            _logger.debug("session_loaded", extra={"session_id": session_id})
             return session
 
     def delete(self, session_id: str) -> bool:
@@ -371,7 +392,7 @@ class SessionStore:
             deleted = cursor.rowcount > 0
 
         if deleted:
-            _logger.info("Deleted session: %s", session_id)
+            _logger.info("session_deleted", extra={"session_id": session_id})
 
         return deleted
 
@@ -385,26 +406,31 @@ class SessionStore:
             List of session metadata.
         """
         with self._connection() as conn:
-            rows = conn.execute("""
+            rows = conn.execute(
+                """
                 SELECT id, name, created_at, updated_at, provider, model, data
                 FROM sessions
                 ORDER BY updated_at DESC
                 LIMIT ?
-            """, (limit,)).fetchall()
+            """,
+                (limit,),
+            ).fetchall()
 
             result: list[SessionMetadata] = []
             for row in rows:
                 data = json.loads(row["data"])
-                result.append(SessionMetadata(
-                    id=row["id"],
-                    name=row["name"],
-                    created_at=datetime.fromisoformat(row["created_at"]),
-                    updated_at=datetime.fromisoformat(row["updated_at"]),
-                    provider=ProviderName(row["provider"]),
-                    model=row["model"],
-                    binary_count=len(data.get("binaries", [])),
-                    message_count=len(data.get("messages", [])),
-                ))
+                result.append(
+                    SessionMetadata(
+                        id=row["id"],
+                        name=row["name"],
+                        created_at=datetime.fromisoformat(row["created_at"]),
+                        updated_at=datetime.fromisoformat(row["updated_at"]),
+                        provider=ProviderName(row["provider"]),
+                        model=row["model"],
+                        binary_count=len(data.get("binaries", [])),
+                        message_count=len(data.get("messages", [])),
+                    )
+                )
 
             return result
 
@@ -418,27 +444,32 @@ class SessionStore:
             List of matching session metadata.
         """
         with self._connection() as conn:
-            rows = conn.execute("""
+            rows = conn.execute(
+                """
                 SELECT s.id, s.name, s.created_at, s.updated_at, s.provider, s.model, s.data
                 FROM sessions s
                 INNER JOIN session_tags t ON s.id = t.session_id
                 WHERE t.tag = ?
                 ORDER BY s.updated_at DESC
-            """, (tag,)).fetchall()
+            """,
+                (tag,),
+            ).fetchall()
 
             result: list[SessionMetadata] = []
             for row in rows:
                 data = json.loads(row["data"])
-                result.append(SessionMetadata(
-                    id=row["id"],
-                    name=row["name"],
-                    created_at=datetime.fromisoformat(row["created_at"]),
-                    updated_at=datetime.fromisoformat(row["updated_at"]),
-                    provider=ProviderName(row["provider"]),
-                    model=row["model"],
-                    binary_count=len(data.get("binaries", [])),
-                    message_count=len(data.get("messages", [])),
-                ))
+                result.append(
+                    SessionMetadata(
+                        id=row["id"],
+                        name=row["name"],
+                        created_at=datetime.fromisoformat(row["created_at"]),
+                        updated_at=datetime.fromisoformat(row["updated_at"]),
+                        provider=ProviderName(row["provider"]),
+                        model=row["model"],
+                        binary_count=len(data.get("binaries", [])),
+                        message_count=len(data.get("messages", [])),
+                    )
+                )
 
             return result
 
@@ -454,15 +485,18 @@ class SessionStore:
         cutoff = datetime.now().isoformat()
 
         with self._connection() as conn:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 DELETE FROM sessions
                 WHERE julianday(?) - julianday(updated_at) > ?
-            """, (cutoff, days))
+            """,
+                (cutoff, days),
+            )
 
             deleted = cursor.rowcount
 
         if deleted > 0:
-            _logger.info("Cleaned up %d old sessions", deleted)
+            _logger.info("sessions_cleaned_up", extra={"deleted_count": deleted})
 
         return deleted
 
@@ -673,10 +707,7 @@ class SessionStore:
                 "tags": session.tags,
                 "binaries": [self._serialize_binary(b) for b in session.binaries],
                 "messages": [self._serialize_message(m) for m in session.messages],
-                "tool_states": {
-                    k.value: self._serialize_tool_state(v)
-                    for k, v in session.tool_states.items()
-                },
+                "tool_states": {k.value: self._serialize_tool_state(v) for k, v in session.tool_states.items()},
                 "patches": [self._serialize_patch(p) for p in session.patches],
             },
         }
@@ -685,7 +716,7 @@ class SessionStore:
         with open(path, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2, ensure_ascii=False)
 
-        _logger.info("Exported session %s to %s", session.id, path)
+        _logger.info("session_exported", extra={"session_id": session.id, "path": str(path)})
 
     def import_from_json(self, path: Path) -> Session:
         """Import a session from a JSON file.
@@ -717,7 +748,7 @@ class SessionStore:
                 tool_name = ToolName(key)
                 tool_states[tool_name] = self._deserialize_tool_state(value)
             except ValueError:
-                _logger.warning("Unknown tool name in import: %s", key)
+                _logger.warning("unknown_tool_name_in_import", extra={"tool_name": key})
                 continue
 
         session = Session(
@@ -730,22 +761,13 @@ class SessionStore:
             active_binary_index=session_data.get("active_binary_index", -1),
             notes=session_data.get("notes", ""),
             tags=session_data.get("tags", []),
-            binaries=[
-                self._deserialize_binary(b)
-                for b in session_data.get("binaries", [])
-            ],
-            messages=[
-                self._deserialize_message(m)
-                for m in session_data.get("messages", [])
-            ],
+            binaries=[self._deserialize_binary(b) for b in session_data.get("binaries", [])],
+            messages=[self._deserialize_message(m) for m in session_data.get("messages", [])],
             tool_states=tool_states,
-            patches=[
-                self._deserialize_patch(p)
-                for p in session_data.get("patches", [])
-            ],
+            patches=[self._deserialize_patch(p) for p in session_data.get("patches", [])],
         )
 
-        _logger.info("Imported session %s from %s", session.id, path)
+        _logger.info("session_imported", extra={"session_id": session.id, "path": str(path)})
         return session
 
 
@@ -814,7 +836,7 @@ class SessionManager:
         await self.save()
         await self._start_auto_save()
 
-        _logger.info("Created new session: %s", session.id)
+        _logger.info("session_created", extra={"session_id": session.id})
         return session
 
     async def load(self, session_id: str) -> Session | None:
@@ -834,7 +856,7 @@ class SessionManager:
         if session is not None:
             self._current = session
             await self._start_auto_save()
-            _logger.info("Loaded session: %s", session_id)
+            _logger.info("session_loaded", extra={"session_id": session_id})
 
         return session
 
@@ -856,13 +878,13 @@ class SessionManager:
             session: Session to update.
         """
         self._store.save(session)
-        _logger.debug("Updated session: %s", session.id)
+        _logger.debug("session_updated", extra={"session_id": session.id})
 
     async def save(self) -> None:
         """Save the current session."""
         if self._current is not None:
             self._store.save(self._current)
-            _logger.debug("Saved current session: %s", self._current.id)
+            _logger.debug("current_session_saved", extra={"session_id": self._current.id})
 
     async def close(self) -> None:
         """Close the current session."""
@@ -870,7 +892,7 @@ class SessionManager:
 
         if self._current is not None:
             await self.save()
-            _logger.info("Closed session: %s", self._current.id)
+            _logger.info("session_closed", extra={"session_id": self._current.id})
             self._current = None
 
     async def delete(self, session_id: str) -> bool:

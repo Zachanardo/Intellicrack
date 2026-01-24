@@ -98,30 +98,22 @@ class TestGetStylesheet:
 class TestApplyTheme:
     """Tests for apply_theme method."""
 
-    def test_apply_theme_returns_bool(
-        self, theme_manager: ThemeManager, qapp: QApplication
-    ) -> None:
+    def test_apply_theme_returns_bool(self, theme_manager: ThemeManager, qapp: QApplication) -> None:
         """apply_theme returns a boolean."""
         result = theme_manager.apply_theme(THEME_DARK)
         assert isinstance(result, bool)
 
-    def test_apply_dark_theme_succeeds(
-        self, theme_manager: ThemeManager, qapp: QApplication
-    ) -> None:
+    def test_apply_dark_theme_succeeds(self, theme_manager: ThemeManager, qapp: QApplication) -> None:
         """Applying dark theme succeeds."""
         result = theme_manager.apply_theme(THEME_DARK)
         assert result
 
-    def test_apply_light_theme_succeeds(
-        self, theme_manager: ThemeManager, qapp: QApplication
-    ) -> None:
+    def test_apply_light_theme_succeeds(self, theme_manager: ThemeManager, qapp: QApplication) -> None:
         """Applying light theme succeeds."""
         result = theme_manager.apply_theme(THEME_LIGHT)
         assert result
 
-    def test_apply_theme_updates_current_theme(
-        self, theme_manager: ThemeManager, qapp: QApplication
-    ) -> None:
+    def test_apply_theme_updates_current_theme(self, theme_manager: ThemeManager, qapp: QApplication) -> None:
         """apply_theme updates _current_theme."""
         theme_manager.apply_theme(THEME_LIGHT)
         assert theme_manager._current_theme == THEME_LIGHT
@@ -129,9 +121,7 @@ class TestApplyTheme:
         theme_manager.apply_theme(THEME_DARK)
         assert theme_manager._current_theme == THEME_DARK
 
-    def test_apply_invalid_theme_uses_default(
-        self, theme_manager: ThemeManager, qapp: QApplication
-    ) -> None:
+    def test_apply_invalid_theme_uses_default(self, theme_manager: ThemeManager, qapp: QApplication) -> None:
         """Invalid theme name falls back to default."""
         theme_manager.apply_theme("invalid_theme_name")
         assert theme_manager._current_theme == DEFAULT_THEME
@@ -144,9 +134,7 @@ class TestCurrentTheme:
         """current_theme has correct initial value."""
         assert theme_manager.current_theme == DEFAULT_THEME
 
-    def test_current_theme_after_apply(
-        self, theme_manager: ThemeManager, qapp: QApplication
-    ) -> None:
+    def test_current_theme_after_apply(self, theme_manager: ThemeManager, qapp: QApplication) -> None:
         """current_theme reflects applied theme."""
         theme_manager.apply_theme(THEME_LIGHT)
         assert theme_manager.current_theme == THEME_LIGHT
@@ -155,18 +143,14 @@ class TestCurrentTheme:
 class TestToggleTheme:
     """Tests for toggle_theme method."""
 
-    def test_toggle_from_dark_to_light(
-        self, theme_manager: ThemeManager, qapp: QApplication
-    ) -> None:
+    def test_toggle_from_dark_to_light(self, theme_manager: ThemeManager, qapp: QApplication) -> None:
         """Toggling from dark goes to light."""
         theme_manager.apply_theme(THEME_DARK)
         result = theme_manager.toggle_theme()
         assert result == THEME_LIGHT
         assert theme_manager.current_theme == THEME_LIGHT
 
-    def test_toggle_from_light_to_dark(
-        self, theme_manager: ThemeManager, qapp: QApplication
-    ) -> None:
+    def test_toggle_from_light_to_dark(self, theme_manager: ThemeManager, qapp: QApplication) -> None:
         """Toggling from light goes to dark."""
         theme_manager.apply_theme(THEME_LIGHT)
         result = theme_manager.toggle_theme()
@@ -286,9 +270,7 @@ class TestThemeIntegrity:
         """ThemeManager correctly detects styles availability."""
         assert theme_manager._styles_available
 
-    def test_loaded_stylesheet_matches_file(
-        self, theme_manager: ThemeManager
-    ) -> None:
+    def test_loaded_stylesheet_matches_file(self, theme_manager: ThemeManager) -> None:
         """Loaded stylesheet matches file content."""
         assets = get_assets_path()
         dark_path = assets / "styles" / "dark_theme.qss"

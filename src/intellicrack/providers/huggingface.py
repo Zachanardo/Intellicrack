@@ -142,25 +142,38 @@ class HuggingFaceProvider(LLMProviderBase):
 
             self._credentials = credentials
             self._connected = True
-            self._logger.info("Connected to HuggingFace Inference API")
+            self._logger.info(
+                "huggingface_connected",
+                extra={"has_custom_base": credentials.api_base is not None},
+            )
         except httpx.HTTPStatusError as e:
+            self._logger.exception(
+                "huggingface_connect_failed",
+                extra={"status_code": e.response.status_code},
+            )
             if e.response.status_code == HTTP_UNAUTHORIZED:
-                raise AuthenticationError(
-                    f"Invalid HuggingFace API token: {e}"
-                ) from e
+                raise AuthenticationError(f"Invalid HuggingFace API token: {e}") from e
             raise ProviderError(f"Failed to connect to HuggingFace: {e}") from e
         except Exception as e:
+            self._logger.exception(
+                "huggingface_connect_failed",
+                extra={"error_type": type(e).__name__},
+            )
             raise ProviderError(f"Failed to connect to HuggingFace: {e}") from e
 
     async def disconnect(self) -> None:
         """Disconnect from HuggingFace API and clean up resources."""
+        was_connected = self._connected
         await super().disconnect()
         if self._client:
             await self._client.aclose()
             self._client = None
         self._api_token = None
         self._base_url = self.BASE_URL
-        self._logger.info("Disconnected from HuggingFace API")
+        self._logger.info(
+            "huggingface_disconnected",
+            extra={"was_connected": was_connected},
+        )
 
     async def list_models(self) -> list[ModelInfo]:
         """Dynamically fetch available text-generation models from HuggingFace.
@@ -227,11 +240,7 @@ class HuggingFaceProvider(LLMProviderBase):
                         0,
                         ModelInfo(
                             id=recommended_id,
-                            name=(
-                                recommended_id.split("/")[-1]
-                                if "/" in recommended_id
-                                else recommended_id
-                            ),
+                            name=(recommended_id.split("/")[-1] if "/" in recommended_id else recommended_id),
                             provider=ProviderName.HUGGINGFACE,
                             context_window=self._estimate_context_window(recommended_id),
                             supports_tools=self._estimate_tool_support(recommended_id),
@@ -242,9 +251,17 @@ class HuggingFaceProvider(LLMProviderBase):
                         ),
                     )
 
+            self._logger.info(
+                "huggingface_models_listed",
+                extra={"count": len(models), "recommended_count": len(self.RECOMMENDED_MODELS)},
+            )
             return models
 
         except Exception as e:
+            self._logger.exception(
+                "huggingface_list_models_failed",
+                extra={"error_type": type(e).__name__},
+            )
             raise ProviderError(f"Failed to list HuggingFace models: {e}") from e
 
     def _estimate_context_window(self, model_id: str) -> int:
@@ -416,9 +433,7 @@ class HuggingFaceProvider(LLMProviderBase):
 
                     tool_call = ToolCall(
                         id=tc.get("id", f"call_{len(tool_calls)}"),
-                        tool_name=(
-                            func_name.split(".")[0] if "." in func_name else func_name
-                        ),
+                        tool_name=(func_name.split(".")[0] if "." in func_name else func_name),
                         function_name=func_name,
                         arguments=args,
                     )
@@ -438,15 +453,38 @@ class HuggingFaceProvider(LLMProviderBase):
                 duration_ms=duration_ms,
             )
 
+            self._logger.info(
+                "huggingface_chat_completed",
+                extra={
+                    "model": model,
+                    "messages_count": len(messages),
+                    "tool_calls_count": len(tool_calls),
+                    "duration_ms": round(duration_ms, 2),
+                    "has_tools": tools is not None,
+                },
+            )
+
             return message, tool_calls if tool_calls else None
 
         except RateLimitError:
+            self._logger.warning(
+                "huggingface_rate_limited",
+                extra={"model": model},
+            )
             raise
         except ProviderError:
             raise
         except httpx.HTTPStatusError as e:
+            self._logger.exception(
+                "huggingface_chat_http_error",
+                extra={"model": model, "status_code": e.response.status_code},
+            )
             raise ProviderError(f"HuggingFace API error: {e}") from e
         except Exception as e:
+            self._logger.exception(
+                "huggingface_chat_failed",
+                extra={"model": model, "error_type": type(e).__name__},
+            )
             raise ProviderError(f"HuggingFace request failed: {e}") from e
 
     async def chat_stream(
@@ -479,6 +517,16 @@ class HuggingFaceProvider(LLMProviderBase):
 
         hf_messages = self._convert_messages_to_provider_format(messages)
 
+        self._logger.info(
+            "huggingface_stream_started",
+            extra={
+                "model": model,
+                "messages_count": len(messages),
+                "has_tools": tools is not None,
+            },
+        )
+
+        chunk_count = 0
         try:
             request_body: dict[str, object] = {
                 "model": model,
@@ -504,6 +552,10 @@ class HuggingFaceProvider(LLMProviderBase):
 
                 async for line in response.aiter_lines():
                     if self._cancel_requested:
+                        self._logger.info(
+                            "huggingface_stream_cancelled",
+                            extra={"model": model, "chunks_received": chunk_count},
+                        )
                         break
                     if line.startswith("data: "):
                         data_str = line[6:]
@@ -516,19 +568,33 @@ class HuggingFaceProvider(LLMProviderBase):
                                 delta = choices[0].get("delta", {})
                                 content = delta.get("content", "")
                                 if content:
+                                    chunk_count += 1
                                     yield content
                         except json.JSONDecodeError:
                             continue
+
+            self._logger.info(
+                "huggingface_stream_completed",
+                extra={"model": model, "chunks_received": chunk_count},
+            )
 
         except ProviderError:
             raise
         except Exception as e:
             if not self._cancel_requested:
+                self._logger.exception(
+                    "huggingface_stream_failed",
+                    extra={"model": model, "error_type": type(e).__name__},
+                )
                 raise ProviderError(f"HuggingFace stream failed: {e}") from e
 
     async def cancel_request(self) -> None:
         """Cancel any in-flight request."""
         self._cancel_requested = True
+        self._logger.info(
+            "huggingface_cancel_requested",
+            extra={"was_connected": self._connected},
+        )
 
     def _convert_messages_to_provider_format(
         self,
@@ -579,9 +645,7 @@ class HuggingFaceProvider(LLMProviderBase):
                 hf_messages.append(assistant_msg)
             elif msg.role == "tool" and msg.tool_results:
                 for tr in msg.tool_results:
-                    result_content = (
-                        tr.result if isinstance(tr.result, str) else json.dumps(tr.result)
-                    )
+                    result_content = tr.result if isinstance(tr.result, str) else json.dumps(tr.result)
                     hf_messages.append({
                         "role": "tool",
                         "tool_call_id": tr.call_id,

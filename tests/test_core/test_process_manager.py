@@ -159,10 +159,14 @@ class TestRunTracked:
             cwd=str(tmp_path),
         )
 
-        assert str(tmp_path) in result.stdout.replace("\\", "/").replace(
-            str(tmp_path).replace("\\", "/"),
-            str(tmp_path),
-        ) or tmp_path.name in result.stdout
+        assert (
+            str(tmp_path)
+            in result.stdout.replace("\\", "/").replace(
+                str(tmp_path).replace("\\", "/"),
+                str(tmp_path),
+            )
+            or tmp_path.name in result.stdout
+        )
 
     def test_run_tracked_with_env(
         self,

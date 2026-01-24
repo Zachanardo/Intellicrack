@@ -198,11 +198,9 @@ class ProcessManager:
                 if hasattr(signal, "SIGBREAK"):
                     signal.signal(signal.SIGBREAK, self._signal_handler)
             except (ValueError, OSError) as e:
-                _module_logger.debug(
-                    "Could not install Windows signal handler: %s", e
-                )
+                _module_logger.debug("signal_handler_install_failed", extra={"error": str(e)})
 
-        ProcessManager._get_logger().debug("Process manager handlers installed")
+        ProcessManager._get_logger().debug("handlers_installed")
 
     def uninstall_handlers(self) -> None:
         """Uninstall signal handlers (restore original handlers)."""
@@ -220,7 +218,7 @@ class ProcessManager:
                 atexit.unregister(self._atexit_cleanup)
             self._atexit_registered = False
 
-        ProcessManager._get_logger().debug("Process manager handlers uninstalled")
+        ProcessManager._get_logger().debug("handlers_uninstalled")
 
     def _signal_handler(self, signum: int, frame: FrameType | None) -> None:
         """Handle termination signals by triggering cleanup.
@@ -230,15 +228,13 @@ class ProcessManager:
             frame: The current stack frame, or None.
         """
         logger = ProcessManager._get_logger()
-        logger.info("Received signal %d, initiating cleanup", signum)
+        logger.info("signal_received", extra={"signal": signum})
 
         self._shutdown_event.set()
 
         try:
             loop = asyncio.get_running_loop()
-            loop.call_soon_threadsafe(
-                lambda: asyncio.create_task(self.cleanup_all_async())
-            )
+            loop.call_soon_threadsafe(lambda: asyncio.create_task(self.cleanup_all_async()))
         except RuntimeError:
             self._sync_cleanup()
 
@@ -254,7 +250,7 @@ class ProcessManager:
         if self._cleanup_in_progress:
             return
 
-        ProcessManager._get_logger().info("atexit cleanup triggered")
+        ProcessManager._get_logger().info("atexit_cleanup_triggered")
         self._sync_cleanup()
 
     def _sync_cleanup(self) -> None:
@@ -274,10 +270,10 @@ class ProcessManager:
                 continue
 
             try:
-                logger.debug("Terminating process: %s (PID: %s)", tracked.name, tracked.pid)
+                logger.debug("process_terminating", extra={"name": tracked.name, "pid": tracked.pid})
                 self._terminate_process_sync(tracked.process)
             except Exception as e:
-                logger.warning("Error terminating %s: %s", tracked.name, e)
+                logger.warning("process_terminate_failed", extra={"name": tracked.name, "error": str(e)})
 
         for tracked in processes:
             if not tracked.is_running:
@@ -286,21 +282,21 @@ class ProcessManager:
             try:
                 self._wait_or_kill_sync(tracked.process, tracked.name)
             except Exception as e:
-                logger.warning("Error killing %s: %s", tracked.name, e)
+                logger.warning("process_kill_failed", extra={"name": tracked.name, "error": str(e)})
 
         for ext_pid in external_pids:
             try:
-                logger.debug("Terminating external PID: %d", ext_pid)
+                logger.debug("external_pid_terminating", extra={"pid": ext_pid})
                 self.terminate_external_pid(ext_pid, force=True)
             except Exception as e:
-                logger.warning("Error terminating external PID %d: %s", ext_pid, e)
+                logger.warning("external_pid_terminate_failed", extra={"pid": ext_pid, "error": str(e)})
 
         with self._process_lock:
             self._processes.clear()
             self._external_pids.clear()
 
         self._cleanup_in_progress = False
-        logger.info("Synchronous cleanup complete")
+        logger.info("sync_cleanup_complete")
 
     @staticmethod
     def _terminate_process_sync(
@@ -330,12 +326,12 @@ class ProcessManager:
             try:
                 process.wait(timeout=self.DEFAULT_GRACEFUL_TIMEOUT)
             except subprocess.TimeoutExpired:
-                logger.warning("Process %s didn't terminate gracefully, killing", name)
+                logger.warning("process_graceful_terminate_failed", extra={"name": name})
                 process.kill()
                 try:
                     process.wait(timeout=self.DEFAULT_FORCE_TIMEOUT)
                 except subprocess.TimeoutExpired:
-                    logger.warning("Failed to kill process %s after timeout", name)
+                    logger.warning("process_kill_timeout", extra={"name": name})
 
     def register(
         self,
@@ -371,10 +367,8 @@ class ProcessManager:
             self._processes[pid] = tracked
 
         ProcessManager._get_logger().debug(
-            "Registered process: %s (PID: %d, type: %s)",
-            name,
-            pid,
-            process_type.value,
+            "process_registered",
+            extra={"name": name, "pid": pid, "type": process_type.value},
         )
 
         return pid
@@ -393,9 +387,8 @@ class ProcessManager:
 
         if tracked is not None:
             ProcessManager._get_logger().debug(
-                "Unregistered process: %s (PID: %d)",
-                tracked.name,
-                pid,
+                "process_unregistered",
+                extra={"name": tracked.name, "pid": pid},
             )
 
         return tracked
@@ -452,14 +445,14 @@ class ProcessManager:
 
         tracked = self.get_tracked(pid)
         if tracked is None:
-            logger.warning("Process PID %d not found in registry", pid)
+            logger.warning("process_not_found", extra={"pid": pid})
             return False
 
         if not tracked.is_running:
             self.unregister(pid)
             return True
 
-        logger.debug("Terminating process: %s (PID: %d)", tracked.name, pid)
+        logger.debug("process_terminating", extra={"name": tracked.name, "pid": pid})
 
         if tracked.cleanup_callback is not None:
             try:
@@ -469,7 +462,7 @@ class ProcessManager:
                     self.unregister(pid)
                     return True
             except Exception as e:
-                logger.warning("Cleanup callback failed for %s: %s", tracked.name, e)
+                logger.warning("cleanup_callback_failed", extra={"name": tracked.name, "error": str(e)})
 
         process = tracked.process
 
@@ -505,9 +498,9 @@ class ProcessManager:
                 asyncio.to_thread(process.wait),
                 timeout=graceful_timeout,
             )
-            logger.debug("Process %s terminated gracefully", name)
+            logger.debug("process_terminated_gracefully", extra={"name": name})
         except TimeoutError:
-            logger.warning("Process %s didn't terminate gracefully, killing", name)
+            logger.warning("process_graceful_terminate_failed", extra={"name": name})
             process.kill()
             try:
                 await asyncio.wait_for(
@@ -515,7 +508,7 @@ class ProcessManager:
                     timeout=force_timeout,
                 )
             except TimeoutError:
-                logger.warning("Failed to kill process %s after timeout", name)
+                logger.warning("process_kill_timeout", extra={"name": name})
 
     @staticmethod
     async def _terminate_async_subprocess(
@@ -538,14 +531,14 @@ class ProcessManager:
 
         try:
             await asyncio.wait_for(process.wait(), timeout=graceful_timeout)
-            logger.debug("Async process %s terminated gracefully", name)
+            logger.debug("async_process_terminated_gracefully", extra={"name": name})
         except TimeoutError:
-            logger.warning("Async process %s didn't terminate gracefully, killing", name)
+            logger.warning("async_process_graceful_terminate_failed", extra={"name": name})
             process.kill()
             try:
                 await asyncio.wait_for(process.wait(), timeout=force_timeout)
             except TimeoutError:
-                logger.warning("Failed to kill async process %s after timeout", name)
+                logger.warning("async_process_kill_timeout", extra={"name": name})
 
     async def cleanup_all_async(
         self,
@@ -563,7 +556,7 @@ class ProcessManager:
 
         self._cleanup_in_progress = True
         logger = ProcessManager._get_logger()
-        logger.info("Starting async cleanup of all processes")
+        logger.info("async_cleanup_started")
 
         graceful_timeout = graceful_timeout or self.DEFAULT_GRACEFUL_TIMEOUT
         force_timeout = force_timeout or self.DEFAULT_FORCE_TIMEOUT
@@ -576,20 +569,20 @@ class ProcessManager:
             try:
                 await self.terminate_process(pid, graceful_timeout, force_timeout)
             except Exception as e:
-                logger.warning("Error during cleanup of PID %d: %s", pid, e)
+                logger.warning("cleanup_pid_failed", extra={"pid": pid, "error": str(e)})
 
         for ext_pid in external_pids:
             try:
-                logger.debug("Terminating external PID: %d", ext_pid)
+                logger.debug("external_pid_terminating", extra={"pid": ext_pid})
                 await asyncio.to_thread(self.terminate_external_pid, ext_pid, True)
             except Exception as e:
-                logger.warning("Error terminating external PID %d: %s", ext_pid, e)
+                logger.warning("external_pid_terminate_failed", extra={"pid": ext_pid, "error": str(e)})
 
         with self._process_lock:
             self._external_pids.clear()
 
         self._cleanup_in_progress = False
-        logger.info("Async cleanup complete")
+        logger.info("async_cleanup_complete")
 
     def is_shutdown_requested(self) -> bool:
         """Check if shutdown has been requested via signal.
@@ -703,7 +696,7 @@ class ProcessManager:
             returncode = process.returncode
 
         except subprocess.TimeoutExpired:
-            logger.warning("Process %s (PID %d) timed out, terminating", name, pid)
+            logger.warning("process_timeout", extra={"name": name, "pid": pid})
             process.kill()
             process.wait()
             self.unregister(pid)
@@ -797,7 +790,7 @@ class ProcessManager:
 
         with self._process_lock:
             if pid in self._processes or pid in self._external_pids:
-                logger.debug("PID %d already registered", pid)
+                logger.debug("pid_already_registered", extra={"pid": pid})
                 return
 
             self._external_pids[pid] = {
@@ -808,10 +801,8 @@ class ProcessManager:
             }
 
         logger.debug(
-            "Registered external PID: %s (PID: %d, type: %s)",
-            name,
-            pid,
-            process_type.value,
+            "external_pid_registered",
+            extra={"name": name, "pid": pid, "type": process_type.value},
         )
 
     def unregister_external_pid(self, pid: int) -> bool:
@@ -826,7 +817,7 @@ class ProcessManager:
         with self._process_lock:
             if pid in self._external_pids:
                 del self._external_pids[pid]
-                ProcessManager._get_logger().debug("Unregistered external PID: %d", pid)
+                ProcessManager._get_logger().debug("external_pid_unregistered", extra={"pid": pid})
                 return True
         return False
 
@@ -853,14 +844,14 @@ class ProcessManager:
             else:
                 sig = _SIGNAL_SIGKILL if force else _SIGNAL_SIGTERM
                 os.kill(pid, sig)
-                logger.debug("Sent signal %d to external process %s (PID %d)", sig, name, pid)
+                logger.debug("signal_sent", extra={"signal": sig, "name": name, "pid": pid})
                 self.unregister_external_pid(pid)
                 success = True
         except (ProcessLookupError, PermissionError) as e:
-            logger.debug("Could not terminate external PID %d: %s", pid, e)
+            logger.debug("external_pid_terminate_skipped", extra={"pid": pid, "error": str(e)})
             self.unregister_external_pid(pid)
         except Exception as e:
-            logger.warning("Error terminating external PID %d: %s", pid, e)
+            logger.warning("external_pid_terminate_error", extra={"pid": pid, "error": str(e)})
 
         return success
 
@@ -880,10 +871,10 @@ class ProcessManager:
         if handle:
             kernel32.TerminateProcess(handle, _WIN_PROCESS_TERMINATE)
             kernel32.CloseHandle(handle)
-            logger.debug("Terminated external process %s (PID %d) via Windows API", name, pid)
+            logger.debug("windows_process_terminated", extra={"name": name, "pid": pid})
             self.unregister_external_pid(pid)
             return True
 
-        logger.warning("Could not open process %s (PID %d)", name, pid)
+        logger.warning("windows_process_open_failed", extra={"name": name, "pid": pid})
         self.unregister_external_pid(pid)
         return False

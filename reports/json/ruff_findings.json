@@ -1,0 +1,86 @@
+{
+  "tool": "ruff",
+  "generated": "2026-01-18T15:55:45.176916",
+  "total_findings": 6,
+  "total_files": 6,
+  "files": [
+    {
+      "path": "D:\\Intellicrack\\src\\intellicrack\\bridges\\base.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 7,
+          "column": 1,
+          "code": "RUF100",
+          "message": "Unused `noqa` directive (non-enabled: `PLR6301`)",
+          "raw": "D:\\Intellicrack\\src\\intellicrack\\bridges\\base.py:7:1: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)"
+        }
+      ]
+    },
+    {
+      "path": "D:\\Intellicrack\\src\\intellicrack\\bridges\\binary.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 350,
+          "column": 44,
+          "code": "RUF100",
+          "message": "Unused `noqa` directive (non-enabled: `PLR6301`)",
+          "raw": "D:\\Intellicrack\\src\\intellicrack\\bridges\\binary.py:350:44: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)"
+        }
+      ]
+    },
+    {
+      "path": "D:\\Intellicrack\\src\\intellicrack\\bridges\\frida_bridge.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 411,
+          "column": 44,
+          "code": "RUF100",
+          "message": "Unused `noqa` directive (non-enabled: `PLR6301`)",
+          "raw": "D:\\Intellicrack\\src\\intellicrack\\bridges\\frida_bridge.py:411:44: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)"
+        }
+      ]
+    },
+    {
+      "path": "D:\\Intellicrack\\src\\intellicrack\\bridges\\installer.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 295,
+          "column": 50,
+          "code": "RUF100",
+          "message": "Unused `noqa` directive (non-enabled: `PLR6301`)",
+          "raw": "D:\\Intellicrack\\src\\intellicrack\\bridges\\installer.py:295:50: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)"
+        }
+      ]
+    },
+    {
+      "path": "D:\\Intellicrack\\src\\intellicrack\\bridges\\process.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 450,
+          "column": 44,
+          "code": "RUF100",
+          "message": "Unused `noqa` directive (non-enabled: `PLR6301`)",
+          "raw": "D:\\Intellicrack\\src\\intellicrack\\bridges\\process.py:450:44: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)"
+        }
+      ]
+    },
+    {
+      "path": "D:\\Intellicrack\\src\\intellicrack\\bridges\\radare2.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 490,
+          "column": 44,
+          "code": "RUF100",
+          "message": "Unused `noqa` directive (non-enabled: `PLR6301`)",
+          "raw": "D:\\Intellicrack\\src\\intellicrack\\bridges\\radare2.py:490:44: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)"
+        }
+      ]
+    }
+  ]
+}

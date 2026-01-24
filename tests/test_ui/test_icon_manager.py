@@ -89,17 +89,13 @@ class TestIconCaching:
         icon2 = icon_manager.get_icon("status_success", size=24)
         assert icon1 is icon2
 
-    def test_different_sizes_cached_separately(
-        self, icon_manager: IconManager
-    ) -> None:
+    def test_different_sizes_cached_separately(self, icon_manager: IconManager) -> None:
         """Different sizes are cached as separate entries."""
         icon_24 = icon_manager.get_icon("status_success", size=24)
         icon_48 = icon_manager.get_icon("status_success", size=48)
         assert icon_24 is not icon_48
 
-    def test_clear_cache_removes_cached_icons(
-        self, icon_manager: IconManager
-    ) -> None:
+    def test_clear_cache_removes_cached_icons(self, icon_manager: IconManager) -> None:
         """clear_cache removes all cached icons."""
         icon_manager.get_icon("status_success")
         icon_manager.get_icon("status_error")
@@ -213,9 +209,7 @@ class TestFallbackIcons:
         for name in required_fallbacks:
             assert name in UNICODE_FALLBACK, f"Missing fallback for {name}"
 
-    def test_missing_icon_returns_icon_object(
-        self, icon_manager: IconManager
-    ) -> None:
+    def test_missing_icon_returns_icon_object(self, icon_manager: IconManager) -> None:
         """Missing icons still return a QIcon object."""
         icon = icon_manager.get_icon("nonexistent_icon_12345")
         assert isinstance(icon, QIcon)

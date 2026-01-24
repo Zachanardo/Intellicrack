@@ -1,0 +1,2536 @@
+241 findings in d:\Intellicrack\tests\test_core\test_script_gen_keygen.py
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:19:42: [error] "GeneratedScript" is unknown import symbol
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:19:42: [error] Type of "GeneratedScript" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:19:59: [error] "ScriptGenerator" is unknown import symbol
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:19:59: [error] Type of "ScriptGenerator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:63:13: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:72:9: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:80:9: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:99:25: [error] Argument type is partially unknown
+  Argument corresponds to parameter "magic_constants" in function "__init__"
+  Argument type is "list[Unknown]"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:117:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:126:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:128:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:128:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:130:25: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:130:52: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:130:52: [error] Type of "lower" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:134:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:136:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:136:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:138:26: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:138:54: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:138:54: [error] Type of "lower" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:142:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:144:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:144:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:146:27: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:146:56: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:146:56: [error] Type of "lower" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:150:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:152:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:152:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:154:25: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:154:52: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:154:52: [error] Type of "lower" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:158:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:160:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:160:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:162:26: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:162:58: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:162:58: [error] Type of "lower" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:166:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:168:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:168:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:170:26: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:170:55: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:170:55: [error] Type of "lower" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:174:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:179:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:179:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:181:29: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:181:57: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:181:57: [error] Type of "lower" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:189:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:191:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:191:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:193:23: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:193:23: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "parse"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:199:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:201:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:201:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:203:23: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:203:23: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "parse"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:209:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:211:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:211:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:213:23: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:213:23: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "parse"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:219:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:221:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:221:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:223:23: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:223:23: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "parse"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:229:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:231:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:231:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:233:23: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:233:23: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "parse"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:239:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:241:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:241:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:243:23: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:243:23: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "parse"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:249:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:254:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:254:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:256:23: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:256:23: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "parse"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:262:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:268:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:268:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:270:23: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:270:23: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "parse"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:276:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:278:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:278:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:280:23: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:280:23: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "parse"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:290:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:292:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:292:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:293:16: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:293:16: [error] Type of "startswith" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:297:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:299:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:299:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:300:56: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:304:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:306:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:306:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:307:35: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:311:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:313:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:313:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:314:35: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:318:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:320:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:320:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:321:35: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:325:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:327:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:327:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:328:35: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:332:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:334:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:334:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:335:35: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:339:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:341:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:341:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:342:35: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:350:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:356:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:356:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:357:35: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:358:43: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:362:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:367:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:367:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:368:50: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:369:50: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:373:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:378:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:378:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:379:50: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:387:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:391:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:391:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:392:37: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:393:32: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:393:66: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:393:66: [error] Type of "upper" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:401:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:405:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:405:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:406:35: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:407:27: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:407:56: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:415:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:421:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:421:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:422:33: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:423:37: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:427:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:433:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:433:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:434:41: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:435:27: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:439:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:444:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:444:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:445:29: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:446:31: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:447:33: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:448:40: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:456:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:462:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:462:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:464:14: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:464:14: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "exec"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:474:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:480:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:480:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:482:14: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:482:14: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "exec"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:491:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:497:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:497:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:499:14: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:499:14: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "exec"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:509:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:515:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:515:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:517:14: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:517:14: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "exec"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:526:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:532:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:532:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:534:14: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:534:14: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "exec"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:544:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:550:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:550:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:552:14: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:552:14: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "exec"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:565:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:572:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:572:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:574:14: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:574:14: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "exec"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:583:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:590:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:590:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:592:14: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:592:14: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "exec"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:606:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:614:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:614:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:616:14: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:616:14: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "exec"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:629:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:631:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:631:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:632:16: [error] Type of "name" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:633:20: [error] Type of "name" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:633:20: [error] Argument type is unknown
+  Argument corresponds to parameter "obj" in function "len"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:637:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:639:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:639:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:640:16: [error] Type of "description" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:641:20: [error] Type of "description" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:641:20: [error] Argument type is unknown
+  Argument corresponds to parameter "obj" in function "len"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:645:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:647:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:647:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:648:16: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:649:20: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:649:20: [error] Argument type is unknown
+  Argument corresponds to parameter "obj" in function "len"
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:657:9: [error] Type of "generator" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:659:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:659:18: [error] Type of "generate_keygen_from_analysis" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:662:23: [error] Type of "content" is unknown
+
+d:\Intellicrack\tests\test_core\test_script_gen_keygen.py:662:23: [error] Argument type is unknown
+  Argument corresponds to parameter "source" in function "parse"
+
+
+95 findings in d:\Intellicrack\src\intellicrack\bridges\radare2.py
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:171:16: [error] Return type, "list[Unknown]", is partially unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:190:19: [error] Type of "open_sync" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:473:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:475:41: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:475:41: [error] Type of "quit" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:475:41: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:497:13: [error] Type of "r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:497:42: [error] Type of "open" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:497:42: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:498:13: [error] Type of "version" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:498:47: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:498:47: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:499:37: [error] Type of "quit" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:499:37: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:503:25: [error] Argument type is unknown
+  Argument corresponds to parameter "o" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:521:16: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:522:41: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:522:41: [error] Type of "quit" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:522:41: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:528:48: [error] Type of "open" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:528:48: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:532:16: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:532:49: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:532:49: [error] Argument type is unknown
+  Argument corresponds to parameter "obj" in function "hasattr"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:533:33: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:533:33: [error] Argument type is unknown
+  Argument corresponds to parameter "o" in function "getattr"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:538:25: [error] Argument of type "int | None" cannot be assigned to parameter "pid" of type "int" in function "register_external_pid"
+  Type "int | None" is not assignable to type "int"
+    "None" is not assignable to "int"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:556:37: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:556:37: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:556:37: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:556:46: [error] "cmd" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:609:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:620:33: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:620:33: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:620:33: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:639:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:680:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:683:33: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:683:33: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:683:33: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:750:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:753:33: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:753:33: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:753:33: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:754:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:754:42: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:754:42: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:754:42: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:757:13: [error] Type of "result" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:757:46: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:757:46: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:757:46: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:762:16: [error] Return type is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:781:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:784:33: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:784:33: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:784:33: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:818:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:858:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:898:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:945:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:965:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:979:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1003:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1025:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1072:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1075:33: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1075:33: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1075:33: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1099:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1103:33: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1103:33: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1103:33: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1117:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1121:33: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1121:33: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1121:33: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1138:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1141:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1142:13: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1142:13: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1142:13: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1149:30: [error] Type of "strip" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1149:30: [error] Argument type is unknown
+  Argument corresponds to parameter "string" in function "fromhex"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1163:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1166:40: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1166:40: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1166:40: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1177:12: [error] Type of "_r2" is partially unknown
+  Type of "_r2" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1181:9: [error] Type of "result" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1181:42: [error] Type of "_r2" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1181:42: [error] Type of "cmd" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1181:42: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1183:30: [error] Type of "strip" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\radare2.py:1187:33: [error] Argument type is unknown
+  Argument corresponds to parameter "s" in function "loads"
+
+
+93 findings in d:\Intellicrack\src\intellicrack\bridges\binary.py
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:78:19: [error] Type of "PE" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:383:21: [error] Type of "PE" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:383:21: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:445:12: [error] Condition will always evaluate to False since the types "bytearray" and "Literal[b"MZ"]" have no overlap
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:448:12: [error] Condition will always evaluate to False since the types "bytearray" and "Literal[b"\x7fELF"]" have no overlap
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:451:12: [error] Expression will always evaluate to False since the types "bytearray" and "bytes" have no overlap
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:480:12: [error] Type of "_pe" is partially unknown
+  Type of "_pe" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:481:13: [error] Type of "machine" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:481:23: [error] Type of "_pe" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:481:23: [error] Type of "FILE_HEADER" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:481:23: [error] Type of "Machine" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:494:26: [error] Type of "machine_type" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:494:26: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:494:33: [error] Cannot access attribute "machine_type" for class "Header"
+  Attribute "machine_type" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:512:12: [error] Type of "_pe" is partially unknown
+  Type of "_pe" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:513:38: [error] Type of "_pe" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:513:38: [error] Type of "OPTIONAL_HEADER" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:513:38: [error] Type of "AddressOfEntryPoint" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:529:12: [error] Type of "_pe" is partially unknown
+  Type of "_pe" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:530:17: [error] Type of "section" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:530:28: [error] Type of "_pe" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:530:28: [error] Type of "sections" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:531:17: [error] Type of "name" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:531:24: [error] Type of "Name" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:531:24: [error] Type of "rstrip" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:531:24: [error] Type of "decode" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:532:58: [error] Type of "get_entropy" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:532:58: [error] Argument type is unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:535:30: [error] Argument type is unknown
+  Argument corresponds to parameter "name" in function "__init__"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:536:53: [error] Type of "VirtualAddress" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:537:50: [error] Type of "Misc_VirtualSize" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:538:46: [error] Type of "SizeOfRawData" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:539:53: [error] Type of "Characteristics" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:597:12: [error] Type of "_pe" is partially unknown
+  Type of "_pe" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:597:45: [error] Type of "_pe" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:597:45: [error] Argument type is unknown
+  Argument corresponds to parameter "obj" in function "hasattr"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:598:17: [error] Type of "entry" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:598:26: [error] Type of "_pe" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:598:26: [error] Type of "DIRECTORY_ENTRY_IMPORT" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:599:17: [error] Type of "dll_name" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:599:28: [error] Type of "dll" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:599:28: [error] Type of "decode" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:600:21: [error] Type of "imp" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:600:28: [error] Type of "imports" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:601:21: [error] Type of "name" is partially unknown
+  Type of "name" is "Unknown | Literal['']"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:601:28: [error] Type of "name" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:601:28: [error] Type of "decode" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:601:74: [error] Type of "name" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:604:33: [error] Argument type is unknown
+  Argument corresponds to parameter "dll" in function "__init__"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:605:38: [error] Argument type is partially unknown
+  Argument corresponds to parameter "function" in function "__init__"
+  Argument type is "Unknown | Literal['']"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:606:49: [error] Type of "ordinal" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:606:69: [error] Type of "name" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:607:49: [error] Type of "address" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:634:12: [error] Type of "_pe" is partially unknown
+  Type of "_pe" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:634:45: [error] Type of "_pe" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:634:45: [error] Argument type is unknown
+  Argument corresponds to parameter "obj" in function "hasattr"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:635:17: [error] Type of "exp" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:635:24: [error] Type of "_pe" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:635:24: [error] Type of "DIRECTORY_ENTRY_EXPORT" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:635:24: [error] Type of "symbols" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:636:17: [error] Type of "name" is partially unknown
+  Type of "name" is "Unknown | Literal['']"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:636:24: [error] Type of "name" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:636:24: [error] Type of "decode" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:636:70: [error] Type of "name" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:639:30: [error] Argument type is partially unknown
+  Argument corresponds to parameter "name" in function "__init__"
+  Argument type is "Unknown | Literal['']"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:640:45: [error] Type of "ordinal" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:641:45: [error] Type of "address" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:916:13: [error] Type of "cs_arch" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:916:23: [error] Type of "CS_ARCH_X86" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:917:13: [error] Type of "cs_mode" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:917:23: [error] Type of "CS_MODE_64" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:917:57: [error] Type of "CS_MODE_32" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:919:13: [error] Type of "cs_arch" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:919:23: [error] Type of "CS_ARCH_ARM64" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:919:60: [error] Type of "CS_ARCH_ARM" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:920:13: [error] Type of "cs_mode" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:920:23: [error] Type of "CS_MODE_ARM" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:924:9: [error] Type of "md" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:924:14: [error] Type of "Cs" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:932:32: [error] Type of "insn" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:932:50: [error] Type of "disasm" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:932:50: [error] Argument type is unknown
+  Argument corresponds to parameter "iterable" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:935:49: [error] Type of "b" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:935:54: [error] Type of "bytes" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:936:31: [error] Type of "address" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:936:68: [error] Type of "mnemonic" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:936:84: [error] Type of "op_str" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:975:12: [error] Type of "_pe" is partially unknown
+  Type of "_pe" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:976:39: [error] Type of "_pe" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:976:39: [error] Type of "get_offset_from_rva" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:999:12: [error] Type of "_pe" is partially unknown
+  Type of "_pe" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:1000:39: [error] Type of "_pe" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\binary.py:1000:39: [error] Type of "get_rva_from_offset" is unknown
+
+
+79 findings in d:\Intellicrack\src\intellicrack\ui\app.py
+
+d:\Intellicrack\src\intellicrack\ui\app.py:165:9: [error] Type of "setSizes" is partially unknown
+  Type of "setSizes" is "(list: Unknown) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:205:29: [error] "addMenu" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:209:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:210:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:210:19: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:212:19: [error] "addSeparator" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:216:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:217:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:217:19: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:220:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:221:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:221:19: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:225:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:226:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:226:19: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:228:19: [error] "addSeparator" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:231:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:232:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:232:19: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:234:19: [error] "addSeparator" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:238:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:239:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:239:19: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:241:30: [error] "addMenu" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:244:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:245:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:245:20: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:248:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:249:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:249:20: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:251:34: [error] "addMenu" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:254:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:255:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:255:24: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:258:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:259:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:259:24: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:261:32: [error] "addMenu" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:264:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:265:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:265:22: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:268:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:269:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:269:22: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:271:33: [error] "addMenu" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:274:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:275:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:275:23: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:277:29: [error] "addMenu" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:280:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:281:9: [error] Type of "addAction" is partially unknown
+  Type of "addAction" is "Overload[(icon: QIcon, text: str | None) -> (QAction | None), (icon: QIcon, text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (icon: QIcon, text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None) -> (QAction | None), (text: str | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (text: str | None, shortcut: QKeySequence | StandardKey | str | int | None, slot: Unknown | pyqtBoundSignal, type: ConnectionType = ...) -> (QAction | None), (action: QAction | None) -> None]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:281:19: [error] "addAction" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:292:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:306:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:325:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:331:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:336:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:355:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:356:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:357:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:358:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:359:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:360:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:396:9: [error] No overloads for "invokeMethod" match the provided arguments
+
+d:\Intellicrack\src\intellicrack\ui\app.py:398:13: [error] Argument of type "() -> None" cannot be assigned to parameter "member" of type "str | None" in function "invokeMethod"
+  Type "() -> None" is not assignable to type "str | None"
+    "FunctionType" is not assignable to "str"
+    "FunctionType" is not assignable to "None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:462:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:463:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:555:19: [error] Type of "save_session" is unknown
+
+d:\Intellicrack\src\intellicrack\ui\app.py:555:38: [error] Cannot access attribute "save_session" for class "Orchestrator"
+  Attribute "save_session" is unknown
+
+d:\Intellicrack\src\intellicrack\ui\app.py:654:24: [error] Unnecessary isinstance call; "dict[str, Any]" is always an instance of "dict[Unknown, Unknown]"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:666:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:680:13: [error] Type of "addItems" is partially unknown
+  Type of "addItems" is "(texts: Unknown) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:739:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:740:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:740:37: [error] Type of parameter "e" is unknown
+
+d:\Intellicrack\src\intellicrack\ui\app.py:740:80: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\ui\app.py:790:32: [error] "_config" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\src\intellicrack\ui\app.py:793:32: [error] "_config" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\src\intellicrack\ui\app.py:805:9: [error] Method "closeEvent" overrides class "QWidget" in an incompatible manner
+  Parameter 2 name mismatch: base parameter is named "a0", override parameter is named "event"
+
+
+76 findings in d:\Intellicrack\tests\test_bridges\test_x64dbg.py
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:97:19: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:98:19: [error] "_binary_path" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:99:19: [error] "_is_64bit" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:100:19: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:101:19: [error] "_watchpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:102:19: [error] "_next_bp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:103:19: [error] "_next_wp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:109:19: [error] "_capabilities" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:194:26: [error] "_next_bp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:195:19: [error] "_next_bp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:196:26: [error] "_next_bp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:209:19: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:210:46: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:211:26: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:225:23: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:227:30: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:228:26: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:229:26: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:234:26: [error] "_next_wp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:235:19: [error] "_next_wp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:236:26: [error] "_next_wp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:249:19: [error] "_watchpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:250:46: [error] "_watchpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:251:26: [error] "_watchpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:285:19: [error] "_x64dbg_path" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:293:19: [error] "_x64dbg_path" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:302:19: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:311:19: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:345:19: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:359:12: [error] "_is_64bit" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:368:22: [error] "_capstone" is private and used outside of the module in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:377:22: [error] "_capstone" is private and used outside of the module in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:380:25: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:393:26: [error] "_is_64bit" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:398:19: [error] "_is_64bit" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:399:26: [error] "_is_64bit" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:421:26: [error] "_next_bp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:428:19: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:429:19: [error] "_next_bp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:431:46: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:432:26: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:433:26: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:441:30: [error] "_next_bp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:447:23: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:448:23: [error] "_next_bp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:450:26: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:451:26: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:452:30: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:458:26: [error] "_next_bp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:465:19: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:466:19: [error] "_next_bp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:468:26: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:480:19: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:481:46: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:483:23: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:484:50: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:497:23: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:499:34: [error] "_breakpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:506:29: [error] "_next_wp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:513:19: [error] "_watchpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:513:46: [error] "_next_wp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:514:19: [error] "_next_wp_id" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:516:46: [error] "_watchpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:517:26: [error] "_watchpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:518:26: [error] "_watchpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:532:23: [error] "_watchpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:534:34: [error] "_watchpoints" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:542:19: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:561:19: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:575:19: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:586:19: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:587:19: [error] "_binary_path" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:599:22: [error] "_keystone" is private and used outside of the module in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:607:22: [error] "_keystone" is private and used outside of the module in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:630:19: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_bridges\test_x64dbg.py:644:12: [error] "_attached_pid" is protected and used outside of the class in which it is declared
+
+
+51 findings in d:\Intellicrack\tests\test_core\test_license_analyzer.py
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:38:25: [error] "_min_string_length" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:39:25: [error] "_max_string_length" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:44:25: [error] "_min_string_length" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:45:25: [error] "_max_string_length" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:50:38: [error] "_license_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:51:37: [error] "_license_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:52:43: [error] "_license_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:53:39: [error] "_license_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:58:50: [error] "_crypto_api_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:59:58: [error] "_crypto_api_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:60:34: [error] "_crypto_api_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:61:34: [error] "_crypto_api_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:66:39: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:67:39: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:68:39: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:69:36: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:80:29: [error] "_detect_format" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:87:29: [error] "_detect_format" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:94:29: [error] "_detect_format" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:101:29: [error] "_detect_format" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:108:29: [error] "_detect_format" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:123:35: [error] "_detect_architecture" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:135:35: [error] "_detect_architecture" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:145:35: [error] "_detect_architecture" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:156:39: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:157:25: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:164:36: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:165:29: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:170:39: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:171:25: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:200:27: [error] "_parse_rsa_public_key_der" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:210:27: [error] "_parse_rsa_public_key_der" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:216:36: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:217:25: [error] "_known_constants" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:232:29: [error] "_filter_strings" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:232:63: [error] "_license_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:245:29: [error] "_filter_strings" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:245:63: [error] "_feature_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:256:29: [error] "_filter_strings" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:256:63: [error] "_blacklist_keywords" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:275:37: [error] "_detect_algorithms" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:290:37: [error] "_detect_algorithms" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:304:37: [error] "_detect_algorithms" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:326:36: [error] "_detect_algorithms" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:340:68: [error] "_detect_key_format" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:350:69: [error] "_detect_key_format" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:361:27: [error] "_read_der_length" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:371:27: [error] "_read_der_length" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:381:27: [error] "_parse_der_integer" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:394:33: [error] "_build_confidence" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_license_analyzer.py:435:34: [error] "_build_confidence" is protected and used outside of the class in which it is declared
+
+
+41 findings in d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:649:26: [error] Argument type is partially unknown
+  Argument corresponds to parameter "o" in function "__new__"
+  Argument type is "list[Unknown] | bytes | bytearray"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:717:17: [error] Type of "r" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:720:32: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:720:32: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:722:17: [error] Type of "size_val" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:722:28: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:723:17: [error] Type of "protection_val" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:723:34: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:724:17: [error] Type of "file_val" is partially unknown
+  Type of "file_val" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:724:28: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:728:34: [error] Argument type is unknown
+  Argument corresponds to parameter "x" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:729:40: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:732:41: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:780:17: [error] Type of "m" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:783:32: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:783:32: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:829:17: [error] Type of "m" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:832:32: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:832:32: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:834:17: [error] Type of "name_val" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:834:28: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:835:17: [error] Type of "path_val" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:835:28: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:836:17: [error] Type of "size_val" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:836:28: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:839:34: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:840:39: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:842:34: [error] Argument type is unknown
+  Argument corresponds to parameter "x" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:884:22: [error] Type of "e" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:884:37: [error] Argument type is partially unknown
+  Argument corresponds to parameter "iterable" in function "__new__"
+  Argument type is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:887:32: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:887:32: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:889:17: [error] Type of "name_val" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:889:28: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:892:34: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:968:50: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:969:21: [error] Type of "addr_str" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:969:32: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:1120:25: [error] Type of "k" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:1120:28: [error] Type of "v" is unknown
+
+d:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:1121:36: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+
+33 findings in d:\Intellicrack\src\intellicrack\ui\session_manager.py
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:95:9: [error] Type of "setSizes" is partially unknown
+  Type of "setSizes" is "(list: Unknown) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:117:9: [error] Type of "setHorizontalHeaderLabels" is partially unknown
+  Type of "setHorizontalHeaderLabels" is "(labels: Unknown) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:121:46: [error] "setVisible" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:122:48: [error] "setStretchLastSection" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:124:16: [error] "setSectionResizeMode" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:125:16: [error] "setSectionResizeMode" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:126:16: [error] "setSectionResizeMode" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:127:16: [error] "setSectionResizeMode" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:128:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:129:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:139:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:143:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:210:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:213:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:218:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:221:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:353:62: [error] "selectedRows" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:357:59: [error] "data" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:446:62: [error] "selectedRows" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:451:55: [error] "data" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:474:62: [error] "selectedRows" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:479:55: [error] "data" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:480:57: [error] "text" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:530:62: [error] "selectedRows" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:540:55: [error] "data" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:541:57: [error] "text" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:621:21: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:623:21: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:659:45: [error] Argument type is partially unknown
+  Argument corresponds to parameter "s" in function "issubset"
+  Argument type is "dict_keys[Unknown, Unknown]"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:676:40: [error] Argument type is partially unknown
+  Argument corresponds to parameter "session_data" in function "_save_session_to_disk"
+  Argument type is "dict[Unknown, Unknown]"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:718:62: [error] "selectedRows" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:764:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\session_manager.py:765:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+
+20 findings in d:\Intellicrack\src\intellicrack\providers\openai.py
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:289:48: [error] Type of "function" is partially unknown
+  Type of "function" is "Function | Unknown"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:289:48: [error] Type of "arguments" is partially unknown
+  Type of "arguments" is "str | Unknown"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:289:48: [error] Argument type is partially unknown
+  Argument corresponds to parameter "s" in function "loads"
+  Argument type is "str | Unknown"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:289:51: [error] Cannot access attribute "function" for class "ChatCompletionMessageCustomToolCall"
+  Attribute "function" is unknown
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:293:21: [error] Type of "func_name" is partially unknown
+  Type of "func_name" is "str | Unknown"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:293:38: [error] Type of "function" is partially unknown
+  Type of "function" is "Function | Unknown"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:293:38: [error] Type of "name" is partially unknown
+  Type of "name" is "str | Unknown"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:293:41: [error] Cannot access attribute "function" for class "ChatCompletionMessageCustomToolCall"
+  Attribute "function" is unknown
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:296:35: [error] Type of "split" is partially unknown
+  Type of "split" is "((sep: str | None = None, maxsplit: SupportsIndex = -1) -> list[str]) | Unknown"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:296:35: [error] Argument type is partially unknown
+  Argument corresponds to parameter "tool_name" in function "__init__"
+  Argument type is "str | Unknown"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:297:39: [error] Argument type is partially unknown
+  Argument corresponds to parameter "function_name" in function "__init__"
+  Argument type is "str | Unknown"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:298:35: [error] Argument type is partially unknown
+  Argument corresponds to parameter "arguments" in function "__init__"
+  Argument type is "Any | dict[Unknown, Unknown]"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:379:23: [error] Type of "chunk" is partially unknown
+  Type of "chunk" is "Unknown | ChatCompletionChunk"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:382:20: [error] Type of "choices" is partially unknown
+  Type of "choices" is "Unknown | List[Choice]"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:382:38: [error] Type of "choices" is partially unknown
+  Type of "choices" is "Unknown | List[Choice]"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:382:38: [error] Type of "delta" is partially unknown
+  Type of "delta" is "Unknown | ChoiceDelta"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:382:38: [error] Type of "content" is partially unknown
+  Type of "content" is "Unknown | str | None"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:383:27: [error] Type of "choices" is partially unknown
+  Type of "choices" is "Unknown | List[Choice]"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:383:27: [error] Type of "delta" is partially unknown
+  Type of "delta" is "Unknown | ChoiceDelta"
+
+d:\Intellicrack\src\intellicrack\providers\openai.py:383:27: [error] Type of "content" is partially unknown
+  Type of "content" is "Unknown | str"
+
+
+19 findings in d:\Intellicrack\tests\test_providers\test_huggingface_provider.py
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:217:9: [error] Type of parameter "credential_loader" is unknown
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:217:9: [error] Type annotation is missing for parameter "credential_loader"
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:225:9: [error] Type of "credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:225:23: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:228:32: [error] Argument type is unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:243:25: [error] "_estimate_context_window" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:244:25: [error] "_estimate_context_window" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:245:25: [error] "_estimate_context_window" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:251:25: [error] "_estimate_context_window" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:262:25: [error] "_estimate_tool_support" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:263:25: [error] "_estimate_tool_support" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:269:25: [error] "_estimate_tool_support" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:270:25: [error] "_estimate_tool_support" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:276:29: [error] "_estimate_tool_support" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:287:25: [error] "_estimate_vision_support" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:288:25: [error] "_estimate_vision_support" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:289:25: [error] "_estimate_vision_support" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:295:29: [error] "_estimate_vision_support" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_providers\test_huggingface_provider.py:296:29: [error] "_estimate_vision_support" is protected and used outside of the class in which it is declared
+
+
+18 findings in d:\Intellicrack\tests\test_core\test_process_manager.py
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:294:44: [error] "_external_pids" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:295:32: [error] "_external_pids" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:296:32: [error] "_external_pids" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:297:32: [error] "_external_pids" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:308:44: [error] "_external_pids" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:313:48: [error] "_external_pids" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:334:32: [error] "_external_pids" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:352:55: [error] "_external_pids" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:429:25: [error] "_sync_cleanup" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:453:25: [error] "_sync_cleanup" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:458:48: [error] "_external_pids" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:483:45: [error] "_external_pids" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:536:32: [error] "_atexit_registered" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:540:32: [error] "_atexit_registered" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:551:32: [error] "_atexit_registered" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:559:32: [error] "_atexit_registered" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:563:32: [error] "_atexit_registered" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_process_manager.py:577:25: [error] "_shutdown_event" is protected and used outside of the class in which it is declared
+
+
+17 findings in d:\Intellicrack\src\intellicrack\ui\provider_config.py
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:59:5: [error] Instance variable "finished" overrides class variable of same name in class "QThread"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:276:5: [error] Instance variable "finished" overrides class variable of same name in class "QThread"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:520:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:526:9: [error] Type of "setSizes" is partially unknown
+  Type of "setSizes" is "(list: Unknown) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:534:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:535:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:539:13: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:695:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:727:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:863:9: [error] Type of "addItems" is partially unknown
+  Type of "addItems" is "(texts: Unknown) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:882:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:899:13: [error] Type of "addItems" is partially unknown
+  Type of "addItems" is "(texts: Unknown) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:926:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:1076:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:1084:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:1087:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\provider_config.py:1088:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+
+17 findings in d:\Intellicrack\tests\test_providers\test_model_discovery.py
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:144:9: [error] Type of parameter "credential_loader" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:144:9: [error] Type annotation is missing for parameter "credential_loader"
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:160:13: [error] Type of "creds" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:160:21: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:161:36: [error] Argument type is unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:170:13: [error] Type of "creds" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:170:21: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:171:36: [error] Argument type is unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:180:13: [error] Type of "creds" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:180:21: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:181:36: [error] Argument type is unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:190:13: [error] Type of "creds" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:190:21: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:191:36: [error] Argument type is unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:200:13: [error] Type of "creds" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:200:21: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_model_discovery.py:205:36: [error] Argument type is partially unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+  Argument type is "ProviderCredentials | Unknown"
+
+
+16 findings in d:\Intellicrack\src\intellicrack\ui\tool_config.py
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:85:5: [error] Instance variable "finished" overrides class variable of same name in class "QThread"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:451:5: [error] Instance variable "finished" overrides class variable of same name in class "QThread"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:662:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:668:9: [error] Type of "setSizes" is partially unknown
+  Type of "setSizes" is "(list: Unknown) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:675:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:676:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:680:13: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:836:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:851:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:862:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:956:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:1015:13: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:1016:13: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:1113:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:1119:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\tool_config.py:1165:13: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+
+13 findings in d:\Intellicrack\src\intellicrack\ui\sandbox_config.py
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:60:5: [error] Instance variable "finished" overrides class variable of same name in class "QThread"
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:117:16: [error] Condition will always evaluate to True since the types "int" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:198:16: [error] Condition will always evaluate to True since the types "int" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:322:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:337:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:345:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:346:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:350:13: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:509:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:517:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:518:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:686:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\sandbox_config.py:690:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+
+12 findings in d:\Intellicrack\src\intellicrack\bridges\x64dbg.py
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:197:9: [error] "_fields_" overrides symbol of same name in class "Structure"
+  Variable is mutable so its type is invariant
+    Override type "list[tuple[str, type]]" is not the same as base type "Sequence[tuple[str, type[_SimpleCData[Any]] | type[_Pointer[Any]] | type[CFuncPtr] | type[Union] | type[Structure] | type[Array[Any]]] | tuple[str, type[_SimpleCData[Any]] | type[_Pointer[Any]] | type[CFuncPtr] | type[Union] | type[Structure] | type[Array[Any]], int]]"
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:617:16: [error] Condition will always evaluate to True since the types "int" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:683:12: [error] Condition will always evaluate to True since the types "int" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:791:13: [error] Type of "output" is partially unknown
+  Type of "output" is "Unknown | None"
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:791:22: [error] Type of "get" is partially unknown
+  Type of "get" is "Overload[(key: Unknown, default: None = None, /) -> (Unknown | None), (key: Unknown, default: Unknown, /) -> Unknown, (key: Unknown, default: _T@get, /) -> (Unknown | _T@get)]"
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:792:24: [error] Argument type is unknown
+  Argument corresponds to parameter "object" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:1113:34: [error] Argument type is unknown
+  Argument corresponds to parameter "value" in function "parse_int"
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:1115:34: [error] Argument type is unknown
+  Argument corresponds to parameter "value" in function "parse_int"
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:1405:13: [error] "_fields_" overrides symbol of same name in class "Structure"
+  Variable is mutable so its type is invariant
+    Override type "list[tuple[str, type]]" is not the same as base type "Sequence[tuple[str, type[_SimpleCData[Any]] | type[_Pointer[Any]] | type[CFuncPtr] | type[Union] | type[Structure] | type[Array[Any]]] | tuple[str, type[_SimpleCData[Any]] | type[_Pointer[Any]] | type[CFuncPtr] | type[Union] | type[Structure] | type[Array[Any]], int]]"
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:1713:17: [error] "_fields_" overrides symbol of same name in class "Structure"
+  Variable is mutable so its type is invariant
+    Override type "list[tuple[str, type]]" is not the same as base type "Sequence[tuple[str, type[_SimpleCData[Any]] | type[_Pointer[Any]] | type[CFuncPtr] | type[Union] | type[Structure] | type[Array[Any]]] | tuple[str, type[_SimpleCData[Any]] | type[_Pointer[Any]] | type[CFuncPtr] | type[Union] | type[Structure] | type[Array[Any]], int]]"
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:1784:17: [error] "_fields_" overrides symbol of same name in class "Structure"
+  Variable is mutable so its type is invariant
+    Override type "list[tuple[str, type]]" is not the same as base type "Sequence[tuple[str, type[_SimpleCData[Any]] | type[_Pointer[Any]] | type[CFuncPtr] | type[Union] | type[Structure] | type[Array[Any]]] | tuple[str, type[_SimpleCData[Any]] | type[_Pointer[Any]] | type[CFuncPtr] | type[Union] | type[Structure] | type[Array[Any]], int]]"
+
+d:\Intellicrack\src\intellicrack\bridges\x64dbg.py:1888:17: [error] "_fields_" overrides symbol of same name in class "Structure"
+  Variable is mutable so its type is invariant
+    Override type "list[tuple[str, type]]" is not the same as base type "Sequence[tuple[str, type[_SimpleCData[Any]] | type[_Pointer[Any]] | type[CFuncPtr] | type[Union] | type[Structure] | type[Array[Any]]] | tuple[str, type[_SimpleCData[Any]] | type[_Pointer[Any]] | type[CFuncPtr] | type[Union] | type[Structure] | type[Array[Any]], int]]"
+
+
+12 findings in d:\Intellicrack\tests\test_core\test_main.py
+
+d:\Intellicrack\tests\test_core\test_main.py:33:22: [error] "_db_path" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:50:20: [error] "_connection" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:68:24: [error] "_store" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:82:36: [error] "_store" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:83:36: [error] "_store" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:84:36: [error] "_store" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:91:24: [error] "_auto_save" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:98:24: [error] "_auto_save" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:105:24: [error] "_save_interval" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:112:24: [error] "_save_interval" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:150:42: [error] "_store" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_core\test_main.py:150:49: [error] "_db_path" is protected and used outside of the class in which it is declared
+
+
+12 findings in d:\Intellicrack\tests\test_ui\test_splash_screen.py
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:122:30: [error] "_progress_bar" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:177:41: [error] "_progress_bar" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:182:41: [error] "_status_label" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:190:30: [error] "_progress_bar" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:191:30: [error] "_progress_bar" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:195:34: [error] "_progress_bar" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:203:31: [error] "_load_splash_pixmap" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:208:31: [error] "_load_splash_pixmap" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:213:31: [error] "_load_splash_pixmap" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:223:31: [error] "_create_fallback_pixmap" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:228:31: [error] "_create_fallback_pixmap" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_splash_screen.py:233:31: [error] "_create_fallback_pixmap" is protected and used outside of the class in which it is declared
+
+
+11 findings in d:\Intellicrack\src\intellicrack\ui\tools.py
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:94:33: [error] "findBlockByLineNumber" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:159:9: [error] Type of "setSizes" is partially unknown
+  Type of "setSizes" is "(list: Unknown) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:267:13: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:269:50: [error] Argument type is partially unknown
+  Argument corresponds to parameter "iterable" in function "join"
+  Argument type is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:331:13: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:333:17: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:334:13: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:337:13: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:339:17: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:341:51: [error] Argument type is partially unknown
+  Argument corresponds to parameter "iterable" in function "join"
+  Argument type is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\ui\tools.py:432:9: [error] Type of "setSizes" is partially unknown
+  Type of "setSizes" is "(list: Unknown) -> None"
+
+
+9 findings in d:\Intellicrack\src\intellicrack\ui\chat.py
+
+d:\Intellicrack\src\intellicrack\ui\chat.py:240:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\chat.py:264:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\chat.py:398:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\chat.py:418:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\chat.py:459:40: [error] "count" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\chat.py:460:36: [error] "itemAt" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\chat.py:483:31: [error] "deleteLater" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\chat.py:496:19: [error] "setValue" is not a known attribute of "None"
+
+d:\Intellicrack\src\intellicrack\ui\chat.py:496:38: [error] "maximum" is not a known attribute of "None"
+
+
+9 findings in d:\Intellicrack\tests\test_ui\test_icon_manager.py
+
+d:\Intellicrack\tests\test_ui\test_icon_manager.py:70:17: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\tests\test_ui\test_icon_manager.py:104:33: [error] "_icon_cache" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_icon_manager.py:105:33: [error] "_pixmap_cache" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_icon_manager.py:221:17: [error] "_icons_available" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_icon_manager.py:223:24: [error] "_load_icon" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_icon_manager.py:272:33: [error] "_icon_cache" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_icon_manager.py:280:33: [error] "_icon_cache" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_icon_manager.py:292:17: [error] Type of "append" is partially unknown
+  Type of "append" is "(object: Unknown, /) -> None"
+
+d:\Intellicrack\tests\test_ui\test_icon_manager.py:307:29: [error] "_icons_available" is protected and used outside of the class in which it is declared
+
+
+8 findings in d:\Intellicrack\src\intellicrack\core\script_gen.py
+
+d:\Intellicrack\src\intellicrack\core\script_gen.py:93:5: [error] Type of "target_functions" is partially unknown
+  Type of "target_functions" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\script_gen.py:94:5: [error] Type of "identified_protections" is partially unknown
+  Type of "identified_protections" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\script_gen.py:95:5: [error] Type of "crypto_apis" is partially unknown
+  Type of "crypto_apis" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\script_gen.py:96:5: [error] Type of "string_references" is partially unknown
+  Type of "string_references" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\script_gen.py:97:5: [error] Type of "magic_constants" is partially unknown
+  Type of "magic_constants" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\script_gen.py:98:5: [error] Type of "additional_context" is partially unknown
+  Type of "additional_context" is "dict[Unknown, Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\script_gen.py:167:5: [error] Type of "target_functions" is partially unknown
+  Type of "target_functions" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\script_gen.py:169:5: [error] Type of "execution_results" is partially unknown
+  Type of "execution_results" is "dict[Unknown, Unknown]"
+
+
+7 findings in d:\Intellicrack\src\intellicrack\sandbox\base.py
+
+d:\Intellicrack\src\intellicrack\sandbox\base.py:166:5: [error] Type of "shared_folders" is partially unknown
+  Type of "shared_folders" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\sandbox\base.py:167:5: [error] Type of "startup_commands" is partially unknown
+  Type of "startup_commands" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\sandbox\base.py:168:5: [error] Type of "environment_variables" is partially unknown
+  Type of "environment_variables" is "dict[Unknown, Unknown]"
+
+d:\Intellicrack\src\intellicrack\sandbox\base.py:209:5: [error] Type of "file_changes" is partially unknown
+  Type of "file_changes" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\sandbox\base.py:210:5: [error] Type of "registry_changes" is partially unknown
+  Type of "registry_changes" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\sandbox\base.py:211:5: [error] Type of "network_activity" is partially unknown
+  Type of "network_activity" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\sandbox\base.py:212:5: [error] Type of "process_activity" is partially unknown
+  Type of "process_activity" is "list[Unknown]"
+
+
+7 findings in d:\Intellicrack\src\intellicrack\ui\preferences.py
+
+d:\Intellicrack\src\intellicrack\ui\preferences.py:129:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\preferences.py:137:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\preferences.py:249:9: [error] Type of "addItems" is partially unknown
+  Type of "addItems" is "(texts: Unknown) -> None"
+
+d:\Intellicrack\src\intellicrack\ui\preferences.py:502:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\preferences.py:620:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\preferences.py:621:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\preferences.py:624:13: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+
+6 findings in d:\Intellicrack\tests\test_core\test_types.py
+
+d:\Intellicrack\tests\test_core\test_types.py:1353:46: [error] No parameter named "process_name"
+
+d:\Intellicrack\tests\test_core\test_types.py:1354:12: [error] Type of "process_name" is unknown
+
+d:\Intellicrack\tests\test_core\test_types.py:1354:18: [error] Cannot access attribute "process_name" for class "AttachError"
+  Attribute "process_name" is unknown
+
+d:\Intellicrack\tests\test_core\test_types.py:1362:9: [error] No parameter named "process_name"
+
+d:\Intellicrack\tests\test_core\test_types.py:1366:12: [error] Type of "process_name" is unknown
+
+d:\Intellicrack\tests\test_core\test_types.py:1366:18: [error] Cannot access attribute "process_name" for class "AttachError"
+  Attribute "process_name" is unknown
+
+
+5 findings in d:\Intellicrack\src\intellicrack\core\process_manager.py
+
+d:\Intellicrack\src\intellicrack\core\process_manager.py:56:5: [error] Type of "metadata" is partially unknown
+  Type of "metadata" is "dict[Unknown, Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\process_manager.py:689:25: [error] Condition will always evaluate to True since the types "bytes" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\core\process_manager.py:692:48: [error] Condition will always evaluate to True since the types "bytes" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\core\process_manager.py:694:25: [error] Condition will always evaluate to True since the types "bytes" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\core\process_manager.py:697:48: [error] Condition will always evaluate to True since the types "bytes" and "None" have no overlap
+
+
+5 findings in d:\Intellicrack\src\intellicrack\core\session.py
+
+d:\Intellicrack\src\intellicrack\core\session.py:95:5: [error] Type of "binaries" is partially unknown
+  Type of "binaries" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\session.py:97:5: [error] Type of "messages" is partially unknown
+  Type of "messages" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\session.py:98:5: [error] Type of "tool_states" is partially unknown
+  Type of "tool_states" is "dict[Unknown, Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\session.py:99:5: [error] Type of "patches" is partially unknown
+  Type of "patches" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\session.py:101:5: [error] Type of "tags" is partially unknown
+  Type of "tags" is "list[Unknown]"
+
+
+5 findings in d:\Intellicrack\tests\test_providers\test_anthropic_provider.py
+
+d:\Intellicrack\tests\test_providers\test_anthropic_provider.py:190:9: [error] Type of parameter "credential_loader" is unknown
+
+d:\Intellicrack\tests\test_providers\test_anthropic_provider.py:190:9: [error] Type annotation is missing for parameter "credential_loader"
+
+d:\Intellicrack\tests\test_providers\test_anthropic_provider.py:198:9: [error] Type of "credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_anthropic_provider.py:198:23: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_anthropic_provider.py:201:32: [error] Argument type is unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+
+
+5 findings in d:\Intellicrack\tests\test_providers\test_google_provider.py
+
+d:\Intellicrack\tests\test_providers\test_google_provider.py:192:9: [error] Type of parameter "credential_loader" is unknown
+
+d:\Intellicrack\tests\test_providers\test_google_provider.py:192:9: [error] Type annotation is missing for parameter "credential_loader"
+
+d:\Intellicrack\tests\test_providers\test_google_provider.py:200:9: [error] Type of "credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_google_provider.py:200:23: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_google_provider.py:203:32: [error] Argument type is unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+
+
+5 findings in d:\Intellicrack\tests\test_providers\test_grok_provider.py
+
+d:\Intellicrack\tests\test_providers\test_grok_provider.py:190:9: [error] Type of parameter "credential_loader" is unknown
+
+d:\Intellicrack\tests\test_providers\test_grok_provider.py:190:9: [error] Type annotation is missing for parameter "credential_loader"
+
+d:\Intellicrack\tests\test_providers\test_grok_provider.py:198:9: [error] Type of "credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_grok_provider.py:198:23: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_grok_provider.py:201:32: [error] Argument type is unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+
+
+5 findings in d:\Intellicrack\tests\test_providers\test_openai_provider.py
+
+d:\Intellicrack\tests\test_providers\test_openai_provider.py:194:9: [error] Type of parameter "credential_loader" is unknown
+
+d:\Intellicrack\tests\test_providers\test_openai_provider.py:194:9: [error] Type annotation is missing for parameter "credential_loader"
+
+d:\Intellicrack\tests\test_providers\test_openai_provider.py:202:9: [error] Type of "credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_openai_provider.py:202:23: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_openai_provider.py:205:32: [error] Argument type is unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+
+
+5 findings in d:\Intellicrack\tests\test_providers\test_openrouter_provider.py
+
+d:\Intellicrack\tests\test_providers\test_openrouter_provider.py:211:9: [error] Type of parameter "credential_loader" is unknown
+
+d:\Intellicrack\tests\test_providers\test_openrouter_provider.py:211:9: [error] Type annotation is missing for parameter "credential_loader"
+
+d:\Intellicrack\tests\test_providers\test_openrouter_provider.py:219:9: [error] Type of "credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_openrouter_provider.py:219:23: [error] Type of "get_credentials" is unknown
+
+d:\Intellicrack\tests\test_providers\test_openrouter_provider.py:222:32: [error] Argument type is unknown
+  Argument corresponds to parameter "credentials" in function "connect"
+
+
+5 findings in d:\Intellicrack\tests\test_ui\test_theme_manager.py
+
+d:\Intellicrack\tests\test_ui\test_theme_manager.py:95:44: [error] "_theme_cache" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_theme_manager.py:119:30: [error] "_current_theme" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_theme_manager.py:122:30: [error] "_current_theme" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_theme_manager.py:127:30: [error] "_current_theme" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_theme_manager.py:271:30: [error] "_styles_available" is protected and used outside of the class in which it is declared
+
+
+4 findings in d:\Intellicrack\src\intellicrack\bridges\ghidra.py
+
+d:\Intellicrack\src\intellicrack\bridges\ghidra.py:365:16: [error] Condition will always evaluate to True since the types "int" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\bridges\ghidra.py:443:12: [error] Condition will always evaluate to True since the types "int" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\bridges\ghidra.py:1183:29: [error] Argument type is unknown
+  Argument corresponds to parameter "x" in function "__new__"
+
+d:\Intellicrack\src\intellicrack\bridges\ghidra.py:1183:39: [error] Type of "addr" is unknown
+
+
+4 findings in d:\Intellicrack\src\intellicrack\providers\google.py
+
+d:\Intellicrack\src\intellicrack\providers\google.py:258:17: [error] Type of "generate_content" is partially unknown
+  Type of "generate_content" is "(*, model: str, contents: Content | ContentDict | str | Unknown | File | FileDict | Part | PartDict | list[str | Unknown | File | FileDict | Part | PartDict] | list[Content | ContentDict | str | Unknown | File | FileDict | Part | PartDict | list[str | Unknown | File | FileDict | Part | PartDict]], config: GenerateContentConfig | GenerateContentConfigDict | None = None) -> GenerateContentResponse"
+
+d:\Intellicrack\src\intellicrack\providers\google.py:258:17: [error] Argument type is partially unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+  Argument type is "(*, model: str, contents: Content | ContentDict | str | Unknown | File | FileDict | Part | PartDict | list[str | Unknown | File | FileDict | Part | PartDict] | list[Content | ContentDict | str | Unknown | File | FileDict | Part | PartDict | list[str | Unknown | File | FileDict | Part | PartDict]], config: GenerateContentConfig | GenerateContentConfigDict | None = None) -> GenerateContentResponse"
+
+d:\Intellicrack\src\intellicrack\providers\google.py:325:17: [error] Type of "generate_content_stream" is partially unknown
+  Type of "generate_content_stream" is "(*, model: str, contents: Content | ContentDict | str | Unknown | File | FileDict | Part | PartDict | list[str | Unknown | File | FileDict | Part | PartDict] | list[Content | ContentDict | str | Unknown | File | FileDict | Part | PartDict | list[str | Unknown | File | FileDict | Part | PartDict]], config: GenerateContentConfig | GenerateContentConfigDict | None = None) -> Iterator[GenerateContentResponse]"
+
+d:\Intellicrack\src\intellicrack\providers\google.py:325:17: [error] Argument type is partially unknown
+  Argument corresponds to parameter "func" in function "to_thread"
+  Argument type is "(*, model: str, contents: Content | ContentDict | str | Unknown | File | FileDict | Part | PartDict | list[str | Unknown | File | FileDict | Part | PartDict] | list[Content | ContentDict | str | Unknown | File | FileDict | Part | PartDict | list[str | Unknown | File | FileDict | Part | PartDict]], config: GenerateContentConfig | GenerateContentConfigDict | None = None) -> Iterator[GenerateContentResponse]"
+
+
+4 findings in d:\Intellicrack\src\intellicrack\ui\highlighter.py
+
+d:\Intellicrack\src\intellicrack\ui\highlighter.py:209:9: [error] Method "highlightBlock" overrides class "QSyntaxHighlighter" in an incompatible manner
+  Parameter 2 type mismatch: base parameter is type "str | None", override parameter is type "str"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str"
+
+d:\Intellicrack\src\intellicrack\ui\highlighter.py:551:9: [error] Method "highlightBlock" overrides class "QSyntaxHighlighter" in an incompatible manner
+  Parameter 2 type mismatch: base parameter is type "str | None", override parameter is type "str"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str"
+
+d:\Intellicrack\src\intellicrack\ui\highlighter.py:753:9: [error] Method "highlightBlock" overrides class "QSyntaxHighlighter" in an incompatible manner
+  Parameter 2 type mismatch: base parameter is type "str | None", override parameter is type "str"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str"
+
+d:\Intellicrack\src\intellicrack\ui\highlighter.py:912:9: [error] Method "highlightBlock" overrides class "QSyntaxHighlighter" in an incompatible manner
+  Parameter 2 type mismatch: base parameter is type "str | None", override parameter is type "str"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str"
+
+
+3 findings in d:\Intellicrack\src\intellicrack\bridges\installer.py
+
+d:\Intellicrack\src\intellicrack\bridges\installer.py:54:5: [error] Type of "common_paths" is partially unknown
+  Type of "common_paths" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\bridges\installer.py:55:5: [error] Type of "executables" is partially unknown
+  Type of "executables" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\bridges\installer.py:57:5: [error] Type of "version_command" is partially unknown
+  Type of "version_command" is "list[Unknown]"
+
+
+3 findings in d:\Intellicrack\src\intellicrack\sandbox\qemu.py
+
+d:\Intellicrack\src\intellicrack\sandbox\qemu.py:155:5: [error] Type of "data" is partially unknown
+  Type of "data" is "dict[Unknown, Unknown]"
+
+d:\Intellicrack\src\intellicrack\sandbox\qemu.py:194:16: [error] Condition will always evaluate to False since the types "StreamReader" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\sandbox\qemu.py:1440:52: [error] "_connected" is protected and used outside of the class in which it is declared
+
+
+3 findings in d:\Intellicrack\tests\test_ui\test_font_manager.py
+
+d:\Intellicrack\tests\test_ui\test_font_manager.py:75:29: [error] "_fonts_loaded" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_font_manager.py:189:24: [error] "_fonts_loaded" is protected and used outside of the class in which it is declared
+
+d:\Intellicrack\tests\test_ui\test_font_manager.py:196:24: [error] "_fonts_loaded" is protected and used outside of the class in which it is declared
+
+
+2 findings in d:\Intellicrack\src\intellicrack\bridges\base.py
+
+d:\Intellicrack\src\intellicrack\bridges\base.py:100:5: [error] Type of "supported_architectures" is partially unknown
+  Type of "supported_architectures" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\bridges\base.py:101:5: [error] Type of "supported_formats" is partially unknown
+  Type of "supported_formats" is "list[Unknown]"
+
+
+2 findings in d:\Intellicrack\src\intellicrack\core\orchestrator.py
+
+d:\Intellicrack\src\intellicrack\core\orchestrator.py:100:5: [error] Type of "_response_times" is partially unknown
+  Type of "_response_times" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\core\orchestrator.py:335:16: [error] Condition will always evaluate to True since the types "Session" and "None" have no overlap
+
+
+2 findings in d:\Intellicrack\src\intellicrack\providers\discovery.py
+
+d:\Intellicrack\src\intellicrack\providers\discovery.py:47:5: [error] Type of "new_models" is partially unknown
+  Type of "new_models" is "list[Unknown]"
+
+d:\Intellicrack\src\intellicrack\providers\discovery.py:48:5: [error] Type of "removed_models" is partially unknown
+  Type of "removed_models" is "list[Unknown]"
+
+
+2 findings in d:\Intellicrack\src\intellicrack\sandbox\windows.py
+
+d:\Intellicrack\src\intellicrack\sandbox\windows.py:197:16: [error] Condition will always evaluate to True since the types "int" and "None" have no overlap
+
+d:\Intellicrack\src\intellicrack\sandbox\windows.py:241:20: [error] Condition will always evaluate to True since the types "int" and "None" have no overlap
+
+
+2 findings in d:\Intellicrack\src\intellicrack\ui\confirmation_dialog.py
+
+d:\Intellicrack\src\intellicrack\ui\confirmation_dialog.py:187:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+d:\Intellicrack\src\intellicrack\ui\confirmation_dialog.py:208:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"
+
+
+1 findings in d:\Intellicrack\src\intellicrack\bridges\named_pipe_client.py
+
+d:\Intellicrack\src\intellicrack\bridges\named_pipe_client.py:193:16: [error] Return type, "dict[Unknown, Unknown]", is partially unknown
+
+
+1 findings in d:\Intellicrack\src\intellicrack\core\logging.py
+
+d:\Intellicrack\src\intellicrack\core\logging.py:199:12: [error] Unnecessary isinstance call; "LogConfig" is always an instance of "LogConfig"
+
+
+1 findings in d:\Intellicrack\src\intellicrack\core\tools.py
+
+d:\Intellicrack\src\intellicrack\core\tools.py:397:24: [error] The function "iscoroutinefunction" is deprecated
+  Deprecated since Python 3.14. Use `inspect.iscoroutinefunction()` instead.
+
+
+1 findings in d:\Intellicrack\src\intellicrack\providers\anthropic.py
+
+d:\Intellicrack\src\intellicrack\providers\anthropic.py:288:70: [error] Unnecessary isinstance call; "Dict[str, object]" is always an instance of "dict[Unknown, Unknown]"
+
+
+1 findings in d:\Intellicrack\src\intellicrack\providers\base.py
+
+d:\Intellicrack\src\intellicrack\providers\base.py:301:5: [error] Type of "tools" is partially unknown
+  Type of "tools" is "list[Unknown]"
+
+
+1 findings in d:\Intellicrack\src\intellicrack\providers\grok.py
+
+d:\Intellicrack\src\intellicrack\providers\grok.py:306:35: [error] Argument type is partially unknown
+  Argument corresponds to parameter "arguments" in function "__init__"
+  Argument type is "Any | dict[Unknown, Unknown]"
+
+
+1 findings in d:\Intellicrack\src\intellicrack\providers\ollama.py
+
+d:\Intellicrack\src\intellicrack\providers\ollama.py:450:35: [error] Argument type is partially unknown
+  Argument corresponds to parameter "arguments" in function "__init__"
+  Argument type is "Any | dict[Unknown, Unknown]"
+
+
+1 findings in d:\Intellicrack\src\intellicrack\providers\openrouter.py
+
+d:\Intellicrack\src\intellicrack\providers\openrouter.py:289:35: [error] Argument type is partially unknown
+  Argument corresponds to parameter "arguments" in function "__init__"
+  Argument type is "Any | dict[Unknown, Unknown]"
+
+
+1 findings in d:\Intellicrack\src\intellicrack\ui\dialogs\splash_screen.py
+
+d:\Intellicrack\src\intellicrack\ui\dialogs\splash_screen.py:56:9: [error] Type of "connect" is partially unknown
+  Type of "connect" is "(slot: Unknown | pyqtBoundSignal) -> Connection"

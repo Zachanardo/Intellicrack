@@ -1040,7 +1040,9 @@ class ThemeManager:
             True if theme was applied successfully.
         """
         if theme not in {THEME_DARK, THEME_LIGHT}:
-            _logger.warning("Unknown theme: %s, using default", theme)
+            _logger.warning(
+                "unknown_theme", extra={"theme": theme, "default": DEFAULT_THEME}
+            )
             theme = DEFAULT_THEME
 
         stylesheet = self.get_stylesheet(theme)
@@ -1050,10 +1052,10 @@ class ThemeManager:
             app = cast("QApplication", app_instance)
             app.setStyleSheet(stylesheet)
             self._current_theme = theme
-            _logger.info("Applied theme: %s", theme)
+            _logger.info("theme_applied", extra={"theme": theme})
             return True
 
-        _logger.warning("No QApplication instance to apply theme to")
+        _logger.warning("no_qapplication_instance", extra={})
         return False
 
     def get_stylesheet(self, theme: str) -> str:
@@ -1089,12 +1091,17 @@ class ThemeManager:
                     with open(style_path, encoding="utf-8") as f:
                         content = f.read()
                         if content.strip():
-                            _logger.debug("Loaded stylesheet from: %s", style_path)
+                            _logger.debug(
+                                "stylesheet_loaded", extra={"path": str(style_path)}
+                            )
                             return content
             except (OSError, PermissionError) as e:
-                _logger.warning("Failed to load stylesheet %s: %s", filename, e)
+                _logger.warning(
+                    "stylesheet_load_failed",
+                    extra={"style_file": filename, "error": str(e)},
+                )
 
-        _logger.debug("Using fallback stylesheet for theme: %s", theme)
+        _logger.debug("using_fallback_stylesheet", extra={"theme": theme})
         return DARK_THEME_FALLBACK if theme == THEME_DARK else LIGHT_THEME_FALLBACK
 
     def toggle_theme(self) -> str:

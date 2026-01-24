@@ -51,12 +51,14 @@ _keystone: ModuleType | None = None
 
 try:
     import capstone as _capstone_module
+
     _capstone = _capstone_module
 except ImportError:
     pass
 
 try:
     import keystone as _keystone_module
+
     _keystone = _keystone_module
 except ImportError:
     pass
@@ -202,9 +204,7 @@ def _extract_command_line_from_peb(handle: int) -> str | None:
 
     pbi = ProcessBasicInformation()
     return_length = wintypes.ULONG()
-    status = ctypes.windll.ntdll.NtQueryInformationProcess(
-        handle, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), ctypes.byref(return_length)
-    )
+    status = ctypes.windll.ntdll.NtQueryInformationProcess(handle, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), ctypes.byref(return_length))
 
     if status != 0 or not pbi.PebBaseAddress:
         return None
@@ -604,9 +604,9 @@ class X64DbgBridge(DebuggerBridge):
 
             if x64_exe.exists() or x32_exe.exists():
                 self._state = BridgeState(connected=True, tool_running=False)
-                _logger.info("x64dbg found at %s", tool_path)
+                _logger.info("x64dbg_found", extra={"path": str(tool_path)})
             else:
-                _logger.warning("x64dbg executables not found in %s", tool_path)
+                _logger.warning("x64dbg_not_found", extra={"path": str(tool_path)})
 
     async def shutdown(self) -> None:
         """Shutdown x64dbg and cleanup resources."""
@@ -631,7 +631,7 @@ class X64DbgBridge(DebuggerBridge):
         self._breakpoints.clear()
         self._watchpoints.clear()
         await super().shutdown()
-        _logger.info("x64dbg bridge shutdown")
+        _logger.info("x64dbg_bridge_shutdown")
 
     async def is_available(self) -> bool:
         """Check if x64dbg is available.
@@ -670,7 +670,7 @@ class X64DbgBridge(DebuggerBridge):
             raise ToolError(msg)
 
         self._is_64bit = is_64bit
-        _logger.info("Starting x64dbg: %s", exe_path)
+        _logger.info("x64dbg_starting", extra={"path": str(exe_path)})
 
         self._process = await asyncio.to_thread(
             subprocess.Popen,
@@ -706,7 +706,7 @@ class X64DbgBridge(DebuggerBridge):
                     event_handler=self._handle_event,
                 )
             await self._pipe_client.connect()
-            _logger.info("Connected to x64dbg named pipe")
+            _logger.info("x64dbg_pipe_connected")
         except Exception as e:
             self._pipe_client = None
             msg = f"Failed to connect to x64dbg pipe: {e}"
@@ -826,7 +826,7 @@ class X64DbgBridge(DebuggerBridge):
             target_path=self._binary_path,
         )
 
-        _logger.info("Loaded %s into x64dbg", path.name)
+        _logger.info("x64dbg_binary_loaded", extra={"path": path.name})
 
     @staticmethod
     def _detect_architecture(path: Path) -> bool:
@@ -854,10 +854,10 @@ class X64DbgBridge(DebuggerBridge):
         if len(data) < pe_offset + 6:
             return True
 
-        if data[pe_offset:pe_offset + 4] != b"PE\x00\x00":
+        if data[pe_offset : pe_offset + 4] != b"PE\x00\x00":
             return True
 
-        machine = int.from_bytes(data[pe_offset + 4:pe_offset + 6], "little")
+        machine = int.from_bytes(data[pe_offset + 4 : pe_offset + 6], "little")
 
         return machine == PE64_MACHINE
 
@@ -879,7 +879,7 @@ class X64DbgBridge(DebuggerBridge):
             process_attached=True,
         )
 
-        _logger.info("Attached to process %d", pid)
+        _logger.info("x64dbg_process_attached", extra={"pid": pid})
 
     async def detach(self) -> None:
         """Detach from current process."""
@@ -892,17 +892,17 @@ class X64DbgBridge(DebuggerBridge):
             process_attached=False,
         )
 
-        _logger.info("Detached from process")
+        _logger.info("x64dbg_process_detached")
 
     async def run(self) -> None:
         """Continue execution."""
         await self._send_pipe_command("run")
-        _logger.debug("Execution continued")
+        _logger.debug("execution_continued")
 
     async def pause(self) -> None:
         """Pause execution."""
         await self._send_pipe_command("pause")
-        _logger.debug("Execution paused")
+        _logger.debug("execution_paused")
 
     async def stop(self) -> None:
         """Stop debugging and terminate process."""
@@ -915,7 +915,7 @@ class X64DbgBridge(DebuggerBridge):
             process_attached=False,
         )
 
-        _logger.info("Debugging stopped")
+        _logger.info("debugging_stopped")
 
     async def step_into(self) -> int:
         """Single step into.
@@ -984,7 +984,7 @@ class X64DbgBridge(DebuggerBridge):
             condition=condition,
         )
 
-        _logger.info("Set %s breakpoint at 0x%X (id=%d)", bp_type, address, bp_id)
+        _logger.info("breakpoint_set", extra={"type": bp_type, "address": hex(address), "id": bp_id})
         return bp_id
 
     async def remove_breakpoint(self, address: int) -> bool:
@@ -1001,7 +1001,7 @@ class X64DbgBridge(DebuggerBridge):
         if address in self._breakpoints:
             del self._breakpoints[address]
 
-        _logger.info("Removed breakpoint at 0x%X", address)
+        _logger.info("breakpoint_removed", extra={"address": hex(address)})
         return True
 
     async def get_breakpoints(self) -> list[BreakpointInfo]:
@@ -1051,7 +1051,7 @@ class X64DbgBridge(DebuggerBridge):
             "hit_count": 0,
         }
 
-        _logger.info("Set watchpoint at 0x%X (size=%d, type=%s)", address, size, watch_type)
+        _logger.info("watchpoint_set", extra={"address": hex(address), "size": size, "type": watch_type})
         return wp_id
 
     async def remove_watchpoint(self, watchpoint_id: int) -> bool:
@@ -1073,7 +1073,7 @@ class X64DbgBridge(DebuggerBridge):
         )
 
         del self._watchpoints[watchpoint_id]
-        _logger.info("Removed watchpoint %d", watchpoint_id)
+        _logger.info("watchpoint_removed", extra={"id": watchpoint_id})
         return True
 
     async def get_watchpoints(self) -> list[WatchpointInfo]:
@@ -1178,7 +1178,7 @@ class X64DbgBridge(DebuggerBridge):
             "reg_set",
             {"register": register, "value": value},
         )
-        _logger.info("Set %s = 0x%X", register, value)
+        _logger.info("register_set", extra={"register": register, "value": hex(value)})
         return True
 
     async def read_memory(self, address: int, size: int) -> bytes:
@@ -1230,7 +1230,7 @@ class X64DbgBridge(DebuggerBridge):
                 msg = f"ReadProcessMemory failed at 0x{address:X}"
                 raise ToolError(msg)
 
-            return buffer.raw[:bytes_read.value]
+            return buffer.raw[: bytes_read.value]
 
         finally:
             kernel32.CloseHandle(handle)
@@ -1283,7 +1283,7 @@ class X64DbgBridge(DebuggerBridge):
                 msg = f"WriteProcessMemory failed at 0x{address:X}"
                 raise ToolError(msg)
 
-            _logger.info("Wrote %d bytes at 0x%X", bytes_written.value, address)
+            _logger.info("memory_written", extra={"bytes": bytes_written.value, "address": hex(address)})
             return bytes_written.value
 
         finally:
@@ -1337,7 +1337,7 @@ class X64DbgBridge(DebuggerBridge):
                 raise ToolError(msg)
 
             address: int = int(address_result)
-            _logger.info("Allocated %d bytes at 0x%X", size, address)
+            _logger.info("memory_allocated", extra={"size": size, "address": hex(address)})
             return address
 
         finally:
@@ -1486,7 +1486,7 @@ class X64DbgBridge(DebuggerBridge):
             Disassembly lines. Returns empty list on error.
         """
         if _capstone is None:
-            _logger.warning("capstone not available")
+            _logger.warning("capstone_unavailable")
             return []
 
         try:
@@ -1511,7 +1511,7 @@ class X64DbgBridge(DebuggerBridge):
                     break
 
         except Exception as e:
-            _logger.warning("Disassembly failed: %s", e)
+            _logger.warning("disassembly_failed", extra={"error": str(e)})
             return []
         else:
             return lines
@@ -1754,7 +1754,7 @@ class X64DbgBridge(DebuggerBridge):
             msg = f"{_ERR_GET_THREADS_FAILED}: {e}"
             raise ToolError(msg, tool_name="x64dbg") from e
         else:
-            _logger.debug("Found %d threads for PID %d", len(threads), self._attached_pid)
+            _logger.debug("threads_found", extra={"count": len(threads), "pid": self._attached_pid})
             return threads
 
     async def get_modules(self) -> list[ModuleInfo]:
@@ -1832,9 +1832,7 @@ class X64DbgBridge(DebuggerBridge):
             msg = f"{_ERR_GET_MODULES_FAILED}: {e}"
             raise ToolError(msg, tool_name="x64dbg") from e
         else:
-            _logger.debug(
-                "Found %d modules for PID %d", len(modules), self._attached_pid
-            )
+            _logger.debug("modules_found", extra={"count": len(modules), "pid": self._attached_pid})
             return modules
 
     async def get_process_info(self) -> ProcessInfo | None:

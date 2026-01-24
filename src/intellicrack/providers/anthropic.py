@@ -116,14 +116,17 @@ class AnthropicProvider(LLMProviderBase):
         else:
             self._credentials = credentials
             self._connected = True
-            self._logger.info("Connected to Anthropic API")
+            self._logger.info(
+                "anthropic_connected",
+                extra={"has_custom_base": credentials.api_base is not None},
+            )
 
     async def disconnect(self) -> None:
         """Disconnect from Anthropic API."""
         await super().disconnect()
         self._client = None
         self._current_task = None
-        self._logger.info("Disconnected from Anthropic API")
+        self._logger.info("anthropic_disconnected", extra={})
 
     async def list_models(self) -> list[ModelInfo]:
         """Dynamically fetch available Claude models from Anthropic API.
@@ -173,8 +176,10 @@ class AnthropicProvider(LLMProviderBase):
                     break
                 after_id = response.last_id
         except Exception as e:
+            self._logger.warning("anthropic_list_models_failed", extra={"error": str(e)})
             raise ProviderError(_MSG_REQUEST_FAILED) from e
         else:
+            self._logger.info("anthropic_models_listed", extra={"count": len(models)})
             return models
 
     @staticmethod
@@ -285,9 +290,7 @@ class AnthropicProvider(LLMProviderBase):
                     content += block.text
                 elif isinstance(block, ToolUseBlock):
                     block_input = block.input
-                    arguments: dict[str, Any] = (
-                        dict(block_input) if isinstance(block_input, dict) else {}
-                    )
+                    arguments: dict[str, Any] = dict(block_input) if isinstance(block_input, dict) else {}
                     tool_call = ToolCall(
                         id=block.id,
                         tool_name=block.name.split(".")[0] if "." in block.name else block.name,
@@ -387,8 +390,10 @@ class AnthropicProvider(LLMProviderBase):
     async def cancel_request(self) -> None:
         """Cancel any in-flight request."""
         self._cancel_requested = True
-        if self._current_task is not None and not self._current_task.done():
+        had_task = self._current_task is not None and not self._current_task.done()
+        if had_task:
             self._current_task.cancel()
+        self._logger.info("anthropic_request_cancelled", extra={"had_active_task": had_task})
 
     @override
     def _convert_messages_to_provider_format(

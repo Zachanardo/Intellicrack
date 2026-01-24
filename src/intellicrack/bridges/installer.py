@@ -241,7 +241,7 @@ class ToolInstaller:
         """
         tool_info = TOOL_REGISTRY.get(tool)
         if tool_info is None:
-            _logger.warning("Unknown tool: %s", tool)
+            _logger.warning("unknown_tool", extra={"tool": str(tool)})
             return None
 
         if tool == ToolName.FRIDA:
@@ -255,14 +255,14 @@ class ToolInstaller:
                 for exe in tool_info.executables:
                     exe_path = common_path / exe
                     if exe_path.exists():
-                        _logger.info("Found %s at %s", tool_info.display_name, exe_path)
+                        _logger.info("tool_found", extra={"tool": tool_info.display_name, "path": str(exe_path)})
                         return common_path
 
         for exe in tool_info.executables:
             found = shutil.which(exe)
             if found is not None:
                 found_path = Path(found).parent
-                _logger.info("Found %s in PATH at %s", tool_info.display_name, found_path)
+                _logger.info("tool_found_in_path", extra={"tool": tool_info.display_name, "path": str(found_path)})
                 return found_path
 
         tool_dir: Path = self.tools_directory / str(tool.value)
@@ -270,11 +270,7 @@ class ToolInstaller:
             for exe in tool_info.executables:
                 exe_path = tool_dir / exe
                 if exe_path.exists():
-                    _logger.info(
-                        "Found %s in tools directory at %s",
-                        tool_info.display_name,
-                        tool_dir,
-                    )
+                    _logger.info("tool_found_in_tools_dir", extra={"tool": tool_info.display_name, "path": str(tool_dir)})
                     return tool_dir
 
                 subdir: Path
@@ -282,14 +278,10 @@ class ToolInstaller:
                     if subdir.is_dir():
                         exe_path = subdir / exe
                         if exe_path.exists():
-                            _logger.info(
-                                "Found %s at %s",
-                                tool_info.display_name,
-                                subdir,
-                            )
+                            _logger.info("tool_found", extra={"tool": tool_info.display_name, "path": str(subdir)})
                             return subdir
 
-        _logger.debug("Tool %s not found", tool_info.display_name)
+        _logger.debug("tool_not_found", extra={"tool": tool_info.display_name})
         return None
 
     async def _find_frida(self) -> Path | None:  # noqa: PLR6301
@@ -306,10 +298,10 @@ class ToolInstaller:
                 timeout=10,
             )
             if result.returncode == 0:
-                _logger.info("Frida is installed: version %s", result.stdout.strip())
+                _logger.info("frida_installed", extra={"version": result.stdout.strip()})
                 return Path("frida-python")
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            _logger.debug("Frida check failed: %s", e)
+            _logger.debug("frida_check_failed", extra={"error": str(e)})
         return None
 
     async def get_version(self, tool: ToolName, path: Path) -> ToolVersion | None:
@@ -354,7 +346,7 @@ class ToolInstaller:
                 return self._parse_version(version_str)
 
         except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
-            _logger.debug("Version check failed for %s: %s", tool, e)
+            _logger.debug("version_check_failed", extra={"tool": str(tool), "error": str(e)})
 
         return None
 
@@ -407,12 +399,7 @@ class ToolInstaller:
                     min_ver = self._parse_version(tool_info.min_version)
                     if version >= min_ver:
                         return True
-                    _logger.warning(
-                        "%s version %s is below minimum %s",
-                        tool_info.display_name,
-                        version,
-                        tool_info.min_version,
-                    )
+                    _logger.warning("version_below_minimum", extra={"tool": tool_info.display_name, "version": str(version), "min_version": tool_info.min_version})
                     return False
                 return True
 
@@ -444,7 +431,7 @@ class ToolInstaller:
             )
 
         try:
-            _logger.info("Installing %s...", tool_info.display_name)
+            _logger.info("tool_installing", extra={"tool": tool_info.display_name})
 
             download_url = await self._get_latest_release_url(tool)
             if download_url is None:
@@ -465,12 +452,7 @@ class ToolInstaller:
             download_path.unlink(missing_ok=True)
 
             version = await self.get_version(tool, install_path)
-            _logger.info(
-                "Installed %s version %s at %s",
-                tool_info.display_name,
-                version,
-                install_path,
-            )
+            _logger.info("tool_installed", extra={"tool": tool_info.display_name, "version": str(version), "path": str(install_path)})
 
             return InstallResult(
                 success=True,
@@ -479,7 +461,7 @@ class ToolInstaller:
             )
 
         except Exception as e:
-            _logger.exception("Failed to install %s", tool_info.display_name)
+            _logger.exception("tool_install_failed", extra={"tool": tool_info.display_name})
             return InstallResult(success=False, error=str(e))
 
     async def _install_frida(self) -> InstallResult:
@@ -489,7 +471,7 @@ class ToolInstaller:
             InstallResult with installation status.
         """
         try:
-            _logger.info("Installing Frida via pip...")
+            _logger.info("frida_pip_installing")
             process_manager = ProcessManager.get_instance()
 
             result = await process_manager.run_tracked_async(
@@ -505,7 +487,7 @@ class ToolInstaller:
                     timeout=10,
                 )
                 version = self._parse_version(version_result.stdout.strip())
-                _logger.info("Installed Frida version %s", version)
+                _logger.info("frida_installed", extra={"version": str(version)})
                 return InstallResult(
                     success=True,
                     path=Path("frida-python"),
@@ -564,7 +546,7 @@ class ToolInstaller:
                     return download_url
 
         except Exception:
-            _logger.exception("Failed to get release info")
+            _logger.exception("release_info_fetch_failed")
 
         return None
 
@@ -583,7 +565,7 @@ class ToolInstaller:
             filename = url.rsplit("/", maxsplit=1)[-1]
             temp_path = Path(tempfile.gettempdir()) / filename
 
-            _logger.info("Downloading %s...", filename)
+            _logger.info("download_starting", extra={"filename": filename})
 
             async with client.stream("GET", url) as response:
                 response.raise_for_status()
@@ -597,12 +579,12 @@ class ToolInstaller:
                         if total > 0:
                             percent = (downloaded / total) * 100
                             if downloaded % _ONE_MB < _PROGRESS_CHUNK:
-                                _logger.debug("Download progress: %.1f%%", percent)
+                                _logger.debug("download_progress", extra={"percent": round(percent, 1)})
 
-            _logger.info("Downloaded %s (%d bytes)", filename, downloaded)
+            _logger.info("download_completed", extra={"filename": filename, "bytes": downloaded})
 
         except Exception:
-            _logger.exception("Download failed")
+            _logger.exception("download_failed")
             return None
         else:
             return temp_path
@@ -626,7 +608,7 @@ class ToolInstaller:
         tool_dir = self.tools_directory / tool.value
         tool_dir.mkdir(parents=True, exist_ok=True)
 
-        _logger.info("Extracting to %s...", tool_dir)
+        _logger.info("extraction_starting", extra={"path": str(tool_dir)})
 
         try:
             await asyncio.to_thread(
@@ -636,7 +618,7 @@ class ToolInstaller:
             )
             subdirs = [d for d in tool_dir.iterdir() if d.is_dir()]
         except Exception as e:
-            _logger.exception("Extraction failed")
+            _logger.exception("extraction_failed")
             raise ToolError(_ERR_EXTRACT_FAILED_FMT) from e
         else:
             if len(subdirs) == 1:
@@ -671,7 +653,7 @@ class ToolInstaller:
         if path is not None:
             if await self.verify_tool(tool, path):
                 return path
-            _logger.warning("Found %s but verification failed", tool)
+            _logger.warning("tool_verification_failed", extra={"tool": str(tool)})
 
         result = await self.install_tool(tool)
         if result.success and result.path is not None:

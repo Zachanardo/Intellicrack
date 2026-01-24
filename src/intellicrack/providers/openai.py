@@ -102,10 +102,25 @@ class OpenAIProvider(LLMProviderBase):
             await self._client.models.list()
             self._credentials = credentials
             self._connected = True
-            self._logger.info("Connected to OpenAI API")
+            self._logger.info(
+                "openai_connected",
+                extra={
+                    "has_custom_base": credentials.api_base is not None,
+                    "has_organization": credentials.organization_id is not None,
+                    "has_project": credentials.project_id is not None,
+                },
+            )
         except openai.AuthenticationError as e:
+            self._logger.exception(
+                "openai_connect_auth_failed",
+                extra={"error": str(e)},
+            )
             raise AuthenticationError(f"Invalid OpenAI API key: {e}") from e
         except Exception as e:
+            self._logger.exception(
+                "openai_connect_failed",
+                extra={"error": str(e)},
+            )
             raise ProviderError(f"Failed to connect to OpenAI: {e}") from e
 
     async def disconnect(self) -> None:
@@ -113,7 +128,7 @@ class OpenAIProvider(LLMProviderBase):
         await super().disconnect()
         self._client = None
         self._current_task = None
-        self._logger.info("Disconnected from OpenAI API")
+        self._logger.info("openai_disconnected", extra={"success": True})
 
     async def list_models(self) -> list[ModelInfo]:
         """Dynamically fetch available models from OpenAI.
@@ -154,8 +169,17 @@ class OpenAIProvider(LLMProviderBase):
                     )
                 )
 
-            return sorted(models, key=lambda m: m.id, reverse=True)
+            sorted_models = sorted(models, key=lambda m: m.id, reverse=True)
+            self._logger.info(
+                "openai_models_listed",
+                extra={"count": len(sorted_models)},
+            )
+            return sorted_models
         except Exception as e:
+            self._logger.exception(
+                "openai_list_models_failed",
+                extra={"error": str(e)},
+            )
             raise ProviderError(f"Failed to list OpenAI models: {e}") from e
 
     def _is_chat_model(self, model_id: str) -> bool:
@@ -316,10 +340,22 @@ class OpenAIProvider(LLMProviderBase):
             return message, tool_calls if tool_calls else None
 
         except openai.RateLimitError as e:
+            self._logger.exception(
+                "openai_chat_rate_limited",
+                extra={"model": model, "error": str(e)},
+            )
             raise RateLimitError(f"OpenAI rate limit exceeded: {e}") from e
         except openai.APIError as e:
+            self._logger.exception(
+                "openai_chat_api_error",
+                extra={"model": model, "error": str(e)},
+            )
             raise ProviderError(f"OpenAI API error: {e}") from e
         except Exception as e:
+            self._logger.exception(
+                "openai_chat_failed",
+                extra={"model": model, "error": str(e)},
+            )
             raise ProviderError(f"OpenAI request failed: {e}") from e
 
     async def chat_stream(
@@ -383,11 +419,23 @@ class OpenAIProvider(LLMProviderBase):
                     yield chunk.choices[0].delta.content
 
         except openai.RateLimitError as e:
+            self._logger.exception(
+                "openai_stream_rate_limited",
+                extra={"model": model, "error": str(e)},
+            )
             raise RateLimitError(f"OpenAI rate limit exceeded: {e}") from e
         except openai.APIError as e:
+            self._logger.exception(
+                "openai_stream_api_error",
+                extra={"model": model, "error": str(e)},
+            )
             raise ProviderError(f"OpenAI API error: {e}") from e
         except Exception as e:
             if not self._cancel_requested:
+                self._logger.exception(
+                    "openai_stream_failed",
+                    extra={"model": model, "error": str(e)},
+                )
                 raise ProviderError(f"OpenAI stream failed: {e}") from e
 
     async def cancel_request(self) -> None:
@@ -395,6 +443,10 @@ class OpenAIProvider(LLMProviderBase):
         self._cancel_requested = True
         if self._current_task is not None and not self._current_task.done():
             self._current_task.cancel()
+        self._logger.info(
+            "openai_request_cancelled",
+            extra={"had_active_task": self._current_task is not None},
+        )
 
     def _convert_messages_to_provider_format(
         self,

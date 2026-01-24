@@ -176,7 +176,7 @@ class Script:
         """
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(self.content, encoding="utf-8")
-        _logger.info("Saved script to %s", path)
+        _logger.info("script_saved", extra={"path": str(path)})
 
     def get_extension(self) -> str:
         """Get the appropriate file extension for this script type.
@@ -331,11 +331,11 @@ class ScriptManager:
         if validate:
             is_valid, error = self._validator.validate(script)
             if not is_valid:
-                _logger.error("Script validation failed: %s", error)
+                _logger.error("script_validation_failed", extra={"error": error})
                 return False
 
         self.scripts[script.name] = script
-        _logger.info("Added script: %s", script.name)
+        _logger.info("script_added", extra={"script_name": script.name})
         return True
 
     def get_script(self, name: str) -> Script | None:
@@ -360,11 +360,7 @@ class ScriptManager:
         """
         if script_type is None:
             return list(self.scripts.keys())
-        return [
-            name
-            for name, script in self.scripts.items()
-            if script.script_type == script_type
-        ]
+        return [name for name, script in self.scripts.items() if script.script_type == script_type]
 
     def save_script(self, name: str, subdir: str | None = None) -> Path | None:
         """Save a script to disk.
@@ -445,31 +441,17 @@ def get_frida_api_reference() -> dict[str, str]:
         Dictionary mapping API categories to usage examples.
     """
     return {
-        "process": (
-            "Process.findModuleByName(name), Process.enumerateModules(), "
-            "Process.enumerateRanges(protection)"
-        ),
-        "module": (
-            "Module.findExportByName(module, name), module.base, module.size, "
-            "module.enumerateExports(), module.enumerateImports()"
-        ),
+        "process": ("Process.findModuleByName(name), Process.enumerateModules(), Process.enumerateRanges(protection)"),
+        "module": ("Module.findExportByName(module, name), module.base, module.size, module.enumerateExports(), module.enumerateImports()"),
         "memory": (
             "Memory.readByteArray(addr, length), Memory.writeByteArray(addr, bytes), "
             "Memory.protect(addr, size, protection), Memory.scanSync(addr, size, pattern)"
         ),
         "interceptor": (
-            "Interceptor.attach(target, {onEnter, onLeave}), "
-            "Interceptor.replace(target, replacement), "
-            "Interceptor.revert(target)"
+            "Interceptor.attach(target, {onEnter, onLeave}), Interceptor.replace(target, replacement), Interceptor.revert(target)"
         ),
-        "native_function": (
-            "new NativeFunction(addr, retType, argTypes), "
-            "new NativeCallback(func, retType, argTypes)"
-        ),
-        "stalker": (
-            "Stalker.follow(threadId, {events, onReceive, transform}), "
-            "Stalker.unfollow(threadId)"
-        ),
+        "native_function": ("new NativeFunction(addr, retType, argTypes), new NativeCallback(func, retType, argTypes)"),
+        "stalker": ("Stalker.follow(threadId, {events, onReceive, transform}), Stalker.unfollow(threadId)"),
     }
 
 
@@ -480,25 +462,11 @@ def get_ghidra_api_reference() -> dict[str, str]:
         Dictionary mapping API categories to usage examples.
     """
     return {
-        "program": (
-            "currentProgram.getListing(), currentProgram.getSymbolTable(), "
-            "currentProgram.getMemory()"
-        ),
-        "functions": (
-            "getFunctionAt(addr), getFunctionContaining(addr), "
-            "currentProgram.getListing().getFunctions(true)"
-        ),
-        "symbols": (
-            "symbolTable.getSymbols(name), symbol.getReferences(null), "
-            "symbol.getAddress()"
-        ),
-        "decompiler": (
-            "DecompInterface(), decompInterface.decompileFunction(func, timeout, monitor)"
-        ),
-        "patching": (
-            "currentProgram.getMemory().setBytes(addr, bytes), "
-            "clearListing(addr), createInstruction(addr)"
-        ),
+        "program": ("currentProgram.getListing(), currentProgram.getSymbolTable(), currentProgram.getMemory()"),
+        "functions": ("getFunctionAt(addr), getFunctionContaining(addr), currentProgram.getListing().getFunctions(true)"),
+        "symbols": ("symbolTable.getSymbols(name), symbol.getReferences(null), symbol.getAddress()"),
+        "decompiler": ("DecompInterface(), decompInterface.decompileFunction(func, timeout, monitor)"),
+        "patching": ("currentProgram.getMemory().setBytes(addr, bytes), clearListing(addr), createInstruction(addr)"),
     }
 
 
@@ -525,13 +493,9 @@ def get_x64dbg_reference() -> dict[str, str]:
         Dictionary mapping command categories to examples.
     """
     return {
-        "breakpoints": (
-            "bp addr (set bp), bc addr (clear bp), bph addr (hardware bp)"
-        ),
+        "breakpoints": ("bp addr (set bp), bc addr (clear bp), bph addr (hardware bp)"),
         "stepping": "sti (step into), sto (step over), run (continue)",
-        "memory": (
-            "dump addr (view memory), fill addr,size,byte (fill memory)"
-        ),
-        "patching": "assemble addr, \"instruction\" (assemble), patch addr, bytes (patch)",
-        "scripting": "scriptload path, scriptcmd \"command\"",
+        "memory": ("dump addr (view memory), fill addr,size,byte (fill memory)"),
+        "patching": 'assemble addr, "instruction" (assemble), patch addr, bytes (patch)',
+        "scripting": 'scriptload path, scriptcmd "command"',
     }

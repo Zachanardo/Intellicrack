@@ -1,12 +1,16 @@
 """Tool output panel widget for the Intellicrack UI.
 
 This module provides the tool output display panel showing
-decompiled code, disassembly, and analysis results from tools.
+decompiled code, disassembly, and analysis results from tools,
+as well as embedded external tools (HxD, x64dbg, Cutter) and
+specialized analysis panels (Licensing, Scripts, Stack).
 """
 
 from __future__ import annotations
 
-from typing import Literal
+import logging
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QTextCursor
@@ -24,6 +28,18 @@ from PyQt6.QtWidgets import (
 from .highlighter import (
     get_highlighter_for_language,
 )
+
+
+if TYPE_CHECKING:
+    from intellicrack.core.license_analyzer import LicensingAnalysis
+    from intellicrack.ui.embedding import CutterWidget, HxDWidget, X64DbgWidget
+    from intellicrack.ui.panels import (
+        LicensingAnalysisPanel,
+        ScriptManagerPanel,
+        StackViewerPanel,
+    )
+
+_logger = logging.getLogger(__name__)
 
 
 OutputType = Literal["decompiled", "disassembly", "strings", "xrefs", "log"]
@@ -151,9 +167,7 @@ class ToolTab(QFrame):
         self._info_content.setFont(QFont("JetBrains Mono", 9))
         self._info_content.setObjectName("code_label")
         self._info_content.setWordWrap(True)
-        self._info_content.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextSelectableByMouse
-        )
+        self._info_content.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         info_layout.addWidget(self._info_content)
         info_layout.addStretch()
 
@@ -347,8 +361,18 @@ class ToolOutputPanel(QFrame):
     """Main tool output panel widget.
 
     Contains tabbed interface for different tool outputs including
-    decompiled code, disassembly, strings, and cross-references.
+    decompiled code, disassembly, strings, cross-references, embedded
+    external tools, and specialized analysis panels.
+
+    Attributes:
+        address_clicked: Signal emitted when an address is clicked.
+        embedded_tool_started: Signal emitted when embedded tool starts.
+        embedded_tool_closed: Signal emitted when embedded tool closes.
     """
+
+    address_clicked: pyqtSignal = pyqtSignal(int)
+    embedded_tool_started: pyqtSignal = pyqtSignal(str)
+    embedded_tool_closed: pyqtSignal = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the tool output panel.
@@ -358,7 +382,10 @@ class ToolOutputPanel(QFrame):
         """
         super().__init__(parent)
         self._tabs: dict[str, ToolTab] = {}
+        self._embedded_tools: dict[str, QWidget] = {}
+        self._panels: dict[str, QWidget] = {}
         self._setup_ui()
+        self._setup_embedded_tabs()
 
     def _setup_ui(self) -> None:
         """Set up the tool output panel UI."""
@@ -537,3 +564,304 @@ class ToolOutputPanel(QFrame):
         self._func_list.set_functions([])
         self._xref_panel.set_xrefs([], [])
         self._address_label.setText("")
+
+    def _setup_embedded_tabs(self) -> None:
+        """Set up tabs for embedded tools and analysis panels."""
+        self._licensing_panel: LicensingAnalysisPanel | None = None
+        self._script_panel: ScriptManagerPanel | None = None
+        self._stack_panel: StackViewerPanel | None = None
+        self._hxd_widget: HxDWidget | None = None
+        self._x64dbg_widget: X64DbgWidget | None = None
+        self._cutter_widget: CutterWidget | None = None
+
+    def add_licensing_panel(self) -> LicensingAnalysisPanel:
+        """Add the licensing analysis panel as a tab.
+
+        Returns:
+            The created LicensingAnalysisPanel widget.
+        """
+        if self._licensing_panel is not None:
+            return self._licensing_panel
+
+        from intellicrack.ui.panels import LicensingAnalysisPanel  # noqa: PLC0415
+
+        self._licensing_panel = LicensingAnalysisPanel()
+        self._tab_widget.addTab(self._licensing_panel, "Licensing")
+        self._panels["licensing"] = self._licensing_panel
+        _logger.info("licensing_panel_added")
+        return self._licensing_panel
+
+    def add_script_panel(self) -> ScriptManagerPanel:
+        """Add the script manager panel as a tab.
+
+        Returns:
+            The created ScriptManagerPanel widget.
+        """
+        if self._script_panel is not None:
+            return self._script_panel
+
+        from intellicrack.ui.panels import ScriptManagerPanel  # noqa: PLC0415
+
+        self._script_panel = ScriptManagerPanel()
+        self._tab_widget.addTab(self._script_panel, "Scripts")
+        self._panels["scripts"] = self._script_panel
+        _logger.info("script_panel_added")
+        return self._script_panel
+
+    def add_stack_panel(self) -> StackViewerPanel:
+        """Add the stack viewer panel as a tab.
+
+        Returns:
+            The created StackViewerPanel widget.
+        """
+        if self._stack_panel is not None:
+            return self._stack_panel
+
+        from intellicrack.ui.panels import StackViewerPanel  # noqa: PLC0415
+
+        self._stack_panel = StackViewerPanel()
+        self._tab_widget.addTab(self._stack_panel, "Stack")
+        self._panels["stack"] = self._stack_panel
+        _logger.info("stack_panel_added")
+        return self._stack_panel
+
+    def add_hxd_tab(self) -> HxDWidget | None:
+        """Add the HxD hex editor as an embedded tab.
+
+        Returns:
+            The created HxDWidget or None if creation failed.
+        """
+        if self._hxd_widget is not None:
+            return self._hxd_widget
+
+        try:
+            from intellicrack.ui.embedding import HxDWidget  # noqa: PLC0415
+
+            self._hxd_widget = HxDWidget()
+            self._hxd_widget.tool_started.connect(
+                lambda: self.embedded_tool_started.emit("hxd")
+            )
+            self._hxd_widget.tool_closed.connect(
+                lambda: self.embedded_tool_closed.emit("hxd")
+            )
+            self._tab_widget.addTab(self._hxd_widget, "HxD")
+            self._embedded_tools["hxd"] = self._hxd_widget
+            _logger.info("hxd_tab_added")
+        except Exception as e:
+            _logger.warning("hxd_tab_add_failed", extra={"error": str(e)})
+            return None
+        else:
+            return self._hxd_widget
+
+    def add_x64dbg_tab(self, is_64bit: bool = True) -> X64DbgWidget | None:
+        """Add the x64dbg/x32dbg debugger as an embedded tab.
+
+        Args:
+            is_64bit: Whether to use x64dbg (True) or x32dbg (False).
+
+        Returns:
+            The created X64DbgWidget or None if creation failed.
+        """
+        if self._x64dbg_widget is not None:
+            return self._x64dbg_widget
+
+        try:
+            from intellicrack.ui.embedding import X64DbgWidget  # noqa: PLC0415
+
+            self._x64dbg_widget = X64DbgWidget(use_64bit=is_64bit)
+            self._x64dbg_widget.tool_started.connect(
+                lambda: self.embedded_tool_started.emit("x64dbg")
+            )
+            self._x64dbg_widget.tool_closed.connect(
+                lambda: self.embedded_tool_closed.emit("x64dbg")
+            )
+            tab_name = "x64dbg" if is_64bit else "x32dbg"
+            self._tab_widget.addTab(self._x64dbg_widget, tab_name)
+            self._embedded_tools["x64dbg"] = self._x64dbg_widget
+            _logger.info("x64dbg_tab_added", extra={"is_64bit": is_64bit})
+        except Exception as e:
+            _logger.warning("x64dbg_tab_add_failed", extra={"error": str(e)})
+            return None
+        else:
+            return self._x64dbg_widget
+
+    def add_cutter_tab(self) -> CutterWidget | None:
+        """Add the Cutter reverse engineering tool as an embedded tab.
+
+        Returns:
+            The created CutterWidget or None if creation failed.
+        """
+        if self._cutter_widget is not None:
+            return self._cutter_widget
+
+        try:
+            from intellicrack.ui.embedding import CutterWidget  # noqa: PLC0415
+
+            self._cutter_widget = CutterWidget()
+            self._cutter_widget.tool_started.connect(
+                lambda: self.embedded_tool_started.emit("cutter")
+            )
+            self._cutter_widget.tool_closed.connect(
+                lambda: self.embedded_tool_closed.emit("cutter")
+            )
+            self._tab_widget.addTab(self._cutter_widget, "Cutter")
+            self._embedded_tools["cutter"] = self._cutter_widget
+            _logger.info("cutter_tab_added")
+        except Exception as e:
+            _logger.warning("cutter_tab_add_failed", extra={"error": str(e)})
+            return None
+        else:
+            return self._cutter_widget
+
+    def open_in_hxd(self, file_path: Path | str) -> bool:
+        """Open a file in the embedded HxD hex editor.
+
+        Args:
+            file_path: Path to the file to open.
+
+        Returns:
+            True if the file was opened successfully.
+        """
+        if self._hxd_widget is None:
+            widget = self.add_hxd_tab()
+            if widget is None:
+                return False
+
+        if self._hxd_widget is None:
+            return False
+
+        path = Path(file_path) if isinstance(file_path, str) else file_path
+        success = self._hxd_widget.load_file(path)
+        if success:
+            self._activate_tab_by_widget(self._hxd_widget)
+        return success
+
+    def open_in_x64dbg(
+        self,
+        file_path: Path | str,
+        is_64bit: bool = True,
+    ) -> bool:
+        """Open a file in the embedded x64dbg debugger.
+
+        Args:
+            file_path: Path to the executable to debug.
+            is_64bit: Whether to use x64dbg (True) or x32dbg (False).
+
+        Returns:
+            True if the file was opened successfully.
+        """
+        if self._x64dbg_widget is None:
+            widget = self.add_x64dbg_tab(is_64bit)
+            if widget is None:
+                return False
+
+        if self._x64dbg_widget is None:
+            return False
+
+        path = Path(file_path) if isinstance(file_path, str) else file_path
+        success = self._x64dbg_widget.debug_file(path)
+        if success:
+            self._activate_tab_by_widget(self._x64dbg_widget)
+        return success
+
+    def open_in_cutter(self, file_path: Path | str) -> bool:
+        """Open a file in the embedded Cutter reverse engineering tool.
+
+        Args:
+            file_path: Path to the binary to analyze.
+
+        Returns:
+            True if the file was opened successfully.
+        """
+        if self._cutter_widget is None:
+            widget = self.add_cutter_tab()
+            if widget is None:
+                return False
+
+        if self._cutter_widget is None:
+            return False
+
+        path = Path(file_path) if isinstance(file_path, str) else file_path
+        success = self._cutter_widget.analyze_binary(path)
+        if success:
+            self._activate_tab_by_widget(self._cutter_widget)
+        return success
+
+    def _activate_tab_by_widget(self, widget: QWidget) -> None:
+        """Activate a tab by its widget.
+
+        Args:
+            widget: The widget whose tab should be activated.
+        """
+        index = self._tab_widget.indexOf(widget)
+        if index >= 0:
+            self._tab_widget.setCurrentIndex(index)
+
+    def get_embedded_tool(self, tool_id: str) -> QWidget | None:
+        """Get an embedded tool widget by ID.
+
+        Args:
+            tool_id: The tool identifier (hxd, x64dbg, cutter).
+
+        Returns:
+            The embedded tool widget or None if not available.
+        """
+        return self._embedded_tools.get(tool_id.lower())
+
+    def get_panel(self, panel_id: str) -> QWidget | None:
+        """Get a panel widget by ID.
+
+        Args:
+            panel_id: The panel identifier (licensing, scripts, stack).
+
+        Returns:
+            The panel widget or None if not available.
+        """
+        return self._panels.get(panel_id.lower())
+
+    def update_licensing_analysis(self, analysis: LicensingAnalysis) -> None:
+        """Update the licensing panel with new analysis data.
+
+        Args:
+            analysis: The licensing analysis data to display.
+        """
+        if self._licensing_panel is None:
+            self.add_licensing_panel()
+
+        if self._licensing_panel is not None:
+            self._licensing_panel.set_analysis(analysis)
+            _logger.info("licensing_analysis_updated")
+
+    def activate_licensing_tab(self) -> None:
+        """Activate the licensing analysis tab."""
+        if self._licensing_panel is None:
+            self.add_licensing_panel()
+        if self._licensing_panel is not None:
+            self._activate_tab_by_widget(self._licensing_panel)
+
+    def activate_scripts_tab(self) -> None:
+        """Activate the scripts manager tab."""
+        if self._script_panel is None:
+            self.add_script_panel()
+        if self._script_panel is not None:
+            self._activate_tab_by_widget(self._script_panel)
+
+    def activate_stack_tab(self) -> None:
+        """Activate the stack viewer tab."""
+        if self._stack_panel is None:
+            self.add_stack_panel()
+        if self._stack_panel is not None:
+            self._activate_tab_by_widget(self._stack_panel)
+
+    def close_embedded_tools(self) -> None:
+        """Close all embedded tool instances."""
+        if self._hxd_widget is not None:
+            self._hxd_widget.stop_tool()
+
+        if self._x64dbg_widget is not None:
+            self._x64dbg_widget.stop_tool()
+
+        if self._cutter_widget is not None:
+            self._cutter_widget.stop_tool()
+
+        _logger.info("embedded_tools_closed")

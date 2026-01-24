@@ -309,49 +309,63 @@ def validate_tool_parameter(
     location = f"{func_name}.{param.name}"
 
     if not param.name:
-        errors.append(ValidationError(
-            "Parameter name cannot be empty",
-            location,
-        ))
+        errors.append(
+            ValidationError(
+                "Parameter name cannot be empty",
+                location,
+            )
+        )
     elif not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", param.name):
-        errors.append(ValidationError(
-            f"Invalid parameter name '{param.name}' (must be valid identifier)",
-            location,
-        ))
+        errors.append(
+            ValidationError(
+                f"Invalid parameter name '{param.name}' (must be valid identifier)",
+                location,
+            )
+        )
 
     normalized_type = normalize_type(param.type)
     if normalized_type not in VALID_JSON_SCHEMA_TYPES:
-        errors.append(ValidationError(
-            f"Invalid type '{param.type}' (normalized to '{normalized_type}')",
-            location,
-            "warning",
-        ))
+        errors.append(
+            ValidationError(
+                f"Invalid type '{param.type}' (normalized to '{normalized_type}')",
+                location,
+                "warning",
+            )
+        )
 
     if not param.description:
-        errors.append(ValidationError(
-            "Parameter description should not be empty",
-            location,
-            "warning",
-        ))
+        errors.append(
+            ValidationError(
+                "Parameter description should not be empty",
+                location,
+                "warning",
+            )
+        )
 
     if param.required and param.default is not None:
-        errors.append(ValidationError(
-            "Required parameter should not have a default value",
-            location,
-            "warning",
-        ))
+        errors.append(
+            ValidationError(
+                "Required parameter should not have a default value",
+                location,
+                "warning",
+            )
+        )
 
     if param.enum is not None:
         if len(param.enum) == 0:
-            errors.append(ValidationError(
-                "Enum list cannot be empty",
-                location,
-            ))
+            errors.append(
+                ValidationError(
+                    "Enum list cannot be empty",
+                    location,
+                )
+            )
         elif param.default is not None and param.default not in param.enum:
-            errors.append(ValidationError(
-                f"Default value '{param.default}' not in enum {param.enum}",
-                location,
-            ))
+            errors.append(
+                ValidationError(
+                    f"Default value '{param.default}' not in enum {param.enum}",
+                    location,
+                )
+            )
 
     return errors
 
@@ -368,31 +382,39 @@ def validate_tool_function(func: ToolFunction) -> list[ValidationError]:
     errors: list[ValidationError] = []
 
     if not func.name:
-        errors.append(ValidationError(
-            "Function name cannot be empty",
-            "function",
-        ))
+        errors.append(
+            ValidationError(
+                "Function name cannot be empty",
+                "function",
+            )
+        )
     elif "." not in func.name:
-        errors.append(ValidationError(
-            f"Function name '{func.name}' should follow 'tool.function' pattern",
-            func.name,
-            "warning",
-        ))
+        errors.append(
+            ValidationError(
+                f"Function name '{func.name}' should follow 'tool.function' pattern",
+                func.name,
+                "warning",
+            )
+        )
 
     if not func.description:
-        errors.append(ValidationError(
-            "Function description should not be empty",
-            func.name or "function",
-            "warning",
-        ))
+        errors.append(
+            ValidationError(
+                "Function description should not be empty",
+                func.name or "function",
+                "warning",
+            )
+        )
 
     param_names: set[str] = set()
     for param in func.parameters:
         if param.name in param_names:
-            errors.append(ValidationError(
-                f"Duplicate parameter name '{param.name}'",
-                func.name or "function",
-            ))
+            errors.append(
+                ValidationError(
+                    f"Duplicate parameter name '{param.name}'",
+                    func.name or "function",
+                )
+            )
         param_names.add(param.name)
         errors.extend(validate_tool_parameter(param, func.name))
 
@@ -411,25 +433,31 @@ def validate_tool_definition(tool: ToolDefinition) -> list[ValidationError]:
     errors: list[ValidationError] = []
 
     if not tool.description:
-        errors.append(ValidationError(
-            "Tool description should not be empty",
-            str(tool.tool_name),
-            "warning",
-        ))
+        errors.append(
+            ValidationError(
+                "Tool description should not be empty",
+                str(tool.tool_name),
+                "warning",
+            )
+        )
 
     if len(tool.functions) == 0:
-        errors.append(ValidationError(
-            "Tool must have at least one function",
-            str(tool.tool_name),
-        ))
+        errors.append(
+            ValidationError(
+                "Tool must have at least one function",
+                str(tool.tool_name),
+            )
+        )
 
     func_names: set[str] = set()
     for func in tool.functions:
         if func.name in func_names:
-            errors.append(ValidationError(
-                f"Duplicate function name '{func.name}'",
-                str(tool.tool_name),
-            ))
+            errors.append(
+                ValidationError(
+                    f"Duplicate function name '{func.name}'",
+                    str(tool.tool_name),
+                )
+            )
         func_names.add(func.name)
         errors.extend(validate_tool_function(func))
 

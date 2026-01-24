@@ -47,11 +47,7 @@ class SplashScreen(QSplashScreen):
         pixmap = SplashScreen._load_splash_pixmap()
         super().__init__(pixmap)
 
-        self.setWindowFlags(
-            Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.SplashScreen
-        )
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint | Qt.WindowType.SplashScreen)
 
         self._progress_value: int = 0
         self._status_message: str = "Initializing..."
@@ -77,10 +73,10 @@ class SplashScreen(QSplashScreen):
                         Qt.AspectRatioMode.KeepAspectRatio,
                         Qt.TransformationMode.SmoothTransformation,
                     )
-                    _logger.debug("Loaded splash image from: %s", splash_path)
+                    _logger.debug("splash_image_loaded", extra={"path": str(splash_path)})
                     return scaled
         except FileNotFoundError:
-            _logger.debug("Splash image not found, using fallback")
+            _logger.debug("splash_image_not_found_using_fallback", extra={})
 
         return SplashScreen._create_fallback_pixmap()
 
@@ -142,9 +138,7 @@ class SplashScreen(QSplashScreen):
         layout.addStretch()
 
         self._status_label = QLabel("Initializing...")
-        self._status_label.setStyleSheet(
-            f"color: {FALLBACK_TEXT_COLOR}; font-size: 11px; background: transparent;"
-        )
+        self._status_label.setStyleSheet(f"color: {FALLBACK_TEXT_COLOR}; font-size: 11px; background: transparent;")
         self._status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self._status_label)
 

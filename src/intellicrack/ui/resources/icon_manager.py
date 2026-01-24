@@ -130,40 +130,40 @@ ICON_MAP: Final[dict[str, str]] = {
 UNICODE_FALLBACK: Final[dict[str, str]] = {
     "status_success": "\u2713",
     "status_error": "\u2717",
-    "status_warning": "\u26A0",
+    "status_warning": "\u26a0",
     "status_info": "\u2139",
     "status_question": "?",
-    "status_loading": "\u23F3",
-    "status_idle": "\u25CF",
-    "status_ready": "\u25CF",
-    "action_run": "\u25B6",
-    "action_stop": "\u25A0",
-    "action_pause": "\u23F8",
-    "action_restart": "\u21BB",
+    "status_loading": "\u23f3",
+    "status_idle": "\u25cf",
+    "status_ready": "\u25cf",
+    "action_run": "\u25b6",
+    "action_stop": "\u25a0",
+    "action_pause": "\u23f8",
+    "action_restart": "\u21bb",
     "nav_back": "\u2190",
     "nav_forward": "\u2192",
     "nav_up": "\u2191",
     "nav_down": "\u2193",
     "nav_home": "\u2302",
-    "nav_refresh": "\u21BB",
+    "nav_refresh": "\u21bb",
     "file_new": "+",
-    "file_open": "\U0001F4C2",
-    "file_save": "\U0001F4BE",
+    "file_open": "\U0001f4c2",
+    "file_save": "\U0001f4be",
     "file_close": "\u2715",
-    "edit_copy": "\U0001F4CB",
+    "edit_copy": "\U0001f4cb",
     "edit_cut": "\u2702",
-    "edit_paste": "\U0001F4CB",
+    "edit_paste": "\U0001f4cb",
     "edit_delete": "\u2715",
-    "edit_undo": "\u21B6",
-    "edit_redo": "\u21B7",
-    "edit_search": "\U0001F50D",
-    "security_lock": "\U0001F512",
-    "security_key": "\U0001F511",
-    "security_shield": "\U0001F6E1",
-    "security_warning": "\u26A0",
-    "binary_exe": "\U0001F4E6",
-    "binary_dll": "\U0001F4E6",
-    "ai_brain": "\U0001F9E0",
+    "edit_undo": "\u21b6",
+    "edit_redo": "\u21b7",
+    "edit_search": "\U0001f50d",
+    "security_lock": "\U0001f512",
+    "security_key": "\U0001f511",
+    "security_shield": "\U0001f6e1",
+    "security_warning": "\u26a0",
+    "binary_exe": "\U0001f4e6",
+    "binary_dll": "\U0001f4e6",
+    "ai_brain": "\U0001f9e0",
     "tool_ghidra": "G",
     "tool_frida": "F",
     "tool_radare2": "r2",
@@ -255,7 +255,7 @@ class IconManager:
                 icon = QIcon(str(icon_path))
                 if not icon.isNull():
                     return icon
-                _logger.debug("Failed to load icon from path: %s", icon_path)
+                _logger.debug("icon_load_failed", extra={"icon_path": str(icon_path)})
 
         return IconManager._create_fallback_icon(name, size)
 
@@ -352,7 +352,7 @@ class IconManager:
                     self._icon_cache["app_icon"] = icon
                     return icon
         except FileNotFoundError:
-            _logger.debug("Application icon not found")
+            _logger.debug("application_icon_not_found")
 
         fallback = IconManager._render_text_icon("IC", 256, QColor("#007acc"))
         self._icon_cache["app_icon"] = fallback

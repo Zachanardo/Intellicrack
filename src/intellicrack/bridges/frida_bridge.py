@@ -372,7 +372,7 @@ class FridaBridge(InstrumentationBridge):
         try:
             self._device = await asyncio.to_thread(frida.get_local_device)
             self._state = BridgeState(connected=True, tool_running=True)
-            _logger.info("Frida bridge initialized")
+            _logger.info("frida_bridge_initialized")
         except Exception as e:
             raise ToolError(_ERR_INIT_FAILED) from e
 
@@ -382,21 +382,21 @@ class FridaBridge(InstrumentationBridge):
             try:
                 await self._unload_script(script_id)
             except Exception as e:
-                _logger.warning("Error unloading script %s: %s", script_id, e)
+                _logger.warning("script_unload_failed", extra={"script_id": script_id, "error": str(e)})
 
         if self._session is not None:
             try:
                 await asyncio.to_thread(self._session.detach)
             except Exception as e:
-                _logger.warning("Error detaching session: %s", e)
+                _logger.warning("session_detach_failed", extra={"error": str(e)})
             self._session = None
 
         if self._spawned_pid is not None and self._device is not None:
             try:
                 await asyncio.to_thread(self._device.kill, self._spawned_pid)
-                _logger.info("Killed spawned process %d", self._spawned_pid)
+                _logger.info("spawned_process_killed", extra={"pid": self._spawned_pid})
             except Exception as e:
-                _logger.warning("Error killing spawned process %d: %s", self._spawned_pid, e)
+                _logger.warning("spawned_process_kill_failed", extra={"pid": self._spawned_pid, "error": str(e)})
 
             process_manager = ProcessManager.get_instance()
             process_manager.unregister_external_pid(self._spawned_pid)
@@ -406,7 +406,7 @@ class FridaBridge(InstrumentationBridge):
         self._pid = None
         self._hooks = {}
         await super().shutdown()
-        _logger.info("Frida bridge shutdown")
+        _logger.info("frida_bridge_shutdown")
 
     async def is_available(self) -> bool:  # noqa: PLR6301
         """Check if Frida is available.
@@ -449,7 +449,7 @@ class FridaBridge(InstrumentationBridge):
                 process_attached=True,
                 target_pid=pid,
             )
-            _logger.info("Attached to process %d", pid)
+            _logger.info("process_attached", extra={"pid": pid})
         except frida.ProcessNotFoundError as e:
             raise ToolError(_ERR_PROCESS_NOT_FOUND) from e
         except Exception as e:
@@ -501,7 +501,7 @@ class FridaBridge(InstrumentationBridge):
             process_attached=True,
             target_pid=self._pid,
         )
-        _logger.info("Attached to process '%s' (PID: %d)", name, self._pid)
+        _logger.info("process_attached_by_name", extra={"name": name, "pid": self._pid})
 
     async def spawn(
         self,
@@ -559,7 +559,7 @@ class FridaBridge(InstrumentationBridge):
                 target_path=path,
                 target_pid=pid,
             )
-            _logger.info("Spawned process %s (PID: %d)", path.name, pid)
+            _logger.info("process_spawned", extra={"name": path.name, "pid": pid})
         except Exception as e:
             raise ToolError(_ERR_ATTACH_FAILED) from e
         else:
@@ -576,7 +576,7 @@ class FridaBridge(InstrumentationBridge):
 
         try:
             await asyncio.to_thread(self._device.resume, self._pid)
-            _logger.info("Resumed process %d", self._pid)
+            _logger.info("process_resumed", extra={"pid": self._pid})
         except Exception as e:
             raise ToolError(_ERR_NOT_ATTACHED) from e
 
@@ -590,7 +590,7 @@ class FridaBridge(InstrumentationBridge):
             ToolError: If detachment fails.
         """
         if self._session is None:
-            _logger.warning("No session to detach")
+            _logger.warning("detach_no_session")
             return
 
         try:
@@ -603,9 +603,9 @@ class FridaBridge(InstrumentationBridge):
             if kill_spawned and self._spawned_pid is not None and self._device is not None:
                 try:
                     await asyncio.to_thread(self._device.kill, self._spawned_pid)
-                    _logger.info("Killed spawned process %d", self._spawned_pid)
+                    _logger.info("spawned_process_killed", extra={"pid": self._spawned_pid})
                 except Exception as e:
-                    _logger.warning("Error killing spawned process %d: %s", self._spawned_pid, e)
+                    _logger.warning("spawned_process_kill_failed", extra={"pid": self._spawned_pid, "error": str(e)})
 
                 process_manager = ProcessManager.get_instance()
                 process_manager.unregister_external_pid(self._spawned_pid)
@@ -614,7 +614,7 @@ class FridaBridge(InstrumentationBridge):
             self._pid = None
             self._hooks = {}
             self._state = BridgeState(connected=True, tool_running=True)
-            _logger.info("Detached from process")
+            _logger.info("process_detached")
         except Exception as e:
             raise ToolError(_ERR_NOT_ATTACHED) from e
 
@@ -678,7 +678,7 @@ class FridaBridge(InstrumentationBridge):
         if "error" in result:
             raise ToolError(_ERR_WRITE_FAILED)
 
-        _logger.debug("Wrote %d bytes to 0x%X", len(data), address)
+        _logger.debug("memory_written", extra={"length": len(data), "address": hex(address)})
         return len(data)
 
     async def get_memory_regions(self) -> list[MemoryRegion]:
@@ -981,7 +981,7 @@ class FridaBridge(InstrumentationBridge):
         )
         self._hooks[hook_id] = hook_info
 
-        _logger.info("Installed hook %s on %s", hook_id, target)
+        _logger.info("hook_installed", extra={"hook_id": hook_id, "target": target})
         return hook_info
 
     async def remove_hook(self, hook_id: str) -> bool:
@@ -994,13 +994,13 @@ class FridaBridge(InstrumentationBridge):
             True if removed successfully, False if hook not found.
         """
         if hook_id not in self._scripts:
-            _logger.warning("Hook %s not found", hook_id)
+            _logger.warning("hook_not_found", extra={"hook_id": hook_id})
             return False
 
         await self._unload_script(hook_id)
         del self._hooks[hook_id]
 
-        _logger.info("Removed hook %s", hook_id)
+        _logger.info("hook_removed", extra={"hook_id": hook_id})
         return True
 
     async def get_hooks(self) -> list[HookInfo]:
@@ -1073,7 +1073,7 @@ class FridaBridge(InstrumentationBridge):
         args_code = ", ".join(f"ptr({a})" for a in args_list)
 
         script_code = f"""
-        var func = new NativeFunction(ptr({address}), 'pointer', [{', '.join(["'pointer'"] * len(args_list))}]);
+        var func = new NativeFunction(ptr({address}), 'pointer', [{", ".join(["'pointer'"] * len(args_list))}]);
         var result = func({args_code});
         send({{ type: 'call_result', value: result.toInt32() }});
         """
@@ -1149,7 +1149,7 @@ class FridaBridge(InstrumentationBridge):
             try:
                 await asyncio.to_thread(script.unload)
             except Exception as e:
-                _logger.warning("Error unloading script %s: %s", script_id, e)
+                _logger.warning("script_unload_failed", extra={"script_id": script_id, "error": str(e)})
             del self._scripts[script_id]
 
     def set_message_handler(

@@ -1,0 +1,89 @@
+5 findings in tests\test_ui\test_font_manager.py
+
+tests\test_ui\test_font_manager.py:108: error: "QFont" has no attribute "styleHint"  [attr-defined]
+
+tests\test_ui\test_font_manager.py:108: error: "type[QFont]" has no attribute "StyleHint"  [attr-defined]
+
+tests\test_ui\test_font_manager.py:113: error: "QFont" has no attribute "fixedPitch"  [attr-defined]
+
+tests\test_ui\test_font_manager.py:143: error: "QFont" has no attribute "styleHint"  [attr-defined]
+
+tests\test_ui\test_font_manager.py:143: error: "type[QFont]" has no attribute "StyleHint"  [attr-defined]
+
+
+5 findings in tests\test_providers\test_model_discovery.py
+
+tests\test_providers\test_model_discovery.py:142: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+
+tests\test_providers\test_model_discovery.py:169: error: Incompatible types in assignment (expression has type "GoogleProvider", variable has type "OpenAIProvider")  [assignment]
+
+tests\test_providers\test_model_discovery.py:179: error: Incompatible types in assignment (expression has type "OpenRouterProvider", variable has type "OpenAIProvider")  [assignment]
+
+tests\test_providers\test_model_discovery.py:189: error: Incompatible types in assignment (expression has type "AnthropicProvider", variable has type "OpenAIProvider")  [assignment]
+
+tests\test_providers\test_model_discovery.py:199: error: Incompatible types in assignment (expression has type "OllamaProvider", variable has type "OpenAIProvider")  [assignment]
+
+
+4 findings in tests\test_core\test_types.py
+
+tests\test_core\test_types.py:1353: error: Unexpected keyword argument "process_name" for "AttachError"  [call-arg]
+
+tests\test_core\test_types.py:1354: error: "AttachError" has no attribute "process_name"  [attr-defined]
+
+tests\test_core\test_types.py:1359: error: Unexpected keyword argument "process_name" for "AttachError"  [call-arg]
+
+tests\test_core\test_types.py:1366: error: "AttachError" has no attribute "process_name"  [attr-defined]
+
+
+2 findings in tests\test_ui\test_splash_screen.py
+
+tests\test_ui\test_splash_screen.py:49: error: "type[Qt]" has no attribute "WindowType"  [attr-defined]
+
+tests\test_ui\test_splash_screen.py:50: error: "type[Qt]" has no attribute "WindowType"  [attr-defined]
+
+
+2 findings in tests\test_core\test_script_gen_keygen.py
+
+tests\test_core\test_script_gen_keygen.py:19: error: Module "intellicrack.core.script_gen" has no attribute "GeneratedScript"  [attr-defined]
+
+tests\test_core\test_script_gen_keygen.py:19: error: Module "intellicrack.core.script_gen" has no attribute "ScriptGenerator"  [attr-defined]
+
+
+1 findings in src\intellicrack\core\types.py
+
+src\intellicrack\core\types.py:1023: note: "AttachError" defined here
+
+
+1 findings in tests\test_ui\conftest.py
+
+tests\test_ui\conftest.py:31: error: Redundant cast to "QApplication"  [redundant-cast]
+
+
+1 findings in tests\test_providers\test_openrouter_provider.py
+
+tests\test_providers\test_openrouter_provider.py:209: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+
+
+1 findings in tests\test_providers\test_huggingface_provider.py
+
+tests\test_providers\test_huggingface_provider.py:215: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+
+
+1 findings in tests\test_providers\test_openai_provider.py
+
+tests\test_providers\test_openai_provider.py:192: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+
+
+1 findings in tests\test_providers\test_grok_provider.py
+
+tests\test_providers\test_grok_provider.py:188: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+
+
+1 findings in tests\test_providers\test_anthropic_provider.py
+
+tests\test_providers\test_anthropic_provider.py:188: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]
+
+
+1 findings in tests\test_providers\test_google_provider.py
+
+tests\test_providers\test_google_provider.py:190: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]

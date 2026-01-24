@@ -221,18 +221,14 @@ class ToolInstallWorker(QThread):
             timeout=300,
         )
         if result.returncode != _RETURNCODE_SUCCESS:
-            error_message = (
-                f"Failed to install ghidra_bridge: {result.stderr.strip()}"
-            )
+            error_message = f"Failed to install ghidra_bridge: {result.stderr.strip()}"
             raise RuntimeError(error_message)
 
         scripts_dir = ghidra_root / "ghidra_scripts"
         scripts_dir.mkdir(parents=True, exist_ok=True)
 
         bridge_script_content = (
-            'import ghidra_bridge_server\n'
-            'ghidra_bridge_server.GhidraBridgeServer('
-            'server_host="127.0.0.1", server_port=4768).start()\n'
+            'import ghidra_bridge_server\nghidra_bridge_server.GhidraBridgeServer(server_host="127.0.0.1", server_port=4768).start()\n'
         )
 
         script_path = scripts_dir / "intellicrack_bridge.py"
@@ -271,20 +267,20 @@ class ToolInstallWorker(QThread):
             (
                 "@echo off\n"
                 "setlocal\n"
-                "set \"GHIDRA_DIR=%~dp0..\"\n"
-                "set \"PROJECT_DIR=%~1\"\n"
-                "set \"PROJECT_NAME=%~2\"\n"
-                "if \"%PROJECT_DIR%\"==\"\" (\n"
+                'set "GHIDRA_DIR=%~dp0.."\n'
+                'set "PROJECT_DIR=%~1"\n'
+                'set "PROJECT_NAME=%~2"\n'
+                'if "%PROJECT_DIR%"=="" (\n'
                 "  echo Usage: %~nx0 ^<project_dir^> [project_name] [extra args]\n"
                 "  exit /b 1\n"
                 ")\n"
-                "if \"%PROJECT_NAME%\"==\"\" (\n"
-                "  set \"PROJECT_NAME=intellicrack\"\n"
+                'if "%PROJECT_NAME%"=="" (\n'
+                '  set "PROJECT_NAME=intellicrack"\n'
                 ")\n"
                 "shift\n"
                 "shift\n"
-                "\"%GHIDRA_DIR%\\support\\analyzeHeadless.bat\" \"%PROJECT_DIR%\" "
-                "\"%PROJECT_NAME%\" -scriptPath \"%GHIDRA_DIR%\\ghidra_scripts\" "
+                '"%GHIDRA_DIR%\\support\\analyzeHeadless.bat" "%PROJECT_DIR%" '
+                '"%PROJECT_NAME%" -scriptPath "%GHIDRA_DIR%\\ghidra_scripts" '
                 "-postScript intellicrack_bridge.py %*\n"
             ),
             encoding="utf-8",
@@ -300,21 +296,21 @@ class ToolInstallWorker(QThread):
                 "    try:\n"
                 "        import ghidra_bridge\n"
                 "    except ImportError as exc:\n"
-                "        print(f\"ghidra_bridge import failed: {exc}\")\n"
+                '        print(f"ghidra_bridge import failed: {exc}")\n'
                 "        return 1\n"
                 "    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n"
                 "    sock.settimeout(3.0)\n"
                 "    try:\n"
-                "        sock.connect((\"127.0.0.1\", 4768))\n"
-                "        print(\"bridge server reachable\")\n"
+                '        sock.connect(("127.0.0.1", 4768))\n'
+                '        print("bridge server reachable")\n'
                 "        return 0\n"
                 "    except OSError as exc:\n"
-                "        print(f\"bridge server not reachable: {exc}\")\n"
+                '        print(f"bridge server not reachable: {exc}")\n'
                 "        return 2\n"
                 "    finally:\n"
                 "        sock.close()\n"
                 "\n"
-                "if __name__ == \"__main__\":\n"
+                'if __name__ == "__main__":\n'
                 "    sys.exit(main())\n"
             ),
             encoding="utf-8",
@@ -383,17 +379,9 @@ class ToolInstallWorker(QThread):
                     current_path = ""
                     value_type = _winreg_module.REG_EXPAND_SZ
 
-                existing = [
-                    os.path.normcase(os.path.normpath(p.strip()))
-                    for p in current_path.split(os.pathsep)
-                    if p.strip()
-                ]
+                existing = [os.path.normcase(os.path.normpath(p.strip())) for p in current_path.split(os.pathsep) if p.strip()]
                 if os.path.normcase(os.path.normpath(bin_path_str)) not in existing:
-                    new_path = (
-                        f"{bin_path_str}{os.pathsep}{current_path}"
-                        if current_path
-                        else bin_path_str
-                    )
+                    new_path = f"{bin_path_str}{os.pathsep}{current_path}" if current_path else bin_path_str
                     _winreg_module.SetValueEx(key, "Path", 0, value_type, new_path)
                 _winreg_module.CloseKey(key)
             except OSError as exc:
@@ -404,11 +392,7 @@ class ToolInstallWorker(QThread):
 
         current_env_path = os.environ.get("PATH", "")
         if bin_path_str not in current_env_path:
-            os.environ["PATH"] = (
-                f"{bin_path_str}{os.pathsep}{current_env_path}"
-                if current_env_path
-                else bin_path_str
-            )
+            os.environ["PATH"] = f"{bin_path_str}{os.pathsep}{current_env_path}" if current_env_path else bin_path_str
 
     @staticmethod
     def _broadcast_environment_change() -> None:
@@ -424,7 +408,7 @@ class ToolInstallWorker(QThread):
                 None,
             )
         except Exception as exc:
-            _logger.warning("Failed to broadcast environment change: %s", exc)
+            _logger.warning("environment_change_broadcast_failed", extra={"error": str(exc)})
 
     @staticmethod
     def _verify_radare2() -> None:
@@ -452,9 +436,7 @@ class ToolInstallWorker(QThread):
         config_path = config_dir / "radare2rc"
         if not config_path.exists():
             config_path.write_text(
-                "e asm.syntax=intel\n"
-                "e asm.lines=true\n"
-                "e scr.color=1\n",
+                "e asm.syntax=intel\ne asm.lines=true\ne scr.color=1\n",
                 encoding="utf-8",
             )
 
@@ -618,11 +600,11 @@ class ToolStatusCheckWorker(QThread):
             if result.returncode == _RETURNCODE_SUCCESS:
                 return True, "radare2 available in PATH"
         except subprocess.TimeoutExpired:
-            _logger.debug("radare2 path check timed out")
+            _logger.debug("radare2_path_check_timed_out", extra={})
         except FileNotFoundError:
-            _logger.debug("radare2 executable not found in PATH")
+            _logger.debug("radare2_executable_not_in_path", extra={})
         except OSError as e:
-            _logger.debug("OS error checking radare2: %s", e)
+            _logger.debug("radare2_os_error", extra={"error": str(e)})
 
         return False, "radare2 executable not found"
 
@@ -688,9 +670,7 @@ class ToolConfigDialog(QDialog):
         layout.addWidget(splitter, stretch=1)
 
         button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok
-            | QDialogButtonBox.StandardButton.Cancel
-            | QDialogButtonBox.StandardButton.Apply
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Apply
         )
         button_box.accepted.connect(self._on_accept)
         button_box.rejected.connect(self.reject)
@@ -976,9 +956,7 @@ class ToolSettingsWidget(QFrame):
         self._status_worker.finished.connect(self._on_status_checked)
         self._status_worker.start()
 
-    def _on_status_checked(
-        self, tool_id: str, is_available: bool, message: str
-    ) -> None:
+    def _on_status_checked(self, tool_id: str, is_available: bool, message: str) -> None:
         """Handle status check completion.
 
         Args:
@@ -1012,8 +990,7 @@ class ToolSettingsWidget(QFrame):
             QMessageBox.warning(
                 self,
                 "Installation",
-                f"Automatic installation not available for {self._display_name}.\n\n"
-                f"Please download and install manually.",
+                f"Automatic installation not available for {self._display_name}.\n\nPlease download and install manually.",
             )
             return
 
@@ -1025,8 +1002,7 @@ class ToolSettingsWidget(QFrame):
         reply = QMessageBox.question(
             self,
             "Install Tool",
-            f"Download and install {self._display_name}?\n\n"
-            f"Installation path:\n{install_path}",
+            f"Download and install {self._display_name}?\n\nInstallation path:\n{install_path}",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
@@ -1035,9 +1011,7 @@ class ToolSettingsWidget(QFrame):
             self._install_progress.setValue(0)
             self._install_btn.setEnabled(False)
 
-            self._install_worker = ToolInstallWorker(
-                self._tool_id, install_path, self
-            )
+            self._install_worker = ToolInstallWorker(self._tool_id, install_path, self)
             self._install_worker.progress.connect(self._install_progress.setValue)
             self._install_worker.finished.connect(self._on_install_finished)
             self._install_worker.start()
@@ -1096,12 +1070,180 @@ class ToolSettingsWidget(QFrame):
             )
 
 
-class ToolStatusDialog(QDialog):
-    """Dialog showing status of all configured tools.
+class ToolCapabilitiesWidget(QFrame):
+    """Widget displaying tool capabilities in a grid format."""
 
-    Displays a summary of which tools are installed, connected,
-    and ready to use.
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize the capabilities widget.
+
+        Args:
+            parent: Parent widget.
+        """
+        super().__init__(parent)
+        self._setup_ui()
+
+    def _setup_ui(self) -> None:
+        """Set up the capabilities display UI."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(8)
+
+        self._name_label = QLabel("Select a tool")
+        self._name_label.setStyleSheet("font-weight: bold; font-size: 12px;")
+        layout.addWidget(self._name_label)
+
+        caps_group = QGroupBox("Capabilities")
+        caps_layout = QFormLayout(caps_group)
+        caps_layout.setSpacing(4)
+
+        self._cap_labels: dict[str, QLabel] = {}
+        capabilities = [
+            ("static_analysis", "Static Analysis"),
+            ("dynamic_analysis", "Dynamic Analysis"),
+            ("decompilation", "Decompilation"),
+            ("debugging", "Debugging"),
+            ("patching", "Patching"),
+            ("scripting", "Scripting"),
+            ("memory_access", "Memory Access"),
+        ]
+
+        for cap_id, cap_name in capabilities:
+            indicator = QLabel("\u25CB")
+            indicator.setStyleSheet("color: #888;")
+            self._cap_labels[cap_id] = indicator
+            caps_layout.addRow(cap_name, indicator)
+
+        layout.addWidget(caps_group)
+
+        arch_group = QGroupBox("Architectures")
+        arch_layout = QVBoxLayout(arch_group)
+        self._arch_label = QLabel("--")
+        self._arch_label.setWordWrap(True)
+        self._arch_label.setStyleSheet("color: #aaa;")
+        arch_layout.addWidget(self._arch_label)
+        layout.addWidget(arch_group)
+
+        fmt_group = QGroupBox("Formats")
+        fmt_layout = QVBoxLayout(fmt_group)
+        self._fmt_label = QLabel("--")
+        self._fmt_label.setWordWrap(True)
+        self._fmt_label.setStyleSheet("color: #aaa;")
+        fmt_layout.addWidget(self._fmt_label)
+        layout.addWidget(fmt_group)
+
+        layout.addStretch()
+
+    def set_tool(self, name: str, capabilities: dict[str, bool], archs: list[str], formats: list[str]) -> None:
+        """Update the display for a specific tool.
+
+        Args:
+            name: Tool display name.
+            capabilities: Dict of capability flags.
+            archs: List of supported architectures.
+            formats: List of supported binary formats.
+        """
+        self._name_label.setText(name)
+
+        cap_mapping = {
+            "static_analysis": "supports_static_analysis",
+            "dynamic_analysis": "supports_dynamic_analysis",
+            "decompilation": "supports_decompilation",
+            "debugging": "supports_debugging",
+            "patching": "supports_patching",
+            "scripting": "supports_scripting",
+            "memory_access": "supports_memory_access",
+        }
+
+        for cap_id, cap_key in cap_mapping.items():
+            label = self._cap_labels.get(cap_id)
+            if label:
+                supported = capabilities.get(cap_key, False)
+                if supported:
+                    label.setText("\u25CF")
+                    label.setStyleSheet("color: #4ec9b0;")
+                else:
+                    label.setText("\u25CB")
+                    label.setStyleSheet("color: #888;")
+
+        self._arch_label.setText(", ".join(archs) if archs else "--")
+        self._fmt_label.setText(", ".join(formats) if formats else "--")
+
+
+class ToolStatusDialog(QDialog):
+    """Dialog showing status and capabilities of all configured tools.
+
+    Displays which tools are installed, their connection state,
+    supported capabilities, architectures, and file formats.
     """
+
+    TOOL_CAPABILITIES: ClassVar[dict[str, dict[str, Any]]] = {
+        "ghidra": {
+            "supports_static_analysis": True,
+            "supports_dynamic_analysis": False,
+            "supports_decompilation": True,
+            "supports_debugging": False,
+            "supports_patching": True,
+            "supports_scripting": True,
+            "supports_memory_access": False,
+            "architectures": ["x86", "x86_64", "ARM", "ARM64", "MIPS", "PPC"],
+            "formats": ["PE", "ELF", "Mach-O", "Raw"],
+        },
+        "x64dbg": {
+            "supports_static_analysis": False,
+            "supports_dynamic_analysis": True,
+            "supports_decompilation": False,
+            "supports_debugging": True,
+            "supports_patching": True,
+            "supports_scripting": True,
+            "supports_memory_access": True,
+            "architectures": ["x86", "x86_64"],
+            "formats": ["PE"],
+        },
+        "frida": {
+            "supports_static_analysis": False,
+            "supports_dynamic_analysis": True,
+            "supports_decompilation": False,
+            "supports_debugging": False,
+            "supports_patching": False,
+            "supports_scripting": True,
+            "supports_memory_access": True,
+            "architectures": ["x86", "x86_64", "ARM", "ARM64"],
+            "formats": ["PE", "ELF", "Mach-O"],
+        },
+        "radare2": {
+            "supports_static_analysis": True,
+            "supports_dynamic_analysis": True,
+            "supports_decompilation": True,
+            "supports_debugging": True,
+            "supports_patching": True,
+            "supports_scripting": True,
+            "supports_memory_access": True,
+            "architectures": ["x86", "x86_64", "ARM", "ARM64", "MIPS", "PPC", "SPARC"],
+            "formats": ["PE", "ELF", "Mach-O", "Raw", "DEX"],
+        },
+        "process": {
+            "supports_static_analysis": False,
+            "supports_dynamic_analysis": True,
+            "supports_decompilation": False,
+            "supports_debugging": False,
+            "supports_patching": False,
+            "supports_scripting": False,
+            "supports_memory_access": True,
+            "architectures": ["x86", "x86_64"],
+            "formats": [],
+        },
+        "binary": {
+            "supports_static_analysis": True,
+            "supports_dynamic_analysis": False,
+            "supports_decompilation": False,
+            "supports_debugging": False,
+            "supports_patching": True,
+            "supports_scripting": False,
+            "supports_memory_access": False,
+            "architectures": ["x86", "x86_64", "ARM", "ARM64"],
+            "formats": ["PE", "ELF", "Mach-O", "Raw"],
+        },
+    }
 
     def __init__(
         self,
@@ -1123,21 +1265,44 @@ class ToolStatusDialog(QDialog):
         self._setup_ui()
         self._refresh_status()
 
-        self.setWindowTitle("Tool Status")
-        self.resize(450, 350)
+        self.setWindowTitle("Tool Status & Capabilities")
+        self.resize(700, 500)
 
     def _setup_ui(self) -> None:
         """Set up the dialog UI."""
         layout = QVBoxLayout(self)
 
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+
+        left_panel = QFrame()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+
+        list_label = QLabel("Tools")
+        list_label.setStyleSheet("font-weight: bold;")
+        left_layout.addWidget(list_label)
+
         self._status_list = QListWidget()
-        layout.addWidget(self._status_list)
+        self._status_list.currentRowChanged.connect(self._on_tool_selected)
+        left_layout.addWidget(self._status_list)
+
+        splitter.addWidget(left_panel)
+
+        self._capabilities_widget = ToolCapabilitiesWidget()
+        splitter.addWidget(self._capabilities_widget)
+
+        splitter.setSizes([300, 400])
+        layout.addWidget(splitter)
 
         button_layout = QHBoxLayout()
 
         self._refresh_btn = QPushButton("Refresh")
         self._refresh_btn.clicked.connect(self._refresh_status)
         button_layout.addWidget(self._refresh_btn)
+
+        self._configure_btn = QPushButton("Configure")
+        self._configure_btn.clicked.connect(self._on_configure)
+        button_layout.addWidget(self._configure_btn)
 
         button_layout.addStretch()
 
@@ -1146,6 +1311,37 @@ class ToolStatusDialog(QDialog):
         button_layout.addWidget(close_btn)
 
         layout.addLayout(button_layout)
+
+    def _on_tool_selected(self, row: int) -> None:
+        """Handle tool selection in the list.
+
+        Args:
+            row: Selected row index.
+        """
+        tools = list(self.TOOL_CAPABILITIES.keys())
+        if 0 <= row < len(tools):
+            tool_id = tools[row]
+            caps = self.TOOL_CAPABILITIES.get(tool_id, {})
+            tool_names = {
+                "ghidra": "Ghidra",
+                "x64dbg": "x64dbg",
+                "frida": "Frida",
+                "radare2": "radare2",
+                "process": "Process Control",
+                "binary": "Binary Operations",
+            }
+            display_name = tool_names.get(tool_id, tool_id)
+            archs = caps.get("architectures", [])
+            formats = caps.get("formats", [])
+            self._capabilities_widget.set_tool(display_name, caps, archs, formats)
+
+    def _on_configure(self) -> None:
+        """Open configuration dialog for selected tool."""
+        current_item = self._status_list.currentItem()
+        if current_item:
+            config_dialog = ToolConfigDialog(parent=self)
+            config_dialog.exec()
+            self._refresh_status()
 
     def _load_settings(self) -> dict[str, dict[str, Any]]:
         """Load all tool settings from config.
@@ -1192,9 +1388,7 @@ class ToolStatusDialog(QDialog):
             self._status_workers.append(worker)
             worker.start()
 
-    def _on_tool_status_received(
-        self, tool_id: str, is_available: bool, message: str
-    ) -> None:
+    def _on_tool_status_received(self, tool_id: str, is_available: bool, message: str) -> None:
         """Handle status check completion for a single tool.
 
         Args:
@@ -1226,3 +1420,5 @@ class ToolStatusDialog(QDialog):
         if len(self._tool_statuses) == EXPECTED_TOOL_COUNT:
             self._refresh_btn.setEnabled(True)
             self._status_workers.clear()
+            if self._status_list.count() > 0:
+                self._status_list.setCurrentRow(0)

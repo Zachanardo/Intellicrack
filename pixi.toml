@@ -43,6 +43,7 @@ lief = "*"
 capstone = "*"
 keystone-engine = "*"
 frida = "*"
+frida-tools = "*"
 r2pipe = "*"
 ghidra-bridge = "*"
 python-dotenv = "*"
@@ -137,6 +138,7 @@ pre-commit-hooks = "*"
 detect-secrets = "*"
 mcp = ">=1.2.0"
 pyannotate = ">=1.2.0,<2"
+structlog = ">=24.1.0"
 
 [pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/xpu"]

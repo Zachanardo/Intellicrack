@@ -7,6 +7,7 @@ Ollama, and OpenRouter.
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, TypedDict
@@ -99,6 +100,9 @@ class LLMProviderBase(ABC):
         self._credentials: ProviderCredentials | None = None
         self._connected: bool = False
         self._cancel_requested: bool = False
+        self._logger: logging.Logger = logging.getLogger(
+            f"{__name__}.{self.__class__.__name__}"
+        )
 
     @property
     @abstractmethod
@@ -138,6 +142,7 @@ class LLMProviderBase(ABC):
         self._connected = False
         self._credentials = None
         self._cancel_requested = False
+        self._logger.debug("provider_base_disconnected", extra={})
 
     @abstractmethod
     async def list_models(self) -> list[ModelInfo]:

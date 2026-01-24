@@ -172,12 +172,8 @@ def _extract_lief_sections(binary: object, image_base: int) -> list[SectionData]
         raw_size = int(getattr(section, "size", 0))
         content = bytes(getattr(section, "content", []) or [])
         executable = False
-        if hasattr(section, "has_characteristic") and _lief_module is not None and hasattr(
-            _lief_module, "PE"
-        ):
-            executable = section.has_characteristic(
-                _lief_module.PE.SECTION_CHARACTERISTICS.MEM_EXECUTE
-            )
+        if hasattr(section, "has_characteristic") and _lief_module is not None and hasattr(_lief_module, "PE"):
+            executable = section.has_characteristic(_lief_module.PE.SECTION_CHARACTERISTICS.MEM_EXECUTE)
         sections.append(
             SectionData(
                 name=name,
@@ -358,9 +354,27 @@ class _FunctionAnalysisContext:
 
 
 _ARITHMETIC_MNEMONICS: frozenset[str] = frozenset({
-    "xor", "add", "sub", "mul", "imul", "div", "idiv",
-    "and", "or", "shl", "shr", "sal", "sar", "rol", "ror",
-    "rcl", "rcr", "not", "neg", "inc", "dec",
+    "xor",
+    "add",
+    "sub",
+    "mul",
+    "imul",
+    "div",
+    "idiv",
+    "and",
+    "or",
+    "shl",
+    "shr",
+    "sal",
+    "sar",
+    "rol",
+    "ror",
+    "rcl",
+    "rcr",
+    "not",
+    "neg",
+    "inc",
+    "dec",
 })
 _MIN_ARITHMETIC_FOR_CHECKSUM = 5
 _MIN_BRANCHES_FOR_VALIDATION = 2
@@ -524,9 +538,7 @@ class LicenseAnalyzer:
         strings = self._extract_strings(view)
         filtered = self._extract_filtered_strings(strings)
         crypto_data = self._analyze_crypto_data(view, strings, filtered.license)
-        key_data = self._analyze_key_format(
-            strings, crypto_data.magic_constants, crypto_data.algorithm_type
-        )
+        key_data = self._analyze_key_format(strings, crypto_data.magic_constants, crypto_data.algorithm_type)
         runtime_flags = self._analyze_runtime_indicators(view, filtered)
         confidence_score, analysis_notes = self._build_confidence(
             crypto_data.algorithm_type,
@@ -595,12 +607,8 @@ class LicenseAnalyzer:
         """
         crypto_api_calls = self._detect_crypto_apis(view, strings)
         magic_constants = self._extract_magic_constants(view)
-        validation_functions = self._identify_validation_functions(
-            view, license_strings, crypto_api_calls
-        )
-        algorithm_type, secondary_algorithms = self._detect_algorithms(
-            crypto_api_calls, magic_constants, strings
-        )
+        validation_functions = self._identify_validation_functions(view, license_strings, crypto_api_calls)
+        algorithm_type, secondary_algorithms = self._detect_algorithms(crypto_api_calls, magic_constants, strings)
         return CryptoAnalysisData(
             crypto_api_calls=crypto_api_calls,
             magic_constants=magic_constants,
@@ -625,12 +633,8 @@ class LicenseAnalyzer:
         Returns:
             KeyFormatData with key format analysis results.
         """
-        key_format, key_length, group_size, group_separator = self._detect_key_format(
-            strings, algorithm_type
-        )
-        checksum_algorithm, checksum_position = self._detect_checksum_info(
-            strings, magic_constants, algorithm_type, key_format, group_size
-        )
+        key_format, key_length, group_size, group_separator = self._detect_key_format(strings, algorithm_type)
+        checksum_algorithm, checksum_position = self._detect_checksum_info(strings, magic_constants, algorithm_type, key_format, group_size)
         return KeyFormatData(
             key_format=key_format,
             key_length=key_length,
@@ -640,9 +644,7 @@ class LicenseAnalyzer:
             checksum_position=checksum_position,
         )
 
-    def _analyze_runtime_indicators(
-        self, view: BinaryView, filtered: FilteredStrings
-    ) -> RuntimeIndicators:
+    def _analyze_runtime_indicators(self, view: BinaryView, filtered: FilteredStrings) -> RuntimeIndicators:
         """Analyze runtime protection indicators.
 
         Args:
@@ -654,15 +656,9 @@ class LicenseAnalyzer:
         """
         hardware_id_apis = self._collect_matching_imports(view, self._hardware_api_keywords)
         if filtered.hardware:
-            hardware_id_apis.extend(
-                s.value for s in filtered.hardware if s.value not in hardware_id_apis
-            )
-        time_check_present = bool(
-            self._collect_matching_imports(view, self._time_api_keywords) or filtered.time
-        )
-        online_validation = bool(
-            self._collect_matching_imports(view, self._network_api_keywords) or filtered.network
-        )
+            hardware_id_apis.extend(s.value for s in filtered.hardware if s.value not in hardware_id_apis)
+        time_check_present = bool(self._collect_matching_imports(view, self._time_api_keywords) or filtered.time)
+        online_validation = bool(self._collect_matching_imports(view, self._network_api_keywords) or filtered.network)
         return RuntimeIndicators(
             hardware_id_apis=hardware_id_apis,
             time_check_present=time_check_present,
@@ -769,7 +765,7 @@ class LicenseAnalyzer:
                 imports=imports,
             )
         except Exception as exc:
-            _logger.warning("pefile parse failed: %s", exc)
+            _logger.warning("pefile_parse_failed", extra={"error": str(exc)})
             return None
 
     @staticmethod
@@ -818,7 +814,7 @@ class LicenseAnalyzer:
                 imports=imports,
             )
         except Exception as exc:
-            _logger.warning("LIEF parse failed: %s", exc)
+            _logger.warning("lief_parse_failed", extra={"error": str(exc)})
             return None
 
     @staticmethod
@@ -859,14 +855,14 @@ class LicenseAnalyzer:
 
         if data[:_MIN_HEADER_SIZE_PE] == b"MZ" and len(data) > _PE_HEADER_MIN_SIZE:
             pe_offset = int.from_bytes(
-                data[_PE_OFFSET_LOCATION:_PE_OFFSET_LOCATION + _PE_OFFSET_SIZE],
+                data[_PE_OFFSET_LOCATION : _PE_OFFSET_LOCATION + _PE_OFFSET_SIZE],
                 "little",
                 signed=False,
             )
             machine_offset = pe_offset + _PE_MACHINE_OFFSET
             if len(data) > machine_offset + _PE_MACHINE_SIZE:
                 machine = int.from_bytes(
-                    data[machine_offset:machine_offset + _PE_MACHINE_SIZE],
+                    data[machine_offset : machine_offset + _PE_MACHINE_SIZE],
                     "little",
                     signed=False,
                 )
@@ -1006,10 +1002,7 @@ class LicenseAnalyzer:
             List of matching strings.
         """
         lowered = tuple(k.lower() for k in keywords)
-        return [
-            s for s in strings
-            if any(k in s.value.lower() for k in lowered)
-        ]
+        return [s for s in strings if any(k in s.value.lower() for k in lowered)]
 
     def _detect_crypto_apis(
         self,
@@ -1211,7 +1204,7 @@ class LicenseAnalyzer:
         """
         results: list[tuple[int, int, int]] = []
         for match in re.finditer(
-            br"-----BEGIN (RSA )?PUBLIC KEY-----(.*?)-----END (RSA )?PUBLIC KEY-----",
+            rb"-----BEGIN (RSA )?PUBLIC KEY-----(.*?)-----END (RSA )?PUBLIC KEY-----",
             data,
             re.DOTALL,
         ):
@@ -1248,9 +1241,7 @@ class LicenseAnalyzer:
         return results
 
     @staticmethod
-    def _parse_rsa_public_key_der_from_offset(
-        data: bytes, offset: int
-    ) -> tuple[int, int, int] | None:
+    def _parse_rsa_public_key_der_from_offset(data: bytes, offset: int) -> tuple[int, int, int] | None:
         """Parse DER-encoded RSA public key at offset.
 
         Args:
@@ -1351,7 +1342,7 @@ class LicenseAnalyzer:
         num_bytes = first & _DER_LENGTH_BYTES_MASK
         if num_bytes == 0 or offset + 1 + num_bytes > len(data):
             return None
-        length = int.from_bytes(data[offset + 1:offset + 1 + num_bytes], "big", signed=False)
+        length = int.from_bytes(data[offset + 1 : offset + 1 + num_bytes], "big", signed=False)
         return length, 1 + num_bytes
 
     @staticmethod
@@ -1377,14 +1368,10 @@ class LicenseAnalyzer:
         if not instructions:
             return []
 
-        lookup_maps = LicenseAnalyzer._build_validation_lookup_maps(
-            view, license_strings, crypto_calls
-        )
+        lookup_maps = LicenseAnalyzer._build_validation_lookup_maps(view, license_strings, crypto_calls)
         function_ranges = LicenseAnalyzer._get_function_ranges(view, instructions)
 
-        return LicenseAnalyzer._analyze_function_ranges(
-            instructions, function_ranges, lookup_maps
-        )
+        return LicenseAnalyzer._analyze_function_ranges(instructions, function_ranges, lookup_maps)
 
     @staticmethod
     def _build_validation_lookup_maps(
@@ -1447,9 +1434,7 @@ class LicenseAnalyzer:
         functions: list[ValidationFunctionInfo] = []
 
         for start, end in function_ranges:
-            ctx = LicenseAnalyzer._analyze_single_function(
-                instructions, start, end, string_map, import_map, crypto_imports
-            )
+            ctx = LicenseAnalyzer._analyze_single_function(instructions, start, end, string_map, import_map, crypto_imports)
             func_info = LicenseAnalyzer._create_validation_info_if_valid(start, ctx)
             if func_info is not None:
                 functions.append(func_info)
@@ -1483,9 +1468,7 @@ class LicenseAnalyzer:
         for instr in instructions:
             if instr.address < start or instr.address >= end:
                 continue
-            LicenseAnalyzer._update_context_for_instruction(
-                ctx, instr, string_map, import_map, crypto_imports
-            )
+            LicenseAnalyzer._update_context_for_instruction(ctx, instr, string_map, import_map, crypto_imports)
 
         return ctx
 
@@ -1519,10 +1502,7 @@ class LicenseAnalyzer:
         if (
             ref_addr is not None
             and ref_addr in import_map
-            and any(
-                keyword.lower() in import_map[ref_addr].lower()
-                for keyword in crypto_imports
-            )
+            and any(keyword.lower() in import_map[ref_addr].lower() for keyword in crypto_imports)
         ):
             ctx.calls_crypto = True
 
@@ -1542,19 +1522,14 @@ class LicenseAnalyzer:
         """
         has_license_indicators = bool(ctx.string_refs) or ctx.calls_crypto
         has_math_based_validation = (
-            ctx.arithmetic_count >= _MIN_ARITHMETIC_FOR_CHECKSUM
-            and ctx.comparisons
-            and ctx.branches >= _MIN_BRANCHES_FOR_VALIDATION
+            ctx.arithmetic_count >= _MIN_ARITHMETIC_FOR_CHECKSUM and ctx.comparisons and ctx.branches >= _MIN_BRANCHES_FOR_VALIDATION
         )
 
         if not has_license_indicators and not has_math_based_validation:
             return None
 
         complexity_score = (
-            len(ctx.comparisons)
-            + ctx.branches
-            + (len(ctx.string_refs) * _STRING_COMPLEXITY_MULTIPLIER)
-            + (ctx.arithmetic_count // 2)
+            len(ctx.comparisons) + ctx.branches + (len(ctx.string_refs) * _STRING_COMPLEXITY_MULTIPLIER) + (ctx.arithmetic_count // 2)
         )
         return ValidationFunctionInfo(
             address=start,
@@ -1884,12 +1859,7 @@ class LicenseAnalyzer:
                 checksum_position = "suffix"
                 break
 
-        if (
-            checksum_position is None
-            and key_format == KeyFormat.SERIAL_DASHED
-            and group_size
-            and group_size <= _MAX_CHECKSUM_GROUP_SIZE
-        ):
+        if checksum_position is None and key_format == KeyFormat.SERIAL_DASHED and group_size and group_size <= _MAX_CHECKSUM_GROUP_SIZE:
             checksum_position = "suffix"
 
         return checksum_algorithm, checksum_position

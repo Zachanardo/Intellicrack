@@ -17,6 +17,7 @@ from .logging import get_logger
 from .types import (
     BinaryInfo,
     ConfirmationLevel,
+    LicensingAnalysis,
     Message,
     PatchInfo,
     ProviderName,
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
 
     from ..providers.base import LLMProvider
     from ..providers.registry import ProviderRegistry
+    from .license_analyzer import LicenseAnalyzer
     from .session import Session, SessionManager
     from .tools import ToolRegistry
 
@@ -106,9 +108,7 @@ class OrchestratorStats:
             time_ms: Response time in milliseconds.
         """
         self._response_times.append(time_ms)
-        self.average_response_time_ms = sum(self._response_times) / len(
-            self._response_times
-        )
+        self.average_response_time_ms = sum(self._response_times) / len(self._response_times)
 
 
 class Orchestrator:
@@ -172,10 +172,9 @@ class Orchestrator:
         self._on_tool_call: Callable[[ToolCall], None] | None = None
         self._on_tool_result: Callable[[ToolResult], None] | None = None
         self._on_stream_chunk: Callable[[str], None] | None = None
+        self._on_licensing_analysis: Callable[[LicensingAnalysis], None] | None = None
         self._confirmation_callback: Callable[[ToolCall], bool] | None = None
-        self._async_confirmation_callback: (
-            Callable[[ToolCall], asyncio.Future[bool]] | None
-        ) = None
+        self._async_confirmation_callback: Callable[[ToolCall], asyncio.Future[bool]] | None = None
 
     @property
     def state(self) -> OrchestratorState:
@@ -245,10 +244,8 @@ class Orchestrator:
         self._state = "idle"
 
         _logger.info(
-            "Started session %s with provider %s model %s",
-            session.id,
-            provider.value,
-            model,
+            "session_started",
+            extra={"session_id": session.id, "provider": provider.value, "model": model},
         )
 
         return session
@@ -273,7 +270,7 @@ class Orchestrator:
         self._current_session = session
         self._state = "idle"
 
-        _logger.info("Loaded session %s", session_id)
+        _logger.info("session_loaded", extra={"session_id": session_id})
         return session
 
     async def _load_binary(self, path: Path) -> BinaryInfo:
@@ -327,7 +324,7 @@ class Orchestrator:
         try:
             await self._run_agent_loop()
         except asyncio.CancelledError:
-            _logger.info("Request cancelled")
+            _logger.info("request_cancelled")
             self._state = "cancelled"
         finally:
             elapsed_ms = (time.time() - start_time) * 1000
@@ -362,7 +359,7 @@ class Orchestrator:
                 raise asyncio.CancelledError()
 
             iteration += 1
-            _logger.debug("Agent loop iteration %d", iteration)
+            _logger.debug("agent_loop_iteration", extra={"iteration": iteration})
 
             messages = self._build_messages()
 
@@ -379,7 +376,7 @@ class Orchestrator:
                     self._on_message(response)
 
             if not tool_calls:
-                _logger.debug("No tool calls, agent loop complete")
+                _logger.debug("agent_loop_complete", extra={"reason": "no_tool_calls"})
                 break
 
             tool_results = await self._execute_tool_calls(tool_calls)
@@ -393,11 +390,11 @@ class Orchestrator:
             self._current_session.messages.append(tool_message)
 
             if all(not r.success for r in tool_results):
-                _logger.warning("All tool calls failed, stopping iteration")
+                _logger.warning("agent_loop_stopping", extra={"reason": "all_tool_calls_failed"})
                 break
 
         if iteration >= self._config.max_iterations:
-            _logger.warning("Reached maximum iterations (%d)", self._config.max_iterations)
+            _logger.warning("agent_loop_max_iterations", extra={"max_iterations": self._config.max_iterations})
 
     def _is_final_response_expected(self) -> bool:
         """Determine whether a final response is expected.
@@ -449,6 +446,51 @@ class Orchestrator:
             "- Binary analysis via radare2 (disassembly, analysis, patching)",
             "- Process control (memory reading/writing, DLL injection)",
             "- Binary operations (loading, parsing, patching)",
+            "- Sandbox execution (isolated testing, behavior monitoring, snapshot/restore)",
+            "",
+            "## Sandbox Usage for Testing Patches",
+            "",
+            "When testing patched binaries:",
+            "1. Use `sandbox.create` to spin up an isolated environment",
+            "2. Use `sandbox.copy_to` to copy the patched binary",
+            "3. Use `sandbox.run_binary` to execute with monitoring",
+            "4. Analyze the ExecutionReport for:",
+            "   - exit_code: Did it crash or succeed?",
+            "   - file_changes: What files were created/modified?",
+            "   - registry_changes: License-related registry modifications?",
+            "   - network_activity: License server communications?",
+            "   - process_activity: Spawned processes?",
+            "5. Use `sandbox.snapshot_create` (QEMU) to save state before risky operations",
+            "6. Use `sandbox.snapshot_restore` to revert if needed",
+            "7. Use `sandbox.destroy` when done",
+            "",
+            "Always test patches in sandbox before considering them successful.",
+            "",
+            "## Cracking Workflow",
+            "",
+            "### Analysis Phase:",
+            "1. `binary.load_file` - Load target binary",
+            "2. `ghidra.load_binary` + `ghidra.analyze` - Static analysis",
+            "3. `ghidra.search_strings` - Find license-related strings",
+            "4. `ghidra.get_functions` - List functions",
+            "5. `ghidra.decompile` - Decompile suspicious functions",
+            "",
+            "### Dynamic Analysis Phase:",
+            "1. `sandbox.create` - Create isolated environment",
+            "2. `frida.spawn` or `x64dbg.load` - Attach to process",
+            "3. `frida.hook_function` - Hook license checks",
+            "4. Trace execution to find validation logic",
+            "",
+            "### Patching Phase:",
+            "1. `binary.write_bytes` - Apply patches",
+            "2. `binary.save` - Save patched binary",
+            "3. `sandbox.copy_to` + `sandbox.run_binary` - Test patch",
+            "4. Verify licensing bypassed via ExecutionReport",
+            "",
+            "### Iteration:",
+            "- If patch fails, analyze sandbox output",
+            "- Adjust patches and re-test",
+            "- Use QEMU snapshots for complex multi-step patches",
             "",
             "When analyzing software:",
             "1. First understand the protection mechanism through static analysis",
@@ -456,15 +498,14 @@ class Orchestrator:
             "3. Identify key validation functions and decision points",
             "4. Propose bypass strategies (patching, hooking, keygen)",
             "5. Implement the bypass with appropriate tools",
+            "6. Test in sandbox to verify the bypass works",
             "",
             "Always explain your reasoning and findings clearly.",
             "Use tools iteratively to build understanding before making changes.",
         ]
 
         if self._current_session.binaries:
-            active_binary = self._current_session.binaries[
-                self._current_session.active_binary_index
-            ]
+            active_binary = self._current_session.binaries[self._current_session.active_binary_index]
             prompt_parts.extend([
                 "",
                 f"Current binary: {active_binary.name}",
@@ -481,9 +522,7 @@ class Orchestrator:
             ])
             for patch in self._current_session.patches:
                 status = "applied" if patch.applied else "pending"
-                prompt_parts.append(
-                    f"- 0x{patch.address:X}: {patch.description} ({status})"
-                )
+                prompt_parts.append(f"- 0x{patch.address:X}: {patch.description} ({status})")
 
         return "\n".join(prompt_parts)
 
@@ -703,10 +742,12 @@ class Orchestrator:
             self._stats.successful_tool_calls += 1
 
             _logger.info(
-                "Tool call %s.%s succeeded in %.1fms",
-                call.tool_name,
-                call.function_name,
-                elapsed_ms,
+                "tool_call_success",
+                extra={
+                    "tool": call.tool_name,
+                    "function": call.function_name,
+                    "duration_ms": round(elapsed_ms, 2),
+                },
             )
 
             return ToolResult(
@@ -722,9 +763,8 @@ class Orchestrator:
             self._stats.failed_tool_calls += 1
 
             _logger.exception(
-                "Tool call %s.%s failed",
-                call.tool_name,
-                call.function_name,
+                "tool_call_failed",
+                extra={"tool": call.tool_name, "function": call.function_name},
             )
 
             return ToolResult(
@@ -794,7 +834,7 @@ class Orchestrator:
             self._state = "processing"
             return result
 
-        _logger.warning("No confirmation callback set, auto-declining")
+        _logger.warning("confirmation_auto_declined", extra={"reason": "no_callback"})
         self._state = "processing"
         return False
 
@@ -804,36 +844,27 @@ class Orchestrator:
         Args:
             confirmed: True to confirm, False to decline.
         """
-        if (
-            self._pending_confirmation is not None
-            and not self._pending_confirmation.future.done()
-        ):
+        if self._pending_confirmation is not None and not self._pending_confirmation.future.done():
             self._pending_confirmation.future.set_result(confirmed)
 
     async def cancel(self) -> None:
         """Cancel current operation."""
-        _logger.info("Cancelling current operation")
+        _logger.info("operation_cancelling")
         self._cancel_event.set()
 
-        provider = (
-            self._providers.get(self._current_session.provider)
-            if self._current_session
-            else None
-        )
+        provider = self._providers.get(self._current_session.provider) if self._current_session else None
         if provider:
             await provider.cancel_request()
 
-        if (
-            self._pending_confirmation
-            and not self._pending_confirmation.future.done()
-        ):
+        if self._pending_confirmation and not self._pending_confirmation.future.done():
             self._pending_confirmation.future.set_result(False)
 
-    async def add_binary(self, path: Path) -> BinaryInfo:
+    async def add_binary(self, path: Path, run_license_analysis: bool = True) -> BinaryInfo:
         """Add a binary to the current session.
 
         Args:
             path: Path to the binary.
+            run_license_analysis: Whether to run licensing analysis automatically.
 
         Returns:
             Binary information.
@@ -847,12 +878,80 @@ class Orchestrator:
 
         binary_info = await self._load_binary(path)
         self._current_session.binaries.append(binary_info)
-        self._current_session.active_binary_index = (
-            len(self._current_session.binaries) - 1
-        )
+        self._current_session.active_binary_index = len(self._current_session.binaries) - 1
+
+        if run_license_analysis:
+            analysis = await self._run_license_analysis(path)
+            if analysis:
+                self._current_session.add_licensing_analysis(path.name, analysis)
+                if self._on_licensing_analysis:
+                    self._on_licensing_analysis(analysis)
 
         await self._sessions.update(self._current_session)
         return binary_info
+
+    async def _run_license_analysis(self, path: Path) -> LicensingAnalysis | None:
+        """Run licensing analysis on a binary.
+
+        Args:
+            path: Path to the binary.
+
+        Returns:
+            LicensingAnalysis results or None on failure.
+        """
+        try:
+            from .license_analyzer import LicenseAnalyzer
+
+            analyzer = LicenseAnalyzer()
+            loop = asyncio.get_running_loop()
+            analysis = await loop.run_in_executor(None, analyzer.analyze, path)
+            _logger.info("licensing_analysis_completed", extra={"binary": path.name})
+            return analysis
+        except Exception as e:
+            _logger.warning("licensing_analysis_failed", extra={"binary": path.name, "error": str(e)})
+            return None
+
+    async def reanalyze_licensing(self, binary_name: str | None = None) -> LicensingAnalysis | None:
+        """Re-run licensing analysis on the active or specified binary.
+
+        Args:
+            binary_name: Optional binary name; uses active binary if not specified.
+
+        Returns:
+            LicensingAnalysis results or None.
+        """
+        if self._current_session is None:
+            return None
+
+        if binary_name:
+            for binary in self._current_session.binaries:
+                if binary.name == binary_name:
+                    from pathlib import Path as PathLib
+                    return await self._run_license_analysis(PathLib(binary.path))
+        elif self._current_session.active_binary:
+            from pathlib import Path as PathLib
+            analysis = await self._run_license_analysis(
+                PathLib(self._current_session.active_binary.path)
+            )
+            if analysis:
+                self._current_session.add_licensing_analysis(
+                    self._current_session.active_binary.name, analysis
+                )
+                if self._on_licensing_analysis:
+                    self._on_licensing_analysis(analysis)
+            return analysis
+
+        return None
+
+    def set_licensing_analysis_callback(
+        self, callback: Callable[[LicensingAnalysis], None] | None
+    ) -> None:
+        """Set callback for licensing analysis completion.
+
+        Args:
+            callback: Function to call with analysis results.
+        """
+        self._on_licensing_analysis = callback
 
     async def set_active_binary(self, index: int) -> None:
         """Set the active binary by index.
@@ -980,7 +1079,7 @@ class Orchestrator:
 
     async def shutdown(self) -> None:
         """Shutdown the orchestrator and cleanup resources."""
-        _logger.info("Shutting down orchestrator")
+        _logger.info("orchestrator_shutdown_started")
 
         await self.cancel()
         await self._tools.shutdown()

@@ -1,3 +1,10 @@
+Set-Location "C:\Users\zachf"
+
+$env:PATH = (($env:PATH -split ';') | Where-Object { $_ -notmatch '\.pixi' -and $_ -notmatch 'pixi' }) -join ';'
+Remove-Item Env:CONDA_PREFIX -ErrorAction SilentlyContinue
+Remove-Item Env:VIRTUAL_ENV -ErrorAction SilentlyContinue
+Remove-Item Env:PIXI_* -ErrorAction SilentlyContinue
+
 try {
     Add-Type -TypeDefinition @"
 using System;
@@ -12,13 +19,6 @@ public class Win32Show {
 } catch {}
 Start-Sleep -Milliseconds 100
 [Win32Show]::ShowWindow([Win32Show]::GetForegroundWindow(), 3) | Out-Null
-
-Set-Location $HOME
-
-$env:PATH = (($env:PATH -split ';') | Where-Object { $_ -notmatch '\.pixi' -and $_ -notmatch 'pixi' }) -join ';'
-Remove-Item Env:CONDA_PREFIX -ErrorAction SilentlyContinue
-Remove-Item Env:VIRTUAL_ENV -ErrorAction SilentlyContinue
-Remove-Item Env:PIXI_* -ErrorAction SilentlyContinue
 Write-Host "Updating all CLI coding tools..." -ForegroundColor Magenta;
 Write-Host "`n"
 Write-Host "`n"

@@ -884,13 +884,13 @@ def test_patch_info_creation() -> None:
     patch = PatchInfo(
         address=ADDR_PATCH,
         original_bytes=b"\x74\x10",
-        new_bytes=b"\xEB\x10",
+        new_bytes=b"\xeb\x10",
         description="JZ -> JMP",
         applied=True,
     )
     assert patch.address == ADDR_PATCH
     assert patch.original_bytes == b"\x74\x10"
-    assert patch.new_bytes == b"\xEB\x10"
+    assert patch.new_bytes == b"\xeb\x10"
     assert patch.applied is True
 
 
@@ -898,7 +898,7 @@ def test_patch_info_nop_sled() -> None:
     """Verify PatchInfo for NOP sled patches."""
     patch = PatchInfo(
         address=ADDR_PATCH_NOP,
-        original_bytes=b"\xE8\x00\x10\x00\x00",
+        original_bytes=b"\xe8\x00\x10\x00\x00",
         new_bytes=b"\x90\x90\x90\x90\x90",
         description="NOP out license check call",
         applied=False,

@@ -7,20 +7,21 @@
 [2] Code must be error-free and strictly adhere to language-specific coding standards and best practices. ALL new code and edits must be validated with ruff and ALL findings must be corrected.
 [3] Real-world binary analysis and software cracking capabilities are ESSENTIAL to Intellicrack's functionality. They must be sophisticated and effective against modern licensing protections.
 [4] Follow common development principles (where relevant) including:
-	• SOLID(Single Responsibility Principle, Open/Closed Principle, Liskov Substitution Principle, Interface Segregation Principle, and Dependency Inversion Principle)
-	• DRY (Don't Repeat Yourself)
-	• KISS (Keep It Simple, Stupid)
+ • SOLID(Single Responsibility Principle, Open/Closed Principle, Liskov Substitution Principle, Interface Segregation Principle, and Dependency Inversion Principle)
+ • DRY (Don't Repeat Yourself)
+ • KISS (Keep It Simple, Stupid)
 [5] ALL code requires explicit type hints/annotations compliant with mypy strict mode. Windows compatibility PRIORITY with proper platform checks. NEVER delete method bindings - create FUNCTIONAL missing functions instead. NO comments/emojis/TODO markers unless requested. MAINTAIN functionality over "cleaner" code.
 </system-reminder>
 
 ## Build, Lint, and Test Commands
 
 - Use `just` for development workflows:
-    - `just test` - Run all unit tests with real data validation
-    - `just test-coverage` - Run tests with 95%+ coverage requirement
-    - `just lint` - Run Ruff linting for Python
-    - `just lint-all` - Lint all languages (Python, JS, Java, Rust, Markdown)
+  - `just test` - Run all unit tests with real data validation
+  - `just test-coverage` - Run tests with 95%+ coverage requirement
+  - `just lint` - Run Ruff linting for Python
+  - `just lint-all` - Lint all languages (Python, JS, Java, Rust, Markdown)
 - To run a single test, use pytest directly, e.g.:
+
     ```bash
     pytest tests/path/to/test_file.py::test_function_name
     ```
@@ -75,11 +76,12 @@ production-ready code:
 ## Build, Lint, and Test Commands
 
 - Use `just` for development workflows:
-    - `just test` - Run all unit tests with real data validation
-    - `just test-coverage` - Run tests with 95%+ coverage requirement
-    - `just lint` - Ruff linting for Python
-    - `just lint-all` - Lint all languages (Python, JS, Java, Rust, Markdown)
+  - `just test` - Run all unit tests with real data validation
+  - `just test-coverage` - Run tests with 95%+ coverage requirement
+  - `just lint` - Ruff linting for Python
+  - `just lint-all` - Lint all languages (Python, JS, Java, Rust, Markdown)
 - To run a single test, use pytest directly, e.g.:
+
     ```bash
     pytest tests/path/to/test_file.py::test_function_name
     ```
@@ -87,10 +89,13 @@ production-ready code:
 ## Application Launch
 
 - Primary launch method:
+
     ```bash
     python launch_intellicrack.py
     ```
+
 - Alternative methods:
+
     ```bash
     python -m intellicrack --gui
     python -m intellicrack analyze target.exe

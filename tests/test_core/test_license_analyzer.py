@@ -205,9 +205,7 @@ class TestRSAKeyExtraction:
 
     def test_extract_der_rsa_key_small(self) -> None:
         """Verify RSA public key extraction from small DER format."""
-        der_data = bytes.fromhex(
-            "3030020100020100020101020101020101020101020101020101"
-        )
+        der_data = bytes.fromhex("3030020100020100020101020101020101020101020101020101")
         analyzer = LicenseAnalyzer()
         result = analyzer._parse_rsa_public_key_der(der_data)
         assert result is None
@@ -339,9 +337,7 @@ class TestKeyFormatDetection:
         strings = [
             StringInfo(address=0x1000, value="XXXX-XXXX-XXXX-XXXX", encoding="ascii", section=".rdata"),
         ]
-        key_format, _key_length, _group_size, separator = analyzer._detect_key_format(
-            strings, AlgorithmType.UNKNOWN
-        )
+        key_format, _key_length, _group_size, separator = analyzer._detect_key_format(strings, AlgorithmType.UNKNOWN)
         assert key_format == KeyFormat.SERIAL_DASHED
         assert separator == "-"
 
@@ -351,9 +347,7 @@ class TestKeyFormatDetection:
         strings = [
             StringInfo(address=0x1000, value="0123456789ABCDEF0123456789ABCDEF", encoding="ascii", section=".rdata"),
         ]
-        key_format, _key_length, _group_size, _separator = analyzer._detect_key_format(
-            strings, AlgorithmType.MD5
-        )
+        key_format, _key_length, _group_size, _separator = analyzer._detect_key_format(strings, AlgorithmType.MD5)
         assert key_format in {KeyFormat.HEX_STRING, KeyFormat.SERIAL_PLAIN}
 
 

@@ -34,11 +34,11 @@ def main() -> int:  # noqa: PLR0914
 
     setup_logging(config.log)
     logger = get_logger("main")
-    logger.info("Starting Intellicrack")
+    logger.info("app_starting", extra={"version": "2.0.0"})
 
     process_manager = ProcessManager.get_instance()
     process_manager.install_handlers()
-    logger.debug("Process manager initialized with cleanup handlers")
+    logger.debug("process_manager_initialized", extra={"handlers_installed": True})
 
     try:
         from PyQt6.QtWidgets import QApplication  # noqa: PLC0415
@@ -90,11 +90,13 @@ def main() -> int:  # noqa: PLR0914
         app.processEvents()
 
         provider_registry = ProviderRegistry()
-        loop.run_until_complete(_initialize_providers(
-            provider_registry,
-            credential_loader,
-            logger,
-        ))
+        loop.run_until_complete(
+            _initialize_providers(
+                provider_registry,
+                credential_loader,
+                logger,
+            )
+        )
 
         splash.set_progress(50, "Initializing tools...")
         app.processEvents()
@@ -128,18 +130,18 @@ def main() -> int:  # noqa: PLR0914
         splash.finish(window)
         window.show()
 
-        logger.info("Intellicrack UI started")
+        logger.info("ui_started")
         exit_code = app.exec()
 
-        logger.info("Initiating shutdown sequence")
+        logger.info("shutdown_started")
         loop.run_until_complete(orchestrator.shutdown())
         loop.run_until_complete(session_manager.close())
         loop.run_until_complete(process_manager.cleanup_all_async())
 
-        logger.info("Intellicrack shutdown complete")
+        logger.info("shutdown_complete")
 
     except Exception:
-        logger.exception("Fatal error during startup")
+        logger.exception("startup_failed")
         return 1
     else:
         return exit_code
@@ -186,14 +188,14 @@ async def _initialize_providers(
 
             if creds:
                 await provider.connect(creds)
-                logger.info("Connected to %s", provider_name.value)
+                logger.info("provider_connected", extra={"provider": provider_name.value})
             else:
-                logger.debug("No credentials for %s", provider_name.value)
+                logger.debug("no_credentials", extra={"provider": provider_name.value})
 
             registry.register(provider)
 
         except Exception as e:
-            logger.warning("Failed to initialize %s: %s", provider_name.value, e)
+            logger.warning("provider_init_failed", extra={"provider": provider_name.value, "error": str(e)})
 
 
 if __name__ == "__main__":

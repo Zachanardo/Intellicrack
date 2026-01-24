@@ -62,11 +62,9 @@ class ProviderRegistry:
         """
         name = provider.name
         if name in self._providers:
-            self._logger.warning(
-                "Provider %s already registered, replacing", name.value
-            )
+            self._logger.warning("provider_already_registered", extra={"provider": name.value})
         self._providers[name] = provider
-        self._logger.info("Registered provider: %s", name.value)
+        self._logger.info("provider_registered", extra={"provider": name.value})
 
     def unregister(self, name: ProviderName) -> bool:
         """Unregister a provider.
@@ -81,7 +79,7 @@ class ProviderRegistry:
             del self._providers[name]
             if self._active_provider == name:
                 self._active_provider = None
-            self._logger.info("Unregistered provider: %s", name.value)
+            self._logger.info("provider_unregistered", extra={"provider": name.value})
             return True
         return False
 
@@ -162,9 +160,9 @@ class ProviderRegistry:
 
         try:
             await provider.connect(credentials)
-            self._logger.info("Connected to provider: %s", name.value)
+            self._logger.info("provider_connected", extra={"provider": name.value})
         except Exception:
-            self._logger.exception("Failed to connect to %s", name.value)
+            self._logger.exception("provider_connection_failed", extra={"provider": name.value})
             raise
         else:
             return True
@@ -178,7 +176,7 @@ class ProviderRegistry:
         provider = self.get(name)
         if provider is not None and provider.is_connected:
             await provider.disconnect()
-            self._logger.info("Disconnected from provider: %s", name.value)
+            self._logger.info("provider_disconnected", extra={"provider": name.value})
 
     async def connect_all(
         self,
@@ -208,7 +206,7 @@ class ProviderRegistry:
 
                 await self.connect_provider(name, creds)
             except Exception as e:
-                self._logger.warning("Failed to connect %s: %s", name.value, e)
+                self._logger.warning("provider_connection_failed", extra={"provider": name.value, "error": str(e)})
                 return name, False
             else:
                 return name, True
@@ -221,7 +219,7 @@ class ProviderRegistry:
                 name, success = result
                 results[name] = success
             else:
-                self._logger.error("Connection task failed: %s", result)
+                self._logger.error("connection_task_failed", extra={"error": str(result)})
 
         return results
 
@@ -244,7 +242,7 @@ class ProviderRegistry:
                     provider_models = await provider.list_models()
                     models[name] = provider_models
                 except Exception as e:
-                    self._logger.warning("Failed to get models from %s: %s", name.value, e)
+                    self._logger.warning("models_fetch_failed", extra={"provider": name.value, "error": str(e)})
                     models[name] = []
             else:
                 models[name] = []
@@ -264,7 +262,7 @@ class ProviderRegistry:
         if not provider.is_connected:
             raise ProviderError(_MSG_NOT_CONNECTED)
         self._active_provider = name
-        self._logger.info("Set active provider: %s", name.value)
+        self._logger.info("active_provider_set", extra={"provider": name.value})
 
     @property
     def active(self) -> LLMProviderBase | None:

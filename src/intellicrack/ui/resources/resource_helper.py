@@ -6,11 +6,14 @@ and PyInstaller frozen applications.
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from pathlib import Path
 from typing import Final
 
+
+_logger = logging.getLogger(__name__)
 
 _ASSETS_DIR_NAME: Final[str] = "assets"
 _PACKAGE_NAME: Final[str] = "intellicrack"
@@ -49,6 +52,7 @@ def get_assets_path() -> Path:
     assets_path = package_root / _ASSETS_DIR_NAME
 
     if assets_path.exists():
+        _logger.debug("assets_path_found", extra={"path": str(assets_path)})
         return assets_path
 
     search_paths = [
@@ -59,8 +63,13 @@ def get_assets_path() -> Path:
 
     for path in search_paths:
         if path.exists():
+            _logger.debug("assets_path_found", extra={"path": str(path)})
             return path
 
+    _logger.error(
+        "assets_path_not_found",
+        extra={"searched_paths": [str(p) for p in search_paths]},
+    )
     raise FileNotFoundError(  # noqa: TRY003
         f"Assets directory not found. Searched: {[str(p) for p in search_paths]}"
     )

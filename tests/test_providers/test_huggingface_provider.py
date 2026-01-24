@@ -51,9 +51,7 @@ class TestHuggingFaceModelListing:
         """Test HuggingFace returns many text-generation models."""
         models = await huggingface_provider.list_models()
 
-        assert len(models) >= 10, (
-            f"Expected at least 10 models from HuggingFace, got {len(models)}"
-        )
+        assert len(models) >= 10, f"Expected at least 10 models from HuggingFace, got {len(models)}"
 
     @pytest.mark.asyncio
     async def test_list_models_returns_model_info_instances(
@@ -64,9 +62,7 @@ class TestHuggingFaceModelListing:
         models = await huggingface_provider.list_models()
 
         for model in models[:20]:
-            assert isinstance(model, ModelInfo), (
-                f"Expected ModelInfo, got {type(model)}"
-            )
+            assert isinstance(model, ModelInfo), f"Expected ModelInfo, got {type(model)}"
 
     @pytest.mark.asyncio
     async def test_model_info_has_valid_id(
@@ -77,9 +73,7 @@ class TestHuggingFaceModelListing:
         models = await huggingface_provider.list_models()
 
         for model in models[:20]:
-            assert isinstance(model.id, str), (
-                f"Expected str id, got {type(model.id)}"
-            )
+            assert isinstance(model.id, str), f"Expected str id, got {type(model.id)}"
             assert len(model.id) > 0, "Model ID should not be empty"
 
     @pytest.mark.asyncio
@@ -91,9 +85,7 @@ class TestHuggingFaceModelListing:
         models = await huggingface_provider.list_models()
 
         for model in models[:20]:
-            assert isinstance(model.name, str), (
-                f"Expected str name, got {type(model.name)}"
-            )
+            assert isinstance(model.name, str), f"Expected str name, got {type(model.name)}"
             assert len(model.name) > 0, "Model name should not be empty"
 
     @pytest.mark.asyncio
@@ -105,9 +97,7 @@ class TestHuggingFaceModelListing:
         models = await huggingface_provider.list_models()
 
         for model in models[:20]:
-            assert model.provider == ProviderName.HUGGINGFACE, (
-                f"Expected HUGGINGFACE provider, got {model.provider}"
-            )
+            assert model.provider == ProviderName.HUGGINGFACE, f"Expected HUGGINGFACE provider, got {model.provider}"
 
     @pytest.mark.asyncio
     async def test_model_info_has_positive_context_window(
@@ -118,12 +108,8 @@ class TestHuggingFaceModelListing:
         models = await huggingface_provider.list_models()
 
         for model in models[:20]:
-            assert isinstance(model.context_window, int), (
-                f"Expected int context_window, got {type(model.context_window)}"
-            )
-            assert model.context_window > 0, (
-                f"Model {model.id} has invalid context_window: {model.context_window}"
-            )
+            assert isinstance(model.context_window, int), f"Expected int context_window, got {type(model.context_window)}"
+            assert model.context_window > 0, f"Model {model.id} has invalid context_window: {model.context_window}"
 
     @pytest.mark.asyncio
     async def test_model_info_has_boolean_capabilities(
@@ -134,15 +120,9 @@ class TestHuggingFaceModelListing:
         models = await huggingface_provider.list_models()
 
         for model in models[:20]:
-            assert isinstance(model.supports_tools, bool), (
-                f"Expected bool supports_tools, got {type(model.supports_tools)}"
-            )
-            assert isinstance(model.supports_vision, bool), (
-                f"Expected bool supports_vision, got {type(model.supports_vision)}"
-            )
-            assert isinstance(model.supports_streaming, bool), (
-                f"Expected bool supports_streaming, got {type(model.supports_streaming)}"
-            )
+            assert isinstance(model.supports_tools, bool), f"Expected bool supports_tools, got {type(model.supports_tools)}"
+            assert isinstance(model.supports_vision, bool), f"Expected bool supports_vision, got {type(model.supports_vision)}"
+            assert isinstance(model.supports_streaming, bool), f"Expected bool supports_streaming, got {type(model.supports_streaming)}"
 
     @pytest.mark.asyncio
     async def test_multiple_calls_return_consistent_results(
@@ -260,15 +240,9 @@ class TestHuggingFaceContextWindowEstimation:
         """Test context window estimation for known models."""
         provider = HuggingFaceProvider()
 
-        assert provider._estimate_context_window(
-            "meta-llama/Llama-3.3-70B-Instruct"
-        ) == 128000
-        assert provider._estimate_context_window(
-            "Qwen/Qwen2.5-72B-Instruct"
-        ) == 131072
-        assert provider._estimate_context_window(
-            "mistralai/Mistral-7B-Instruct-v0.3"
-        ) == 32768
+        assert provider._estimate_context_window("meta-llama/Llama-3.3-70B-Instruct") == 128000
+        assert provider._estimate_context_window("Qwen/Qwen2.5-72B-Instruct") == 131072
+        assert provider._estimate_context_window("mistralai/Mistral-7B-Instruct-v0.3") == 32768
 
     def test_unknown_model_default_context_window(self) -> None:
         """Test unknown models get default context window."""

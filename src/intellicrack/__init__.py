@@ -56,21 +56,27 @@ def __getattr__(name: str) -> object:
     """
     if name == "main":
         from intellicrack.main import main as _main  # noqa: PLC0415
+
         return _main
     if name == "Config":
         from intellicrack.core.config import Config as _Config  # noqa: PLC0415
+
         return _Config
     if name == "Orchestrator":
         from intellicrack.core.orchestrator import Orchestrator as _Orchestrator  # noqa: PLC0415
+
         return _Orchestrator
     if name == "SessionManager":
         from intellicrack.core.session import SessionManager as _SessionManager  # noqa: PLC0415
+
         return _SessionManager
     if name == "ToolRegistry":
         from intellicrack.core.tools import ToolRegistry as _ToolRegistry  # noqa: PLC0415
+
         return _ToolRegistry
     if name == "ScriptManager":
         from intellicrack.core.script_gen import ScriptManager as _ScriptManager  # noqa: PLC0415
+
         return _ScriptManager
 
     msg = f"module {__name__!r} has no attribute {name!r}"

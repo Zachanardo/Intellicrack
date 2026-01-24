@@ -26,6 +26,7 @@ from .ghidra import GhidraBridge
 from .installer import ToolInstaller
 from .process import ProcessBridge
 from .radare2 import Radare2Bridge
+from .sandbox_bridge import SandboxBridge
 from .x64dbg import X64DbgBridge
 
 
@@ -43,6 +44,7 @@ __all__: list[str] = [
     "MemorySearchResult",
     "ProcessBridge",
     "Radare2Bridge",
+    "SandboxBridge",
     "StackFrame",
     "StaticAnalysisBridge",
     "ToolBridgeBase",

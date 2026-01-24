@@ -123,10 +123,10 @@ class OllamaProvider(LLMProviderBase):
             response = await self._local_client.get(f"{self._local_url}/api/tags")
             response.raise_for_status()
             self._local_available = True
-            self._logger.info("Connected to local Ollama at %s", self._local_url)
+            self._logger.info("local_ollama_connected", extra={"url": self._local_url})
         except Exception as e:
             self._local_available = False
-            self._logger.debug("Local Ollama not available: %s", e)
+            self._logger.debug("local_ollama_unavailable", extra={"error": str(e)})
             if self._local_client:
                 await self._local_client.aclose()
                 self._local_client = None
@@ -144,19 +144,19 @@ class OllamaProvider(LLMProviderBase):
             response = await self._cloud_client.get(f"{self.CLOUD_API_URL}/tags")
             response.raise_for_status()
             self._cloud_available = True
-            self._logger.info("Connected to Ollama cloud API")
+            self._logger.info("cloud_ollama_connected")
         except httpx.HTTPStatusError as e:
             self._cloud_available = False
             if e.response.status_code == HTTPStatus.UNAUTHORIZED:
-                self._logger.warning("Ollama cloud API key is invalid")
+                self._logger.warning("cloud_api_key_invalid")
             else:
-                self._logger.debug("Ollama cloud not available: %s", e)
+                self._logger.debug("cloud_ollama_unavailable", extra={"error": str(e)})
             if self._cloud_client:
                 await self._cloud_client.aclose()
                 self._cloud_client = None
         except Exception as e:
             self._cloud_available = False
-            self._logger.debug("Ollama cloud not available: %s", e)
+            self._logger.debug("cloud_ollama_unavailable", extra={"error": str(e)})
             if self._cloud_client:
                 await self._cloud_client.aclose()
                 self._cloud_client = None
@@ -172,7 +172,7 @@ class OllamaProvider(LLMProviderBase):
             self._cloud_client = None
         self._local_available = False
         self._cloud_available = False
-        self._logger.info("Disconnected from Ollama")
+        self._logger.info("ollama_disconnected")
 
     async def list_models(self) -> list[ModelInfo]:
         """Fetch available models from both local and cloud Ollama.
@@ -233,7 +233,7 @@ class OllamaProvider(LLMProviderBase):
                     )
                 )
         except Exception as e:
-            self._logger.warning("Failed to list local models: %s", e)
+            self._logger.warning("local_models_list_failed", extra={"error": str(e)})
 
         return models
 
@@ -270,7 +270,7 @@ class OllamaProvider(LLMProviderBase):
                     )
                 )
         except Exception as e:
-            self._logger.warning("Failed to list cloud models: %s", e)
+            self._logger.warning("cloud_models_list_failed", extra={"error": str(e)})
 
         return models
 
@@ -590,9 +590,7 @@ class OllamaProvider(LLMProviderBase):
                 ollama_messages.append(assistant_msg)
             elif msg.role == "tool" and msg.tool_results:
                 for tr in msg.tool_results:
-                    result_content = (
-                        tr.result if isinstance(tr.result, str) else json.dumps(tr.result)
-                    )
+                    result_content = tr.result if isinstance(tr.result, str) else json.dumps(tr.result)
                     ollama_messages.append({
                         "role": "tool",
                         "content": result_content,

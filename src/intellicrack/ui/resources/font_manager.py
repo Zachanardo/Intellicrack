@@ -90,7 +90,7 @@ class FontManager:
         try:
             fonts_dir = get_assets_path() / "fonts"
             if not fonts_dir.exists():
-                _logger.warning("Fonts directory not found: %s", fonts_dir)
+                _logger.warning("fonts_directory_not_found", extra={"path": str(fonts_dir)})
                 self._setup_fallback_fonts()
                 return False
 
@@ -103,12 +103,12 @@ class FontManager:
                 self._setup_fallback_fonts()
                 fonts_loaded = False
             else:
-                _logger.info("Loaded %d custom fonts", len(self._loaded_families))
+                _logger.info("custom_fonts_loaded", extra={"count": len(self._loaded_families)})
                 self._setup_fonts_from_loaded()
                 fonts_loaded = True
 
         except (FileNotFoundError, PermissionError) as e:
-            _logger.warning("Error loading fonts: %s", e)
+            _logger.warning("font_loading_error", extra={"error": str(e)})
             self._setup_fallback_fonts()
             fonts_loaded = False
 
@@ -121,9 +121,9 @@ class FontManager:
             if config_path.exists():
                 with open(config_path, encoding="utf-8") as f:
                     self._font_config = json.load(f)
-                    _logger.debug("Loaded font config: %s", self._font_config)
+                    _logger.debug("font_config_loaded", extra={"config": self._font_config})
         except (json.JSONDecodeError, OSError) as e:
-            _logger.debug("Could not load font config: %s", e)
+            _logger.debug("font_config_load_failed", extra={"error": str(e)})
             self._font_config = {}
 
     def _load_font_file(self, font_path: Path) -> bool:
@@ -138,13 +138,13 @@ class FontManager:
         font_id = QFontDatabase.addApplicationFont(str(font_path))
 
         if font_id < 0:
-            _logger.warning("Failed to load font: %s", font_path)
+            _logger.warning("font_load_failed", extra={"path": str(font_path)})
             return False
 
         families = QFontDatabase.applicationFontFamilies(font_id)
         if families:
             self._loaded_families.extend(families)
-            _logger.debug("Loaded font families: %s from %s", families, font_path.name)
+            _logger.debug("font_families_loaded", extra={"families": families, "file": font_path.name})
             return True
 
         return False

@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sun, Jan 18, 2026 02:29:18 PM
+Generated: Sat, Jan 24, 2026 12:21:37 PM
 Directory: D:\Intellicrack\src
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -154,6 +154,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── named_pipe_client.py
 │   │   ├── process.py
 │   │   ├── radare2.py
+│   │   ├── sandbox_bridge.py
 │   │   ├── schemas.py
 │   │   └── x64dbg.py
 │   ├── core/
@@ -208,6 +209,18 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── dialogs/
 │   │   │   ├── __init__.py
 │   │   │   └── splash_screen.py
+│   │   ├── embedding/
+│   │   │   ├── __init__.py
+│   │   │   ├── cutter_widget.py
+│   │   │   ├── embedded_widget.py
+│   │   │   ├── hxd_widget.py
+│   │   │   ├── win32_helper.py
+│   │   │   └── x64dbg_widget.py
+│   │   ├── panels/
+│   │   │   ├── __init__.py
+│   │   │   ├── licensing_panel.py
+│   │   │   ├── script_manager.py
+│   │   │   └── stack_viewer.py
 │   │   ├── resources/
 │   │   │   ├── icons/
 │   │   │   ├── styles/
@@ -219,6 +232,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── __init__.py
 │   │   ├── app.py
 │   │   ├── chat.py
+│   │   ├── confirmation_dialog.py
 │   │   ├── highlighter.py
 │   │   ├── preferences.py
 │   │   ├── provider_config.py

@@ -200,6 +200,7 @@ class TestAllProvidersModelCount:
             creds = credential_loader.get_credentials(ProviderName.OLLAMA)
             if creds is None:
                 from intellicrack.core.types import ProviderCredentials
+
                 creds = ProviderCredentials(api_base="http://localhost:11434")
             await provider.connect(creds)
             models = await provider.list_models()

@@ -75,3 +75,5 @@ file_enabled = true
 console_enabled = true
 max_file_size_mb = 10
 backup_count = 5
+retention_days = 14
+json_file = true

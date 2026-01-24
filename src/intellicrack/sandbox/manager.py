@@ -124,10 +124,7 @@ class SandboxManager:
         Returns:
             Number of running sandboxes.
         """
-        return sum(
-            1 for inst in self._instances.values()
-            if inst.state.status == "running"
-        )
+        return sum(1 for inst in self._instances.values() if inst.state.status == "running")
 
     async def get_available_types(self) -> list[SandboxType]:
         """Get list of available sandbox types.
@@ -176,9 +173,7 @@ class SandboxManager:
                 if oldest is not None:
                     await self.destroy(oldest.id)
                 else:
-                    error_message = (
-                        f"Maximum sandbox instances ({self._max_instances}) reached"
-                    )
+                    error_message = f"Maximum sandbox instances ({self._max_instances}) reached"
                     raise SandboxError(error_message)
 
             effective_config = config or self._default_config
@@ -202,12 +197,12 @@ class SandboxManager:
             )
 
             self._instances[instance.id] = instance
-            _logger.info("Created sandbox instance: %s (type=%s)", instance.id, sandbox_type)
+            _logger.info("sandbox_instance_created", extra={"instance_id": instance.id, "sandbox_type": sandbox_type})
 
             if auto_start:
                 try:
                     await sandbox.start()
-                    _logger.info("Started sandbox instance: %s", instance.id)
+                    _logger.info("sandbox_instance_started", extra={"instance_id": instance.id})
                 except Exception as e:
                     del self._instances[instance.id]
                     error_message = f"Failed to start sandbox: {e}"
@@ -244,10 +239,10 @@ class SandboxManager:
             try:
                 await instance.sandbox.stop()
             except Exception as e:
-                _logger.warning("Error stopping sandbox %s: %s", instance_id, e)
+                _logger.warning("sandbox_stop_error", extra={"instance_id": instance_id, "error": str(e)})
 
             del self._instances[instance_id]
-            _logger.info("Destroyed sandbox instance: %s", instance_id)
+            _logger.info("sandbox_instance_destroyed", extra={"instance_id": instance_id})
 
     async def destroy_all(self) -> None:
         """Destroy all sandbox instances."""
@@ -256,7 +251,7 @@ class SandboxManager:
             try:
                 await self.destroy(instance_id)
             except Exception as e:
-                _logger.warning("Error destroying sandbox %s: %s", instance_id, e)
+                _logger.warning("sandbox_destroy_error", extra={"instance_id": instance_id, "error": str(e)})
 
     async def run_binary(
         self,
@@ -317,7 +312,7 @@ class SandboxManager:
             )
 
         except Exception:
-            _logger.exception("Binary execution failed in sandbox %s", instance.id)
+            _logger.exception("binary_execution_failed", extra={"instance_id": instance.id})
             raise
 
         return (instance, report)
@@ -335,10 +330,7 @@ class SandboxManager:
             Idle instance or None if not found.
         """
         for instance in self._instances.values():
-            if (
-                instance.sandbox_type == sandbox_type
-                and instance.state.status == "running"
-            ):
+            if instance.sandbox_type == sandbox_type and instance.state.status == "running":
                 return instance
         return None
 
@@ -352,10 +344,7 @@ class SandboxManager:
         oldest_time: datetime | None = None
 
         for instance in self._instances.values():
-            if (
-                instance.state.status == "running"
-                and (oldest_time is None or instance.last_used < oldest_time)
-            ):
+            if instance.state.status == "running" and (oldest_time is None or instance.last_used < oldest_time):
                 oldest = instance
                 oldest_time = instance.last_used
 
@@ -382,7 +371,7 @@ class SandboxManager:
             try:
                 await self.destroy(instance_id)
             except Exception as e:
-                _logger.warning("Error cleaning up stale sandbox %s: %s", instance_id, e)
+                _logger.warning("stale_sandbox_cleanup_error", extra={"instance_id": instance_id, "error": str(e)})
 
         return len(stale_ids)
 

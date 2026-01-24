@@ -9,9 +9,9 @@ vulnerabilities:
 
 - **Languages Analyzed**: Python, Rust
 - **Scan Frequency**:
-    - On every push to `main` and `develop` branches
-    - On all pull requests to `main`
-    - Weekly scheduled scans (Sundays at 1:30 AM UTC)
+  - On every push to `main` and `develop` branches
+  - On all pull requests to `main`
+  - Weekly scheduled scans (Sundays at 1:30 AM UTC)
 - **Query Sets**: Security and quality queries
 - **Configuration**: `.github/codeql/codeql-config.yml`
 

@@ -14,13 +14,6 @@ from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QAction, QCloseEvent
-
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Coroutine
-
-    from ..core.config import Config
-    from ..core.orchestrator import Orchestrator
 from PyQt6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -46,6 +39,13 @@ from .sandbox_config import SandboxConfigDialog
 from .session_manager import SessionManagerDialog
 from .tool_config import ToolConfigDialog, ToolStatusDialog
 from .tools import ToolOutputPanel
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine
+
+    from ..core.config import Config
+    from ..core.orchestrator import Orchestrator
 
 
 _logger = get_logger("ui.app")
@@ -125,6 +125,8 @@ class MainWindow(QMainWindow):
         self._stream_append: Callable[[str], None] | None = None
         self._sandbox_manager = SandboxManager()
         self._model_refresh_worker: ModelRefreshWorker | None = None
+
+        self._current_binary: Path | None = None
 
         self._icon_manager = IconManager.get_instance()
         self._font_manager = FontManager.get_instance()
@@ -248,6 +250,36 @@ class MainWindow(QMainWindow):
         configure_tools_action.triggered.connect(self._on_configure_tools)
         tools_menu.addAction(configure_tools_action)
 
+        tools_menu.addSeparator()
+
+        embedded_menu = tools_menu.addMenu("&Embedded Tools")
+
+        open_x64dbg_action = QAction("Open x64dbg Debugger", self)
+        open_x64dbg_action.triggered.connect(self._on_open_x64dbg)
+        embedded_menu.addAction(open_x64dbg_action)
+
+        open_cutter_action = QAction("Open Cutter Analysis", self)
+        open_cutter_action.triggered.connect(self._on_open_cutter)
+        embedded_menu.addAction(open_cutter_action)
+
+        open_hxd_action = QAction("Open HxD Hex Editor", self)
+        open_hxd_action.triggered.connect(self._on_open_hxd)
+        embedded_menu.addAction(open_hxd_action)
+
+        embedded_menu.addSeparator()
+
+        debug_binary_action = QAction("Debug Current Binary...", self)
+        debug_binary_action.triggered.connect(self._on_debug_current_binary)
+        embedded_menu.addAction(debug_binary_action)
+
+        analyze_binary_action = QAction("Analyze Current Binary...", self)
+        analyze_binary_action.triggered.connect(self._on_analyze_current_binary)
+        embedded_menu.addAction(analyze_binary_action)
+
+        hex_edit_binary_action = QAction("Hex Edit Current Binary...", self)
+        hex_edit_binary_action.triggered.connect(self._on_hex_edit_current_binary)
+        embedded_menu.addAction(hex_edit_binary_action)
+
         providers_menu = menubar.addMenu("&Providers")
 
         configure_providers_action = QAction("Configure Providers...", self)
@@ -315,9 +347,39 @@ class MainWindow(QMainWindow):
         self._model_combo.setObjectName("toolbar_combo")
         toolbar.addWidget(self._model_combo)
 
+        toolbar.addSeparator()
+
+        tools_label = QLabel("Tools:")
+        tools_label.setObjectName("toolbar_label")
+        toolbar.addWidget(tools_label)
+
+        self._x64dbg_btn = QPushButton("x64dbg")
+        self._x64dbg_btn.setObjectName("tool_button")
+        self._x64dbg_btn.setToolTip("Open x64dbg Debugger")
+        self._x64dbg_btn.clicked.connect(self._on_open_x64dbg)
+        toolbar.addWidget(self._x64dbg_btn)
+
+        self._cutter_btn = QPushButton("Cutter")
+        self._cutter_btn.setObjectName("tool_button")
+        self._cutter_btn.setToolTip("Open Cutter Analysis")
+        self._cutter_btn.clicked.connect(self._on_open_cutter)
+        toolbar.addWidget(self._cutter_btn)
+
+        self._hxd_btn = QPushButton("HxD")
+        self._hxd_btn.setObjectName("tool_button")
+        self._hxd_btn.setToolTip("Open HxD Hex Editor")
+        self._hxd_btn.clicked.connect(self._on_open_hxd)
+        toolbar.addWidget(self._hxd_btn)
+
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         toolbar.addWidget(spacer)
+
+        self._auto_approve_btn = QPushButton("Auto-approve: OFF")
+        self._auto_approve_btn.setCheckable(True)
+        self._auto_approve_btn.setObjectName("toggle_button")
+        self._auto_approve_btn.toggled.connect(self._on_auto_approve_toggled)
+        toolbar.addWidget(self._auto_approve_btn)
 
         self._sandbox_btn = QPushButton("Sandbox: OFF")
         self._sandbox_btn.setCheckable(True)
@@ -359,6 +421,41 @@ class MainWindow(QMainWindow):
         self._orchestrator.set_tool_call_callback(self.tool_call_received.emit)
         self._orchestrator.set_tool_result_callback(self.tool_result_received.emit)
         self._orchestrator.set_stream_callback(self.stream_chunk_received.emit)
+        self._orchestrator.set_async_confirmation_callback(self._request_tool_confirmation)
+
+    def _request_tool_confirmation(self, call: ToolCall) -> asyncio.Future[bool]:
+        """Request user confirmation for a tool call.
+
+        Args:
+            call: The tool call requiring confirmation.
+
+        Returns:
+            Future that resolves to True if approved, False otherwise.
+        """
+        from .confirmation_dialog import ToolConfirmationDialog  # noqa: PLC0415
+
+        future: asyncio.Future[bool] = asyncio.get_event_loop().create_future()
+
+        def show_dialog() -> None:
+            dialog = ToolConfirmationDialog(call, self)
+            dialog.exec()
+            try:
+                future.set_result(dialog.approved)
+            except asyncio.InvalidStateError:
+                pass
+
+        from PyQt6.QtCore import (  # noqa: PLC0415
+            QMetaObject,
+            Qt as QtCore_Qt,
+        )
+
+        QMetaObject.invokeMethod(
+            self,
+            show_dialog,
+            QtCore_Qt.ConnectionType.QueuedConnection,
+        )
+
+        return future
 
     def _on_user_message(self, text: str) -> None:
         """Handle user message submission.
@@ -391,9 +488,7 @@ class MainWindow(QMainWindow):
             call: The tool call being executed.
         """
         self.status_update.emit(f"Running: {call.tool_name}.{call.function_name}")
-        self._tool_panel.log(
-            f"[CALL] {call.tool_name}.{call.function_name}"
-        )
+        self._tool_panel.log(f"[CALL] {call.tool_name}.{call.function_name}")
 
     def _on_tool_result(self, result: ToolResult) -> None:
         """Handle tool result notification.
@@ -402,14 +497,12 @@ class MainWindow(QMainWindow):
             result: The tool execution result.
         """
         status = "SUCCESS" if result.success else "FAILED"
-        self._tool_panel.log(
-            f"[{status}] Duration: {result.duration_ms:.1f}ms"
-        )
+        self._tool_panel.log(f"[{status}] Duration: {result.duration_ms:.1f}ms")
 
         if result.success and result.result:
             result_str = str(result.result)
             if len(result_str) > _MAX_RESULT_DISPLAY_LEN:
-                result_str = result_str[:_MAX_RESULT_DISPLAY_LEN - 3] + "..."
+                result_str = result_str[: _MAX_RESULT_DISPLAY_LEN - 3] + "..."
             self._tool_panel.log(f"Result: {result_str}")
 
         if result.error:
@@ -472,6 +565,8 @@ class MainWindow(QMainWindow):
         Args:
             path: Path to the binary.
         """
+        self._current_binary = path
+
         async def load() -> None:
             await self._orchestrator.add_binary(path)
 
@@ -501,6 +596,7 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             session_id = dialog.get_selected_session_id()
             if session_id:
+
                 async def load_session() -> None:
                     await self._orchestrator.load_session(session_id)
 
@@ -511,6 +607,7 @@ class MainWindow(QMainWindow):
 
     def _on_save_session(self) -> None:
         """Handle save session action."""
+
         async def save_session() -> None:
             await self._orchestrator.save_session()
 
@@ -626,9 +723,7 @@ class MainWindow(QMainWindow):
         self._model_refresh_worker.finished.connect(self._on_models_refresh_finished)
         self._model_refresh_worker.start()
 
-    def _on_models_refresh_finished(
-        self, success: bool, models: list[str], message: str
-    ) -> None:
+    def _on_models_refresh_finished(self, success: bool, models: list[str], message: str) -> None:
         """Handle models refresh completion.
 
         Args:
@@ -670,6 +765,7 @@ class MainWindow(QMainWindow):
 
     def _on_open_sandbox(self) -> None:
         """Handle open sandbox action."""
+
         async def open_sandbox() -> object:
             available_types = await self._sandbox_manager.get_available_types()
             if not available_types:
@@ -716,10 +812,94 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "About Intellicrack",
-            "Intellicrack\n\n"
-            "AI-powered reverse engineering platform for analyzing\n"
-            "software licensing protections.\n\n"
-            "Version 2.0.0",
+            "Intellicrack\n\nAI-powered reverse engineering platform for analyzing\nsoftware licensing protections.\n\nVersion 2.0.0",
+        )
+
+    def _on_open_x64dbg(self) -> None:
+        """Open x64dbg debugger in embedded tab."""
+        widget = self._tool_panel.add_x64dbg_tab(is_64bit=True)
+        if widget is None:
+            self._show_tool_error("x64dbg", "Failed to initialize x64dbg widget")
+            return
+        if not widget.start_tool():
+            self._show_tool_error(
+                "x64dbg",
+                "x64dbg executable not found. Check tools/x64dbg/ directory.",
+            )
+
+    def _on_open_cutter(self) -> None:
+        """Open Cutter analysis tool in embedded tab."""
+        widget = self._tool_panel.add_cutter_tab()
+        if widget is None:
+            self._show_tool_error("Cutter", "Failed to initialize Cutter widget")
+            return
+        if not widget.start_tool():
+            self._show_tool_error(
+                "Cutter",
+                "Cutter executable not found. Check tools/cutter/ directory.",
+            )
+
+    def _on_open_hxd(self) -> None:
+        """Open HxD hex editor in embedded tab."""
+        widget = self._tool_panel.add_hxd_tab()
+        if widget is None:
+            self._show_tool_error("HxD", "Failed to initialize HxD widget")
+            return
+        if not widget.start_tool():
+            self._show_tool_error(
+                "HxD",
+                "HxD executable not found. Check tools/hxd/ directory.",
+            )
+
+    def _on_debug_current_binary(self) -> None:
+        """Debug the currently loaded binary with x64dbg."""
+        if self._current_binary is None:
+            self._show_no_binary_warning("debug")
+            return
+        if not self._tool_panel.open_in_x64dbg(self._current_binary):
+            self._show_tool_error("x64dbg", "Failed to open binary in x64dbg")
+
+    def _on_analyze_current_binary(self) -> None:
+        """Analyze the currently loaded binary with Cutter."""
+        if self._current_binary is None:
+            self._show_no_binary_warning("analyze")
+            return
+        if not self._tool_panel.open_in_cutter(self._current_binary):
+            self._show_tool_error("Cutter", "Failed to open binary in Cutter")
+
+    def _on_hex_edit_current_binary(self) -> None:
+        """Open the currently loaded binary in HxD hex editor."""
+        if self._current_binary is None:
+            self._show_no_binary_warning("hex edit")
+            return
+        if not self._tool_panel.open_in_hxd(self._current_binary):
+            self._show_tool_error("HxD", "Failed to open binary in HxD")
+
+    def _show_tool_error(self, tool_name: str, message: str) -> None:
+        """Show tool-related error dialog.
+
+        Args:
+            tool_name: Name of the tool.
+            message: Error message to display.
+        """
+        QMessageBox.warning(
+            self,
+            f"{tool_name} Error",
+            message,
+            QMessageBox.StandardButton.Ok,
+        )
+
+    def _show_no_binary_warning(self, action: str) -> None:
+        """Show warning when no binary is loaded.
+
+        Args:
+            action: The action being attempted.
+        """
+        QMessageBox.information(
+            self,
+            "No Binary Loaded",
+            f"Please load a binary first before attempting to {action} it.",
+            QMessageBox.StandardButton.Ok,
         )
 
     def _on_provider_changed(self, index: int) -> None:
@@ -730,7 +910,7 @@ class MainWindow(QMainWindow):
         """
         del index
         provider = self._provider_combo.currentData()
-        _logger.info("Provider changed to %s", provider.value if provider else "None")
+        _logger.info("provider_changed", extra={"provider": provider.value if provider else None})
 
     def _on_sandbox_toggled(self, checked: bool) -> None:
         """Handle sandbox toggle.
@@ -740,8 +920,26 @@ class MainWindow(QMainWindow):
         """
         self._sandbox_btn.setText(f"Sandbox: {'ON' if checked else 'OFF'}")
 
+    def _on_auto_approve_toggled(self, checked: bool) -> None:
+        """Handle auto-approve toggle.
+
+        Args:
+            checked: Whether auto-approve is enabled.
+        """
+        from ..core.types import ConfirmationLevel  # noqa: PLC0415
+
+        self._auto_approve_btn.setText(f"Auto-approve: {'ON' if checked else 'OFF'}")
+
+        if checked:
+            self._orchestrator._config.confirmation_level = ConfirmationLevel.NONE
+            self.status_update.emit("Auto-approve enabled - all tool calls will be approved automatically")
+        else:
+            self._orchestrator._config.confirmation_level = ConfirmationLevel.DESTRUCTIVE
+            self.status_update.emit("Auto-approve disabled - destructive operations require confirmation")
+
     def _on_cancel(self) -> None:
         """Handle cancel button click."""
+
         async def cancel() -> None:
             await self._orchestrator.cancel()
 
@@ -754,6 +952,7 @@ class MainWindow(QMainWindow):
         Args:
             event: Close event.
         """
+
         async def shutdown() -> None:
             await self._orchestrator.shutdown()
 

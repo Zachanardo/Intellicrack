@@ -1,0 +1,294 @@
+{
+  "tool": "mypy",
+  "generated": "2026-01-18T15:59:31.276028",
+  "total_findings": 26,
+  "total_files": 13,
+  "files": [
+    {
+      "path": "tests\\test_ui\\test_font_manager.py",
+      "count": 5,
+      "findings": [
+        {
+          "line": 108,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "\"QFont\" has no attribute \"styleHint\"",
+          "raw": "tests\\test_ui\\test_font_manager.py:108: error: \"QFont\" has no attribute \"styleHint\"  [attr-defined]"
+        },
+        {
+          "line": 108,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "\"type[QFont]\" has no attribute \"StyleHint\"",
+          "raw": "tests\\test_ui\\test_font_manager.py:108: error: \"type[QFont]\" has no attribute \"StyleHint\"  [attr-defined]"
+        },
+        {
+          "line": 113,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "\"QFont\" has no attribute \"fixedPitch\"",
+          "raw": "tests\\test_ui\\test_font_manager.py:113: error: \"QFont\" has no attribute \"fixedPitch\"  [attr-defined]"
+        },
+        {
+          "line": 143,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "\"QFont\" has no attribute \"styleHint\"",
+          "raw": "tests\\test_ui\\test_font_manager.py:143: error: \"QFont\" has no attribute \"styleHint\"  [attr-defined]"
+        },
+        {
+          "line": 143,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "\"type[QFont]\" has no attribute \"StyleHint\"",
+          "raw": "tests\\test_ui\\test_font_manager.py:143: error: \"type[QFont]\" has no attribute \"StyleHint\"  [attr-defined]"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_providers\\test_model_discovery.py",
+      "count": 5,
+      "findings": [
+        {
+          "line": 142,
+          "column": null,
+          "severity": "error",
+          "code": "no-untyped-def",
+          "message": "Function is missing a type annotation for one or more arguments",
+          "raw": "tests\\test_providers\\test_model_discovery.py:142: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]"
+        },
+        {
+          "line": 169,
+          "column": null,
+          "severity": "error",
+          "code": "assignment",
+          "message": "Incompatible types in assignment (expression has type \"GoogleProvider\", variable has type \"OpenAIProvider\")",
+          "raw": "tests\\test_providers\\test_model_discovery.py:169: error: Incompatible types in assignment (expression has type \"GoogleProvider\", variable has type \"OpenAIProvider\")  [assignment]"
+        },
+        {
+          "line": 179,
+          "column": null,
+          "severity": "error",
+          "code": "assignment",
+          "message": "Incompatible types in assignment (expression has type \"OpenRouterProvider\", variable has type \"OpenAIProvider\")",
+          "raw": "tests\\test_providers\\test_model_discovery.py:179: error: Incompatible types in assignment (expression has type \"OpenRouterProvider\", variable has type \"OpenAIProvider\")  [assignment]"
+        },
+        {
+          "line": 189,
+          "column": null,
+          "severity": "error",
+          "code": "assignment",
+          "message": "Incompatible types in assignment (expression has type \"AnthropicProvider\", variable has type \"OpenAIProvider\")",
+          "raw": "tests\\test_providers\\test_model_discovery.py:189: error: Incompatible types in assignment (expression has type \"AnthropicProvider\", variable has type \"OpenAIProvider\")  [assignment]"
+        },
+        {
+          "line": 199,
+          "column": null,
+          "severity": "error",
+          "code": "assignment",
+          "message": "Incompatible types in assignment (expression has type \"OllamaProvider\", variable has type \"OpenAIProvider\")",
+          "raw": "tests\\test_providers\\test_model_discovery.py:199: error: Incompatible types in assignment (expression has type \"OllamaProvider\", variable has type \"OpenAIProvider\")  [assignment]"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_core\\test_types.py",
+      "count": 4,
+      "findings": [
+        {
+          "line": 1353,
+          "column": null,
+          "severity": "error",
+          "code": "call-arg",
+          "message": "Unexpected keyword argument \"process_name\" for \"AttachError\"",
+          "raw": "tests\\test_core\\test_types.py:1353: error: Unexpected keyword argument \"process_name\" for \"AttachError\"  [call-arg]"
+        },
+        {
+          "line": 1354,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "\"AttachError\" has no attribute \"process_name\"",
+          "raw": "tests\\test_core\\test_types.py:1354: error: \"AttachError\" has no attribute \"process_name\"  [attr-defined]"
+        },
+        {
+          "line": 1359,
+          "column": null,
+          "severity": "error",
+          "code": "call-arg",
+          "message": "Unexpected keyword argument \"process_name\" for \"AttachError\"",
+          "raw": "tests\\test_core\\test_types.py:1359: error: Unexpected keyword argument \"process_name\" for \"AttachError\"  [call-arg]"
+        },
+        {
+          "line": 1366,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "\"AttachError\" has no attribute \"process_name\"",
+          "raw": "tests\\test_core\\test_types.py:1366: error: \"AttachError\" has no attribute \"process_name\"  [attr-defined]"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_ui\\test_splash_screen.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 49,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "\"type[Qt]\" has no attribute \"WindowType\"",
+          "raw": "tests\\test_ui\\test_splash_screen.py:49: error: \"type[Qt]\" has no attribute \"WindowType\"  [attr-defined]"
+        },
+        {
+          "line": 50,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "\"type[Qt]\" has no attribute \"WindowType\"",
+          "raw": "tests\\test_ui\\test_splash_screen.py:50: error: \"type[Qt]\" has no attribute \"WindowType\"  [attr-defined]"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_core\\test_script_gen_keygen.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 19,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "Module \"intellicrack.core.script_gen\" has no attribute \"GeneratedScript\"",
+          "raw": "tests\\test_core\\test_script_gen_keygen.py:19: error: Module \"intellicrack.core.script_gen\" has no attribute \"GeneratedScript\"  [attr-defined]"
+        },
+        {
+          "line": 19,
+          "column": null,
+          "severity": "error",
+          "code": "attr-defined",
+          "message": "Module \"intellicrack.core.script_gen\" has no attribute \"ScriptGenerator\"",
+          "raw": "tests\\test_core\\test_script_gen_keygen.py:19: error: Module \"intellicrack.core.script_gen\" has no attribute \"ScriptGenerator\"  [attr-defined]"
+        }
+      ]
+    },
+    {
+      "path": "src\\intellicrack\\core\\types.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 1023,
+          "column": null,
+          "severity": "note",
+          "code": "",
+          "message": "\"AttachError\" defined here",
+          "raw": "src\\intellicrack\\core\\types.py:1023: note: \"AttachError\" defined here"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_ui\\conftest.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 31,
+          "column": null,
+          "severity": "error",
+          "code": "redundant-cast",
+          "message": "Redundant cast to \"QApplication\"",
+          "raw": "tests\\test_ui\\conftest.py:31: error: Redundant cast to \"QApplication\"  [redundant-cast]"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_providers\\test_openrouter_provider.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 209,
+          "column": null,
+          "severity": "error",
+          "code": "no-untyped-def",
+          "message": "Function is missing a type annotation for one or more arguments",
+          "raw": "tests\\test_providers\\test_openrouter_provider.py:209: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_providers\\test_huggingface_provider.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 215,
+          "column": null,
+          "severity": "error",
+          "code": "no-untyped-def",
+          "message": "Function is missing a type annotation for one or more arguments",
+          "raw": "tests\\test_providers\\test_huggingface_provider.py:215: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_providers\\test_openai_provider.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 192,
+          "column": null,
+          "severity": "error",
+          "code": "no-untyped-def",
+          "message": "Function is missing a type annotation for one or more arguments",
+          "raw": "tests\\test_providers\\test_openai_provider.py:192: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_providers\\test_grok_provider.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 188,
+          "column": null,
+          "severity": "error",
+          "code": "no-untyped-def",
+          "message": "Function is missing a type annotation for one or more arguments",
+          "raw": "tests\\test_providers\\test_grok_provider.py:188: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_providers\\test_anthropic_provider.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 188,
+          "column": null,
+          "severity": "error",
+          "code": "no-untyped-def",
+          "message": "Function is missing a type annotation for one or more arguments",
+          "raw": "tests\\test_providers\\test_anthropic_provider.py:188: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_providers\\test_google_provider.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 190,
+          "column": null,
+          "severity": "error",
+          "code": "no-untyped-def",
+          "message": "Function is missing a type annotation for one or more arguments",
+          "raw": "tests\\test_providers\\test_google_provider.py:190: error: Function is missing a type annotation for one or more arguments  [no-untyped-def]"
+        }
+      ]
+    }
+  ]
+}

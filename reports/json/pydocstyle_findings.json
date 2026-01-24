@@ -1,0 +1,136 @@
+{
+  "tool": "pydocstyle",
+  "generated": "2026-01-18T15:58:20.604787",
+  "total_findings": 10,
+  "total_files": 8,
+  "files": [
+    {
+      "path": "src/intellicrack\\bridges\\base.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 800,
+          "column": null,
+          "code": "D401",
+          "context": "in public method `hook_function`:",
+          "message": "in public method `hook_function`: - First line should be in imperative mood; try rephrasing (found 'Hook')",
+          "raw": "src/intellicrack\\bridges\\base.py:800: D401: in public method `hook_function`: - First line should be in imperative mood; try rephrasing (found 'Hook')"
+        },
+        {
+          "line": 862,
+          "column": null,
+          "code": "D401",
+          "context": "in public method `intercept_return`:",
+          "message": "in public method `intercept_return`: - First line should be in imperative mood; try rephrasing (found 'Hook')",
+          "raw": "src/intellicrack\\bridges\\base.py:862: D401: in public method `intercept_return`: - First line should be in imperative mood; try rephrasing (found 'Hook')"
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack\\bridges\\frida_bridge.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 906,
+          "column": null,
+          "code": "D401",
+          "context": "in public method `hook_function`:",
+          "message": "in public method `hook_function`: - First line should be in imperative mood; try rephrasing (found 'Hook')",
+          "raw": "src/intellicrack\\bridges\\frida_bridge.py:906: D401: in public method `hook_function`: - First line should be in imperative mood; try rephrasing (found 'Hook')"
+        },
+        {
+          "line": 1037,
+          "column": null,
+          "code": "D401",
+          "context": "in public method `intercept_return`:",
+          "message": "in public method `intercept_return`: - First line should be in imperative mood; try rephrasing (found 'Hook')",
+          "raw": "src/intellicrack\\bridges\\frida_bridge.py:1037: D401: in public method `intercept_return`: - First line should be in imperative mood; try rephrasing (found 'Hook')"
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack\\core\\process_manager.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 257,
+          "column": null,
+          "code": "D401",
+          "context": "in private method `_sync_cleanup`:",
+          "message": "in private method `_sync_cleanup`: - First line should be in imperative mood (perhaps 'Synchronize', not 'Synchronous')",
+          "raw": "src/intellicrack\\core\\process_manager.py:257: D401: in private method `_sync_cleanup`: - First line should be in imperative mood (perhaps 'Synchronize', not 'Synchronous')"
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack\\core\\script_gen.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 259,
+          "column": null,
+          "code": "D401",
+          "context": "in public method `validate_java`:",
+          "message": "in public method `validate_java`: - First line should be in imperative mood; try rephrasing (found 'Basic')",
+          "raw": "src/intellicrack\\core\\script_gen.py:259: D401: in public method `validate_java`: - First line should be in imperative mood; try rephrasing (found 'Basic')"
+        }
+      ]
+    },
+    {
+      "path": "src/intellicrack\\credentials\\oauth.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 899,
+          "column": null,
+          "code": "D401",
+          "context": "in public function `authorize_google`:",
+          "message": "in public function `authorize_google`: - First line should be in imperative mood; try rephrasing (found 'Convenience')",
+          "raw": "src/intellicrack\\credentials\\oauth.py:899: D401: in public function `authorize_google`: - First line should be in imperative mood; try rephrasing (found 'Convenience')"
+        }
+      ]
+    },
+    {
+      "path": "tests\\__init__.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 1,
+          "column": null,
+          "code": "D104",
+          "context": "at module level:",
+          "message": "at module level: - Missing docstring in public package",
+          "raw": "tests\\__init__.py:1: D104: at module level: - Missing docstring in public package"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_bridges\\__init__.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 1,
+          "column": null,
+          "code": "D104",
+          "context": "at module level:",
+          "message": "at module level: - Missing docstring in public package",
+          "raw": "tests\\test_bridges\\__init__.py:1: D104: at module level: - Missing docstring in public package"
+        }
+      ]
+    },
+    {
+      "path": "tests\\test_core\\__init__.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 1,
+          "column": null,
+          "code": "D104",
+          "context": "at module level:",
+          "message": "at module level: - Missing docstring in public package",
+          "raw": "tests\\test_core\\__init__.py:1: D104: at module level: - Missing docstring in public package"
+        }
+      ]
+    }
+  ]
+}

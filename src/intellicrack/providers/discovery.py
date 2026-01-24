@@ -124,7 +124,7 @@ class DiscoveryCache:
             return None
 
         if time.time() > entry.expires_at:
-            self._logger.debug("Cache expired for %s", provider.value)
+            self._logger.debug("cache_expired", extra={"provider": provider.value})
             return None
 
         return entry.models
@@ -144,10 +144,12 @@ class DiscoveryCache:
         )
         self._cache[provider] = entry
         self._logger.debug(
-            "Cached %d models for %s (expires in %ds)",
-            len(models),
-            provider.value,
-            self._ttl_seconds,
+            "cache_set",
+            extra={
+                "model_count": len(models),
+                "provider": provider.value,
+                "ttl_seconds": self._ttl_seconds,
+            },
         )
 
     def invalidate(self, provider: ProviderName | None = None) -> None:
@@ -158,10 +160,10 @@ class DiscoveryCache:
         """
         if provider is None:
             self._cache.clear()
-            self._logger.debug("Invalidated entire cache")
+            self._logger.debug("cache_invalidated_all")
         elif provider in self._cache:
             del self._cache[provider]
-            self._logger.debug("Invalidated cache for %s", provider.value)
+            self._logger.debug("cache_invalidated", extra={"provider": provider.value})
 
     def is_expired(self, provider: ProviderName) -> bool:
         """Check if cache entry is expired.
@@ -233,10 +235,10 @@ class DiscoveryCache:
                 data["entries"] = entries_dict
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(data, indent=2), encoding="utf-8")
-                self._logger.info("Saved cache to %s", path)
+                self._logger.info("cache_saved", extra={"path": str(path)})
 
             except Exception:
-                self._logger.exception("Failed to save cache")
+                self._logger.exception("cache_save_failed")
 
     async def load_from_disk(self, path: Path) -> None:
         """Load cache from disk.
@@ -246,7 +248,7 @@ class DiscoveryCache:
         """
         async with self._lock:
             if not path.exists():
-                self._logger.debug("Cache file not found: %s", path)
+                self._logger.debug("cache_file_not_found", extra={"path": str(path)})
                 return
 
             try:
@@ -254,7 +256,7 @@ class DiscoveryCache:
                 data = json.loads(content)
 
                 if data.get("version") != 1:
-                    self._logger.warning("Unknown cache version, skipping load")
+                    self._logger.warning("unknown_cache_version")
                     return
 
                 entries = data.get("entries", {})
@@ -277,12 +279,8 @@ class DiscoveryCache:
                                 supports_tools=m["supports_tools"],
                                 supports_vision=m["supports_vision"],
                                 supports_streaming=m["supports_streaming"],
-                                input_cost_per_1m_tokens=m.get(
-                                    "input_cost_per_1m_tokens"
-                                ),
-                                output_cost_per_1m_tokens=m.get(
-                                    "output_cost_per_1m_tokens"
-                                ),
+                                input_cost_per_1m_tokens=m.get("input_cost_per_1m_tokens"),
+                                output_cost_per_1m_tokens=m.get("output_cost_per_1m_tokens"),
                             )
                             for m in entry_data.get("models", [])
                         ]
@@ -294,18 +292,14 @@ class DiscoveryCache:
                         )
 
                     except (ValueError, KeyError) as e:
-                        self._logger.warning(
-                            "Failed to load cache entry for %s: %s", provider_str, e
-                        )
+                        self._logger.warning("cache_entry_load_failed", extra={"provider": provider_str, "error": str(e)})
 
-                self._logger.info(
-                    "Loaded %d provider caches from %s", len(self._cache), path
-                )
+                self._logger.info("cache_loaded", extra={"provider_count": len(self._cache), "path": str(path)})
 
             except json.JSONDecodeError:
-                self._logger.exception("Failed to parse cache file")
+                self._logger.exception("cache_parse_failed")
             except Exception:
-                self._logger.exception("Failed to load cache")
+                self._logger.exception("cache_load_failed")
 
 
 class ModelDiscovery:
@@ -368,7 +362,7 @@ class ModelDiscovery:
         registered = self._registry.list_registered()
 
         if not registered:
-            self._logger.warning("No providers registered for discovery")
+            self._logger.warning("no_providers_registered")
             return results
 
         if force_refresh:
@@ -457,9 +451,7 @@ class ModelDiscovery:
 
             except Exception as e:
                 duration_ms = (time.time() - start_time) * 1000
-                self._logger.warning(
-                    "Discovery failed for %s: %s", provider_name.value, e
-                )
+                self._logger.warning("discovery_failed", extra={"provider": provider_name.value, "error": str(e)})
                 return (
                     provider_name,
                     [],
@@ -478,16 +470,18 @@ class ModelDiscovery:
 
         for result in completed:
             if isinstance(result, BaseException):
-                self._logger.error("Discovery task exception: %s", result)
+                self._logger.error("discovery_task_exception", extra={"error": str(result)})
                 continue
             provider_name, models, event = result
             results[provider_name] = models
             self._events.append(event)
 
         self._logger.info(
-            "Discovery complete: %d providers, %d total models",
-            len(results),
-            sum(len(m) for m in results.values()),
+            "discovery_complete",
+            extra={
+                "provider_count": len(results),
+                "total_models": sum(len(m) for m in results.values()),
+            },
         )
 
         return results
@@ -513,11 +507,11 @@ class ModelDiscovery:
 
         provider_instance = self._registry.get(provider)
         if provider_instance is None:
-            self._logger.warning("Provider %s not registered", provider.value)
+            self._logger.warning("provider_not_registered", extra={"provider": provider.value})
             return []
 
         if not provider_instance.is_connected:
-            self._logger.warning("Provider %s not connected", provider.value)
+            self._logger.warning("provider_not_connected", extra={"provider": provider.value})
             return []
 
         start_time = time.time()
@@ -529,13 +523,12 @@ class ModelDiscovery:
             )
         except TimeoutError:
             self._logger.warning(
-                "Discovery timeout for %s after %ss",
-                provider.value,
-                self._timeout,
+                "discovery_timeout",
+                extra={"provider": provider.value, "timeout_seconds": self._timeout},
             )
             return []
         except Exception:
-            self._logger.exception("Discovery failed for %s", provider.value)
+            self._logger.exception("discovery_failed", extra={"provider": provider.value})
             return []
         else:
             duration_ms = (time.time() - start_time) * 1000
@@ -579,11 +572,7 @@ class ModelDiscovery:
         all_models = self._cache.get_all_cached()
 
         for models in all_models.values():
-            results.extend(
-                model
-                for model in models
-                if query_lower in model.id.lower() or query_lower in model.name.lower()
-            )
+            results.extend(model for model in models if query_lower in model.id.lower() or query_lower in model.name.lower())
 
         results.sort(key=lambda m: (m.provider.value, m.id))
         return results
@@ -608,17 +597,14 @@ class ModelDiscovery:
             try:
                 pattern = re.compile(criteria.model_id_pattern, re.IGNORECASE)
             except re.error as e:
-                self._logger.warning("Invalid regex pattern: %s", e)
+                self._logger.warning("invalid_regex_pattern", extra={"error": str(e)})
 
         for provider, models in all_models.items():
             if criteria.providers is not None and provider not in criteria.providers:
                 continue
 
             for model in models:
-                if (
-                    criteria.min_context_window is not None
-                    and model.context_window < criteria.min_context_window
-                ):
+                if criteria.min_context_window is not None and model.context_window < criteria.min_context_window:
                     continue
 
                 if (
@@ -628,22 +614,13 @@ class ModelDiscovery:
                 ):
                     continue
 
-                if (
-                    criteria.requires_tools is not None
-                    and model.supports_tools != criteria.requires_tools
-                ):
+                if criteria.requires_tools is not None and model.supports_tools != criteria.requires_tools:
                     continue
 
-                if (
-                    criteria.requires_vision is not None
-                    and model.supports_vision != criteria.requires_vision
-                ):
+                if criteria.requires_vision is not None and model.supports_vision != criteria.requires_vision:
                     continue
 
-                if (
-                    criteria.requires_streaming is not None
-                    and model.supports_streaming != criteria.requires_streaming
-                ):
+                if criteria.requires_streaming is not None and model.supports_streaming != criteria.requires_streaming:
                     continue
 
                 if pattern is not None and not pattern.match(model.id):

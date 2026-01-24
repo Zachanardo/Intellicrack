@@ -48,9 +48,7 @@ class TestSessionStoreInitialization:
         store = SessionStore(db_path)
 
         with store._connection() as conn:
-            tables = conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
+            tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
             table_names = {row["name"] for row in tables}
 
         assert "sessions" in table_names
@@ -233,9 +231,7 @@ class TestSessionDataIntegrity:
         assert deleted is True
         assert store.load(session.id) is None
 
-    def test_delete_nonexistent_session_returns_false(
-        self, store: SessionStore
-    ) -> None:
+    def test_delete_nonexistent_session_returns_false(self, store: SessionStore) -> None:
         """Verify deleting non-existent session returns False."""
         result = store.delete("nonexistent-session-id")
         assert result is False

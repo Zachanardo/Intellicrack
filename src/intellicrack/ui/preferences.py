@@ -144,11 +144,9 @@ class GeneralSettingsWidget(QWidget):
         behavior_layout = QFormLayout(behavior_group)
 
         self._confirm_combo = QComboBox()
-        self._confirm_combo.addItem("None", ConfirmationLevel.NONE.value)
-        self._confirm_combo.addItem(
-            "Destructive operations", ConfirmationLevel.DESTRUCTIVE.value
-        )
-        self._confirm_combo.addItem("All operations", ConfirmationLevel.ALL.value)
+        self._confirm_combo.addItem("Auto-approve all (no confirmations)", ConfirmationLevel.NONE.value)
+        self._confirm_combo.addItem("Confirm destructive only", ConfirmationLevel.DESTRUCTIVE.value)
+        self._confirm_combo.addItem("Confirm all operations", ConfirmationLevel.ALL.value)
         behavior_layout.addRow("Confirmation Level:", self._confirm_combo)
 
         layout.addWidget(behavior_group)
@@ -157,17 +155,13 @@ class GeneralSettingsWidget(QWidget):
 
     def _browse_tools(self) -> None:
         """Browse for tools directory."""
-        path = QFileDialog.getExistingDirectory(
-            self, "Select Tools Directory", self._tools_path.text()
-        )
+        path = QFileDialog.getExistingDirectory(self, "Select Tools Directory", self._tools_path.text())
         if path:
             self._tools_path.setText(path)
 
     def _browse_logs(self) -> None:
         """Browse for logs directory."""
-        path = QFileDialog.getExistingDirectory(
-            self, "Select Logs Directory", self._logs_path.text()
-        )
+        path = QFileDialog.getExistingDirectory(self, "Select Logs Directory", self._logs_path.text())
         if path:
             self._logs_path.setText(path)
 
@@ -200,18 +194,10 @@ class GeneralSettingsWidget(QWidget):
         confirm_value = _combo_current_data(self._confirm_combo)
 
         return {
-            "default_provider": ProviderName(provider_value)
-            if provider_value
-            else self._config.default_provider,
-            "tools_directory": Path(self._tools_path.text())
-            if self._tools_path.text()
-            else self._config.tools_directory,
-            "logs_directory": Path(self._logs_path.text())
-            if self._logs_path.text()
-            else self._config.logs_directory,
-            "confirmation_level": ConfirmationLevel(confirm_value)
-            if confirm_value
-            else self._config.confirmation_level,
+            "default_provider": ProviderName(provider_value) if provider_value else self._config.default_provider,
+            "tools_directory": Path(self._tools_path.text()) if self._tools_path.text() else self._config.tools_directory,
+            "logs_directory": Path(self._logs_path.text()) if self._logs_path.text() else self._config.logs_directory,
+            "confirmation_level": ConfirmationLevel(confirm_value) if confirm_value else self._config.confirmation_level,
         }
 
 
@@ -490,12 +476,7 @@ class PreferencesDialog(QDialog):
         """
         super().__init__(parent)
         self._config = config
-        self._settings_widgets: list[
-            GeneralSettingsWidget
-            | AppearanceSettingsWidget
-            | SessionSettingsWidget
-            | LoggingSettingsWidget
-        ] = []
+        self._settings_widgets: list[GeneralSettingsWidget | AppearanceSettingsWidget | SessionSettingsWidget | LoggingSettingsWidget] = []
         self._config_path: Path | None = None
         self._setup_ui()
 
@@ -634,9 +615,7 @@ class PreferencesDialog(QDialog):
         button_layout.setContentsMargins(16, 12, 16, 12)
 
         button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok
-            | QDialogButtonBox.StandardButton.Cancel
-            | QDialogButtonBox.StandardButton.Apply
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Apply
         )
         button_box.accepted.connect(self._on_accept)
         button_box.rejected.connect(self.reject)
@@ -677,9 +656,9 @@ class PreferencesDialog(QDialog):
         if self._config_path is not None:
             try:
                 new_config.save(self._config_path)
-                _logger.info("Saved configuration to %s", self._config_path)
-            except Exception:
-                _logger.exception("Failed to save configuration")
+                _logger.info("configuration_saved", extra={"path": str(self._config_path)})
+            except Exception as e:
+                _logger.exception("configuration_save_failed", extra={"error": str(e)})
 
     def _build_config(self) -> Config:
         """Build a new Config from all widget settings.
@@ -693,18 +672,10 @@ class PreferencesDialog(QDialog):
 
         return replace(
             self._config,
-            default_provider=all_settings.get(
-                "default_provider", self._config.default_provider
-            ),
-            tools_directory=all_settings.get(
-                "tools_directory", self._config.tools_directory
-            ),
-            logs_directory=all_settings.get(
-                "logs_directory", self._config.logs_directory
-            ),
-            confirmation_level=all_settings.get(
-                "confirmation_level", self._config.confirmation_level
-            ),
+            default_provider=all_settings.get("default_provider", self._config.default_provider),
+            tools_directory=all_settings.get("tools_directory", self._config.tools_directory),
+            logs_directory=all_settings.get("logs_directory", self._config.logs_directory),
+            confirmation_level=all_settings.get("confirmation_level", self._config.confirmation_level),
             ui=all_settings.get("ui", self._config.ui),
             session=all_settings.get("session", self._config.session),
             log=all_settings.get("log", self._config.log),

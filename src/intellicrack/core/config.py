@@ -6,12 +6,16 @@ from TOML files, saving, and default configurations for all components.
 
 from __future__ import annotations
 
+import logging
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from .types import ConfirmationLevel, ProviderName, ToolName
+
+
+_logger = logging.getLogger(__name__)
 
 
 _ERR_TOMLI_W_REQUIRED = "tomli_w is required for saving config"
@@ -112,6 +116,8 @@ class LogConfig:
         console_enabled: Whether to log to console.
         max_file_size_mb: Maximum log file size in megabytes.
         backup_count: Number of backup log files to keep.
+        retention_days: Number of days to retain log files before cleanup.
+        json_file: Whether to output JSON formatted logs to file.
     """
 
     level: str = "INFO"
@@ -119,6 +125,8 @@ class LogConfig:
     console_enabled: bool = True
     max_file_size_mb: int = 10
     backup_count: int = 5
+    retention_days: int = 14
+    json_file: bool = True
 
 
 def _default_providers() -> dict[ProviderName, ProviderConfig]:
@@ -219,22 +227,14 @@ class Config:
         log: Logging configuration.
     """
 
-    tools_directory: Path = field(
-        default_factory=lambda: Path("D:/Intellicrack/tools")
-    )
-    logs_directory: Path = field(
-        default_factory=lambda: Path("D:/Intellicrack/logs")
-    )
-    data_directory: Path = field(
-        default_factory=lambda: Path("D:/Intellicrack/data")
-    )
+    tools_directory: Path = field(default_factory=lambda: Path("D:/Intellicrack/tools"))
+    logs_directory: Path = field(default_factory=lambda: Path("D:/Intellicrack/logs"))
+    data_directory: Path = field(default_factory=lambda: Path("D:/Intellicrack/data"))
 
     default_provider: ProviderName = ProviderName.ANTHROPIC
     confirmation_level: ConfirmationLevel = ConfirmationLevel.DESTRUCTIVE
 
-    providers: dict[ProviderName, ProviderConfig] = field(
-        default_factory=_default_providers
-    )
+    providers: dict[ProviderName, ProviderConfig] = field(default_factory=_default_providers)
     tools: dict[ToolName, ToolConfig] = field(default_factory=_default_tools)
     sandbox: SandboxConfig = field(default_factory=SandboxConfig)
     ui: UIConfig = field(default_factory=UIConfig)
@@ -251,10 +251,20 @@ class Config:
         Returns:
             Loaded Config instance with defaults for missing values.
         """
+        _logger.debug("config_load_started", extra={"path": str(path)})
         with path.open("rb") as f:
             data = tomllib.load(f)
 
-        return cls._from_dict(data)
+        config = cls._from_dict(data)
+        _logger.info(
+            "config_loaded",
+            extra={
+                "path": str(path),
+                "providers_count": len(config.providers),
+                "tools_count": len(config.tools),
+            },
+        )
+        return config
 
     @classmethod
     def _from_dict(cls, data: dict[str, Any]) -> Config:  # noqa: PLR0914
@@ -298,9 +308,7 @@ class Config:
                     enabled=prov_data.get("enabled", prov_base.enabled),
                     api_base=prov_data.get("api_base", prov_base.api_base),
                     default_model=prov_data.get("default_model", prov_base.default_model),
-                    timeout_seconds=prov_data.get(
-                        "timeout_seconds", prov_base.timeout_seconds
-                    ),
+                    timeout_seconds=prov_data.get("timeout_seconds", prov_base.timeout_seconds),
                     max_retries=prov_data.get("max_retries", prov_base.max_retries),
                 )
 
@@ -320,9 +328,7 @@ class Config:
                     enabled=tool_data.get("enabled", tool_base.enabled),
                     path=tool_path,
                     auto_install=tool_data.get("auto_install", tool_base.auto_install),
-                    startup_timeout_seconds=tool_data.get(
-                        "startup_timeout_seconds", tool_base.startup_timeout_seconds
-                    ),
+                    startup_timeout_seconds=tool_data.get("startup_timeout_seconds", tool_base.startup_timeout_seconds),
                 )
 
         sandbox_data = data.get("sandbox", {})
@@ -355,6 +361,8 @@ class Config:
             console_enabled=log_data.get("console_enabled", True),
             max_file_size_mb=log_data.get("max_file_size_mb", 10),
             backup_count=log_data.get("backup_count", 5),
+            retention_days=log_data.get("retention_days", 14),
+            json_file=log_data.get("json_file", True),
         )
 
         return cls(
@@ -380,15 +388,18 @@ class Config:
         Raises:
             ImportError: If tomli_w is not installed.
         """
+        _logger.debug("config_save_started", extra={"path": str(path)})
         try:
             import tomli_w  # noqa: PLC0415
         except ImportError as err:
+            _logger.exception("config_save_failed", extra={"reason": "tomli_w_not_installed"})
             raise ImportError(_ERR_TOMLI_W_REQUIRED) from err
 
         data = self._to_dict()
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("wb") as f:
             tomli_w.dump(data, f)
+        _logger.info("config_saved", extra={"path": str(path)})
 
     def _to_dict(self) -> dict[str, Any]:
         """Convert Config to dictionary for TOML serialization.
@@ -429,6 +440,8 @@ class Config:
                 "console_enabled": self.log.console_enabled,
                 "max_file_size_mb": self.log.max_file_size_mb,
                 "backup_count": self.log.backup_count,
+                "retention_days": self.log.retention_days,
+                "json_file": self.log.json_file,
             },
         }
 

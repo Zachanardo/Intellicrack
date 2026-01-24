@@ -120,7 +120,7 @@ class WindowsSandbox(SandboxBase):
                 timeout=_WHERE_TIMEOUT,
             )
             if result.returncode != _RETURNCODE_SUCCESS:
-                _logger.debug("WindowsSandbox.exe not found in PATH")
+                _logger.debug("windows_sandbox_exe_not_found")
                 return False
 
             features_result = await process_manager.run_tracked_async(
@@ -134,14 +134,14 @@ class WindowsSandbox(SandboxBase):
             )
 
             if "Enabled" in features_result.stdout:
-                _logger.info("Windows Sandbox is available")
+                _logger.info("windows_sandbox_available")
                 is_available = True
             else:
-                _logger.warning("Windows Sandbox feature is not enabled")
+                _logger.warning("windows_sandbox_feature_not_enabled")
                 is_available = False
 
         except Exception as e:
-            _logger.debug("Windows Sandbox availability check failed: %s", e)
+            _logger.debug("windows_sandbox_availability_check_failed", extra={"error": str(e)})
             return False
         else:
             return is_available
@@ -156,7 +156,7 @@ class WindowsSandbox(SandboxBase):
             SandboxError: If sandbox cannot be started.
         """
         if self._state.status == "running":
-            _logger.warning("Sandbox already running")
+            _logger.warning("sandbox_already_running")
             return
 
         self._state.status = "starting"
@@ -184,7 +184,7 @@ class WindowsSandbox(SandboxBase):
             self._wsb_path = self._temp_dir / "intellicrack.wsb"
             await self._generate_wsb_config()
 
-            _logger.info("Starting Windows Sandbox with config: %s", self._wsb_path)
+            _logger.info("windows_sandbox_starting", extra={"config_path": str(self._wsb_path)})
 
             self._process = await asyncio.to_thread(
                 subprocess.Popen,
@@ -213,7 +213,7 @@ class WindowsSandbox(SandboxBase):
             self._state.started_at = datetime.now()
             self._state.pid = self._process.pid
 
-            _logger.info("Windows Sandbox started (PID: %d)", self._process.pid)
+            _logger.info("windows_sandbox_started", extra={"pid": self._process.pid})
 
         except Exception as e:
             self._state.status = "error"
@@ -230,7 +230,7 @@ class WindowsSandbox(SandboxBase):
             SandboxError: If sandbox cannot be stopped cleanly.
         """
         if self._state.status == "stopped":
-            _logger.debug("Sandbox already stopped")
+            _logger.debug("sandbox_already_stopped")
             return
 
         self._state.status = "stopping"
@@ -261,7 +261,7 @@ class WindowsSandbox(SandboxBase):
 
             self._state.status = "stopped"
             self._state.pid = None
-            _logger.info("Windows Sandbox stopped")
+            _logger.info("windows_sandbox_stopped")
 
         except Exception as e:
             self._state.status = "error"
@@ -278,7 +278,7 @@ class WindowsSandbox(SandboxBase):
                     ignore_errors=True,
                 )
             except Exception as e:
-                _logger.warning("Failed to cleanup temp dir: %s", e)
+                _logger.warning("temp_dir_cleanup_failed", extra={"error": str(e)})
 
         self._temp_dir = None
         self._shared_folder = None
@@ -337,7 +337,7 @@ class WindowsSandbox(SandboxBase):
         with open(self._wsb_path, "wb") as f:
             tree.write(f, encoding="utf-8", xml_declaration=True)
 
-        _logger.debug("Generated WSB config: %s", self._wsb_path)
+        _logger.debug("wsb_config_generated", extra={"path": str(self._wsb_path)})
 
     async def _create_monitor_scripts(self) -> None:
         """Create behavioral monitoring scripts for the sandbox."""
@@ -345,7 +345,7 @@ class WindowsSandbox(SandboxBase):
             return
 
         file_monitor_ps1 = self._monitor_folder / "file_monitor.ps1"
-        file_monitor_script = '''
+        file_monitor_script = """
 $logPath = "C:\\Users\\WDAGUtilityAccount\\Desktop\\Shared\\logs\\file_changes.log"
 $watcher = New-Object System.IO.FileSystemWatcher
 $watcher.Path = "C:\\"
@@ -365,11 +365,11 @@ Register-ObjectEvent $watcher "Deleted" -Action $action
 Register-ObjectEvent $watcher "Renamed" -Action $action
 
 while ($true) { Start-Sleep -Seconds 1 }
-'''
+"""
         file_monitor_ps1.write_text(file_monitor_script, encoding="utf-8")
 
         registry_monitor_ps1 = self._monitor_folder / "registry_monitor.ps1"
-        registry_monitor_script = '''
+        registry_monitor_script = """
 $logPath = "C:\\Users\\WDAGUtilityAccount\\Desktop\\Shared\\logs\\registry_changes.log"
 
 $baselineKeys = @(
@@ -404,11 +404,11 @@ while ($true) {
         } catch {}
     }
 }
-'''
+"""
         registry_monitor_ps1.write_text(registry_monitor_script, encoding="utf-8")
 
         network_monitor_ps1 = self._monitor_folder / "network_monitor.ps1"
-        network_monitor_script = '''
+        network_monitor_script = """
 $logPath = "C:\\Users\\WDAGUtilityAccount\\Desktop\\Shared\\logs\\network_activity.log"
 
 while ($true) {
@@ -422,11 +422,11 @@ while ($true) {
 
     Start-Sleep -Seconds 2
 }
-'''
+"""
         network_monitor_ps1.write_text(network_monitor_script, encoding="utf-8")
 
         process_monitor_ps1 = self._monitor_folder / "process_monitor.ps1"
-        process_monitor_script = '''
+        process_monitor_script = """
 $logPath = "C:\\Users\\WDAGUtilityAccount\\Desktop\\Shared\\logs\\process_activity.log"
 $knownProcesses = @{}
 
@@ -452,19 +452,19 @@ while ($true) {
 
     Start-Sleep -Seconds 1
 }
-'''
+"""
         process_monitor_ps1.write_text(process_monitor_script, encoding="utf-8")
 
         start_monitors_cmd = self._monitor_folder / "start_monitors.cmd"
-        start_monitors_script = '''@echo off
+        start_monitors_script = """@echo off
 start /min powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0file_monitor.ps1"
 start /min powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0registry_monitor.ps1"
 start /min powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0network_monitor.ps1"
 start /min powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0process_monitor.ps1"
-'''
+"""
         start_monitors_cmd.write_text(start_monitors_script, encoding="utf-8")
 
-        _logger.debug("Created monitoring scripts in %s", self._monitor_folder)
+        _logger.debug("monitoring_scripts_created", extra={"path": str(self._monitor_folder)})
 
     async def execute(
         self,
@@ -526,7 +526,7 @@ call "{sandbox_script_path}"
                     result_text = result_path.read_text(encoding="utf-8").strip()
                     exit_code = int(result_text) if result_text.isdigit() else _RETURNCODE_FAILURE
                 except Exception as e:
-                    _logger.warning("Failed to read result: %s", e)
+                    _logger.warning("result_read_failed", extra={"error": str(e)})
                 else:
                     return (exit_code, "", "")
 
@@ -655,7 +655,7 @@ call "{sandbox_script_path}"
                         )
                     )
         except Exception as e:
-            _logger.warning("Failed to parse file log: %s", e)
+            _logger.warning("file_log_parse_failed", extra={"error": str(e)})
 
         return changes
 
@@ -688,7 +688,7 @@ call "{sandbox_script_path}"
                         )
                     )
         except Exception as e:
-            _logger.warning("Failed to parse registry log: %s", e)
+            _logger.warning("registry_log_parse_failed", extra={"error": str(e)})
 
         return changes
 
@@ -727,7 +727,7 @@ call "{sandbox_script_path}"
                         )
                     )
         except Exception as e:
-            _logger.warning("Failed to parse network log: %s", e)
+            _logger.warning("network_log_parse_failed", extra={"error": str(e)})
 
         return activities
 
@@ -762,7 +762,7 @@ call "{sandbox_script_path}"
                         )
                     )
         except Exception as e:
-            _logger.warning("Failed to parse process log: %s", e)
+            _logger.warning("process_log_parse_failed", extra={"error": str(e)})
 
         return activities
 
@@ -787,7 +787,7 @@ call "{sandbox_script_path}"
 
         try:
             await asyncio.to_thread(shutil.copy2, source, dest_path)
-            _logger.debug("Copied %s to sandbox as %s", source, dest)
+            _logger.debug("file_copied_to_sandbox", extra={"source": str(source), "dest": dest})
         except Exception as e:
             raise SandboxError(_ERR_COPY_TO_SANDBOX_FAILED) from e
 
@@ -813,6 +813,6 @@ call "{sandbox_script_path}"
 
         try:
             await asyncio.to_thread(shutil.copy2, source_path, dest)
-            _logger.debug("Copied %s from sandbox to %s", source, dest)
+            _logger.debug("file_copied_from_sandbox", extra={"source": source, "dest": str(dest)})
         except Exception as e:
             raise SandboxError(_ERR_COPY_FROM_SANDBOX_FAILED) from e

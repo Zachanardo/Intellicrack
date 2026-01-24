@@ -1,0 +1,28 @@
+1 findings in D:\Intellicrack\src\intellicrack\bridges\base.py
+
+D:\Intellicrack\src\intellicrack\bridges\base.py:7:1: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)
+
+
+1 findings in D:\Intellicrack\src\intellicrack\bridges\binary.py
+
+D:\Intellicrack\src\intellicrack\bridges\binary.py:350:44: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)
+
+
+1 findings in D:\Intellicrack\src\intellicrack\bridges\frida_bridge.py
+
+D:\Intellicrack\src\intellicrack\bridges\frida_bridge.py:411:44: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)
+
+
+1 findings in D:\Intellicrack\src\intellicrack\bridges\installer.py
+
+D:\Intellicrack\src\intellicrack\bridges\installer.py:295:50: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)
+
+
+1 findings in D:\Intellicrack\src\intellicrack\bridges\process.py
+
+D:\Intellicrack\src\intellicrack\bridges\process.py:450:44: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)
+
+
+1 findings in D:\Intellicrack\src\intellicrack\bridges\radare2.py
+
+D:\Intellicrack\src\intellicrack\bridges\radare2.py:490:44: RUF100 Unused `noqa` directive (non-enabled: `PLR6301`)

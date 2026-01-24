@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import ctypes
 import json
+import logging
 import os
 import uuid
 from collections.abc import Callable
@@ -13,6 +14,9 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..core.types import ToolError
+
+
+_logger = logging.getLogger(__name__)
 
 
 _LENGTH_PREFIX_SIZE = 4
@@ -93,12 +97,20 @@ class NamedPipeClient:
         if self._handle is not None:
             return
 
+        pipe_name = self._config.pipe_name
+        _logger.info("pipe_connecting", extra={"pipe_name": pipe_name})
+
         try:
             self._handle = await asyncio.wait_for(
                 asyncio.to_thread(self._open_handle),
                 timeout=self._config.connect_timeout,
             )
+            _logger.info("pipe_connected", extra={"pipe_name": pipe_name})
         except TimeoutError as exc:
+            _logger.error(
+                "pipe_connection_failed",
+                extra={"pipe_name": pipe_name, "error": "connection timeout"},
+            )
             error_message = "Timed out connecting to named pipe"
             raise ToolError(error_message) from exc
 
@@ -106,6 +118,8 @@ class NamedPipeClient:
         """Close the pipe connection."""
         if self._handle is None:
             return
+        pipe_name = self._config.pipe_name
+        _logger.info("pipe_disconnecting", extra={"pipe_name": pipe_name})
         await asyncio.to_thread(self._close_handle)
         self._handle = None
 
@@ -130,6 +144,8 @@ class NamedPipeClient:
             "command": command,
             "params": params or {},
         }
+
+        _logger.debug("pipe_command_sent", extra={"command": command})
 
         async with self._lock:
             await self._send_message(request)
@@ -211,6 +227,10 @@ class NamedPipeClient:
             )
         except TimeoutError as exc:
             self._cancel_io()
+            _logger.error(
+                "pipe_error",
+                extra={"operation": "read", "error": "read timeout"},
+            )
             error_message = "Timed out reading from pipe"
             raise ToolError(error_message) from exc
 
@@ -230,6 +250,10 @@ class NamedPipeClient:
             )
         except TimeoutError as exc:
             self._cancel_io()
+            _logger.error(
+                "pipe_error",
+                extra={"operation": "write", "error": "write timeout"},
+            )
             error_message = "Timed out writing to pipe"
             raise ToolError(error_message) from exc
 
@@ -246,6 +270,10 @@ class NamedPipeClient:
         wait_ok = kernel32.WaitNamedPipeW(pipe_name, timeout_ms)
         if wait_ok == 0:
             error = ctypes.get_last_error()
+            _logger.error(
+                "pipe_connection_failed",
+                extra={"pipe_name": pipe_name, "error": f"pipe not available (code {error})"},
+            )
             error_message = f"Named pipe not available (error {error})"
             raise ToolError(error_message)
 
@@ -261,6 +289,10 @@ class NamedPipeClient:
 
         if handle == wintypes.HANDLE(-1).value:
             error = ctypes.get_last_error()
+            _logger.error(
+                "pipe_connection_failed",
+                extra={"pipe_name": pipe_name, "error": f"failed to open (code {error})"},
+            )
             error_message = f"Failed to open pipe (error {error})"
             raise ToolError(error_message)
 
@@ -293,12 +325,20 @@ class NamedPipeClient:
             )
             if not success:
                 error = ctypes.get_last_error()
+                _logger.error(
+                    "pipe_error",
+                    extra={"operation": "read", "error": f"read failed (code {error})"},
+                )
                 error_message = f"Pipe read failed (error {error})"
                 raise ToolError(error_message)
             if bytes_read.value == 0:
+                _logger.error(
+                    "pipe_error",
+                    extra={"operation": "read", "error": "pipe closed unexpectedly"},
+                )
                 error_message = "Pipe closed"
                 raise ToolError(error_message)
-            data.extend(buffer.raw[:bytes_read.value])
+            data.extend(buffer.raw[: bytes_read.value])
             remaining -= bytes_read.value
 
         return bytes(data)
@@ -313,7 +353,7 @@ class NamedPipeClient:
         offset = 0
 
         while offset < total:
-            chunk = data[offset:offset + _CHUNK_SIZE]
+            chunk = data[offset : offset + _CHUNK_SIZE]
             bytes_written = wintypes.DWORD(0)
             success = kernel32.WriteFile(
                 self._handle,
@@ -324,6 +364,10 @@ class NamedPipeClient:
             )
             if not success:
                 error = ctypes.get_last_error()
+                _logger.error(
+                    "pipe_error",
+                    extra={"operation": "write", "error": f"write failed (code {error})"},
+                )
                 error_message = f"Pipe write failed (error {error})"
                 raise ToolError(error_message)
             offset += bytes_written.value

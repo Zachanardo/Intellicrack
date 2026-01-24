@@ -466,7 +466,7 @@ class Radare2Bridge(StaticAnalysisBridge):
         """
         del tool_path
         self._state = BridgeState(connected=True, tool_running=True)
-        _logger.info("radare2 bridge initialized")
+        _logger.info("radare2_bridge_initialized")
 
     async def shutdown(self) -> None:
         """Shutdown radare2 and cleanup resources."""
@@ -474,7 +474,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             try:
                 await asyncio.to_thread(self._r2.quit)
             except Exception as e:
-                _logger.warning("Error closing r2: %s", e)
+                _logger.warning("radare2_close_failed", extra={"error": str(e)})
             self._r2 = None
 
         if self._r2_pid is not None:
@@ -485,7 +485,7 @@ class Radare2Bridge(StaticAnalysisBridge):
         self._binary_path = None
         self._analyzed = False
         await super().shutdown()
-        _logger.info("radare2 bridge shutdown")
+        _logger.info("radare2_bridge_shutdown")
 
     async def is_available(self) -> bool:  # noqa: PLR6301
         """Check if radare2 is available.
@@ -540,7 +540,7 @@ class Radare2Bridge(StaticAnalysisBridge):
                         process_type=ProcessType.EXTERNAL_TOOL,
                         metadata={"binary": str(path)},
                     )
-                    _logger.debug("Registered radare2 process PID: %d", self._r2_pid)
+                    _logger.debug("radare2_process_registered", extra={"pid": self._r2_pid})
 
             info_list = await self._cmd_json("ij")
             info = info_list[0] if info_list else {}
@@ -576,7 +576,7 @@ class Radare2Bridge(StaticAnalysisBridge):
                 target_path=self._binary_path,
             )
 
-            _logger.info("Loaded binary: %s (%s, %s %d-bit)", path.name, file_type, arch, bits)
+            _logger.info("binary_loaded", extra={"path": path.name, "file_type": file_type, "arch": arch, "bits": bits})
 
             return BinaryInfo(
                 path=self._binary_path,
@@ -594,7 +594,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             )
 
         except Exception as e:
-            _logger.exception("Failed to load binary")
+            _logger.exception("binary_load_failed")
             raise ToolError(_ERR_LOAD_FAILED) from e
 
     async def analyze(self, level: str = "normal") -> None:
@@ -616,10 +616,10 @@ class Radare2Bridge(StaticAnalysisBridge):
         }
         cmd = cmd_map.get(level, "aaa")
 
-        _logger.info("Running %s analysis...", level)
+        _logger.info("analysis_starting", extra={"level": level})
         await asyncio.to_thread(self._r2.cmd, cmd)
         self._analyzed = True
-        _logger.info("Analysis complete")
+        _logger.info("analysis_complete")
 
     async def get_functions(
         self,
@@ -696,11 +696,7 @@ class Radare2Bridge(StaticAnalysisBridge):
         sp_vars = _get_list(vars_data, "sp")
         bp_vars = _get_list(vars_data, "bp")
         reg_vars = _get_list(vars_data, "reg")
-        all_vars: list[dict[str, Any]] = [
-            var_item
-            for var_item in sp_vars + bp_vars + reg_vars
-            if isinstance(var_item, dict)
-        ]
+        all_vars: list[dict[str, Any]] = [var_item for var_item in sp_vars + bp_vars + reg_vars if isinstance(var_item, dict)]
 
         for var in all_vars:
             var_name = _get_str(var, "name")
@@ -981,7 +977,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             List of section info.
         """
         if self._r2 is None:
-            _logger.warning("radare2 session not available for _get_sections_internal")
+            _logger.warning("radare2_unavailable", extra={"operation": "_get_sections_internal"})
             return []
 
         sections = await self._cmd_json("iSj")
@@ -1005,7 +1001,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             List of import info.
         """
         if self._r2 is None:
-            _logger.warning("radare2 session not available for _get_imports_internal")
+            _logger.warning("radare2_unavailable", extra={"operation": "_get_imports_internal"})
             return []
 
         imports = await self._cmd_json("iij")
@@ -1027,7 +1023,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             List of export info.
         """
         if self._r2 is None:
-            _logger.warning("radare2 session not available for _get_exports_internal")
+            _logger.warning("radare2_unavailable", extra={"operation": "_get_exports_internal"})
             return []
 
         exports = await self._cmd_json("iEj")
@@ -1077,7 +1073,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             raise ToolError(_ERR_NO_BINARY)
 
         await asyncio.to_thread(self._r2.cmd, f"afn {new_name} @ {address}")
-        _logger.info("Renamed function at 0x%X to %s", address, new_name)
+        _logger.info("function_renamed", extra={"address": hex(address), "new_name": new_name})
         return True
 
     async def add_comment(
@@ -1105,7 +1101,7 @@ class Radare2Bridge(StaticAnalysisBridge):
 
         escaped = comment.replace('"', '\\"')
         await asyncio.to_thread(self._r2.cmd, f'CC "{escaped}" @ {address}')
-        _logger.info("Added comment at 0x%X", address)
+        _logger.info("comment_added", extra={"address": hex(address)})
         return True
 
     async def write_bytes(self, address: int, data: bytes) -> None:
@@ -1123,7 +1119,7 @@ class Radare2Bridge(StaticAnalysisBridge):
 
         hex_data = data.hex()
         await asyncio.to_thread(self._r2.cmd, f"wx {hex_data} @ {address}")
-        _logger.debug("Wrote %d bytes at 0x%X", len(data), address)
+        _logger.debug("bytes_written", extra={"length": len(data), "address": hex(address)})
 
     async def assemble_at(self, address: int, instruction: str) -> bytes:
         """Assemble instruction at address.
@@ -1179,7 +1175,7 @@ class Radare2Bridge(StaticAnalysisBridge):
             Parsed JSON as list of dicts.
         """
         if self._r2 is None:
-            _logger.warning("radare2 session not available for _cmd_json")
+            _logger.warning("radare2_unavailable", extra={"operation": "_cmd_json"})
             return []
 
         result = await asyncio.to_thread(self._r2.cmd, command)
@@ -1190,7 +1186,7 @@ class Radare2Bridge(StaticAnalysisBridge):
         try:
             parsed = json.loads(result)
         except json.JSONDecodeError:
-            _logger.warning("Failed to parse JSON from command: %s", command)
+            _logger.warning("json_parse_failed", extra={"command": command})
             return []
         else:
             if isinstance(parsed, list):

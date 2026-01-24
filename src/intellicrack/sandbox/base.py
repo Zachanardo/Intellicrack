@@ -270,7 +270,7 @@ class SandboxBase:
         Returns:
             True if sandbox can be used.
         """
-        _logger.debug("Base sandbox is_available called for %s - returning False", type(self).__name__)
+        _logger.debug("base_sandbox_is_available_called", extra={"class_name": type(self).__name__})
         return False
 
     async def start(self) -> None:
@@ -279,7 +279,7 @@ class SandboxBase:
         Raises:
             SandboxError: If sandbox cannot be started.
         """
-        _logger.debug("start() called on base class %s", type(self).__name__)
+        _logger.debug("base_sandbox_start_called", extra={"class_name": type(self).__name__})
         raise SandboxError(
             _ERR_SANDBOX_NOT_IMPL,
             _ERR_SANDBOX_NOT_IMPL_DETAIL,
@@ -292,7 +292,7 @@ class SandboxBase:
             SandboxError: If sandbox cannot be stopped.
         """
         if self._state.status == "stopped":
-            _logger.debug("Sandbox already stopped")
+            _logger.debug("sandbox_already_stopped")
             return
 
         raise SandboxError(
@@ -325,9 +325,8 @@ class SandboxBase:
             SandboxError: If execution fails.
         """
         _logger.debug(
-            "execute() called on base class %s with command=%s",
-            type(self).__name__,
-            command,
+            "base_sandbox_execute_called",
+            extra={"class_name": type(self).__name__, "command": command},
         )
         del timeout, working_directory
         raise SandboxError(
@@ -357,9 +356,8 @@ class SandboxBase:
             SandboxError: If execution fails.
         """
         _logger.debug(
-            "run_binary() called on base class %s with binary_path=%s",
-            type(self).__name__,
-            binary_path,
+            "base_sandbox_run_binary_called",
+            extra={"class_name": type(self).__name__, "binary_path": str(binary_path)},
         )
         del args, timeout, monitor
         raise SandboxError(
@@ -378,10 +376,8 @@ class SandboxBase:
             SandboxError: If copy fails.
         """
         _logger.debug(
-            "copy_to_sandbox() called on base class %s: %s -> %s",
-            type(self).__name__,
-            source,
-            dest,
+            "base_sandbox_copy_to_sandbox_called",
+            extra={"class_name": type(self).__name__, "source": str(source), "dest": dest},
         )
         raise SandboxError(
             _ERR_FILE_COPY_NOT_IMPL,
@@ -399,10 +395,8 @@ class SandboxBase:
             SandboxError: If copy fails.
         """
         _logger.debug(
-            "copy_from_sandbox() called on base class %s: %s -> %s",
-            type(self).__name__,
-            source,
-            dest,
+            "base_sandbox_copy_from_sandbox_called",
+            extra={"class_name": type(self).__name__, "source": source, "dest": str(dest)},
         )
         raise SandboxError(
             _ERR_FILE_COPY_NOT_IMPL,
@@ -422,9 +416,8 @@ class SandboxBase:
             SandboxError: If not supported.
         """
         _logger.debug(
-            "take_snapshot() called on base class %s with name=%s",
-            type(self).__name__,
-            name,
+            "base_sandbox_take_snapshot_called",
+            extra={"class_name": type(self).__name__, "name": name},
         )
         raise SandboxError(_ERR_SNAPSHOTS_NOT_SUPPORTED)
 
@@ -438,8 +431,7 @@ class SandboxBase:
             SandboxError: If not supported.
         """
         _logger.debug(
-            "restore_snapshot() called on base class %s with snapshot_id=%s",
-            type(self).__name__,
-            snapshot_id,
+            "base_sandbox_restore_snapshot_called",
+            extra={"class_name": type(self).__name__, "snapshot_id": snapshot_id},
         )
         raise SandboxError(_ERR_SNAPSHOTS_NOT_SUPPORTED)

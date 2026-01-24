@@ -100,9 +100,16 @@ class GoogleProvider(LLMProviderBase):
 
             self._credentials = credentials
             self._connected = True
-            self._logger.info("Connected to Google AI API")
+            self._logger.info(
+                "google_connected",
+                extra={"has_custom_base": credentials.api_base is not None},
+            )
 
         except Exception as e:
+            self._logger.exception(
+                "google_connect_failed",
+                extra={"error": str(e)},
+            )
             error_msg = str(e).lower()
             if "api key" in error_msg or "authentication" in error_msg:
                 raise AuthenticationError(_MSG_INVALID_API_KEY) from e
@@ -120,7 +127,7 @@ class GoogleProvider(LLMProviderBase):
         await super().disconnect()
         self._client = None
         self._current_task = None
-        self._logger.info("Disconnected from Google AI API")
+        self._logger.info("google_disconnected", extra={})
 
     async def list_models(self) -> list[ModelInfo]:
         """Dynamically fetch available Gemini models from Google AI API.
@@ -167,8 +174,17 @@ class GoogleProvider(LLMProviderBase):
                     )
                 )
 
-            return sorted(models, key=lambda m: m.id, reverse=True)
+            sorted_models = sorted(models, key=lambda m: m.id, reverse=True)
+            self._logger.info(
+                "google_models_listed",
+                extra={"count": len(sorted_models)},
+            )
+            return sorted_models
         except Exception as e:
+            self._logger.exception(
+                "google_list_models_failed",
+                extra={"error": str(e)},
+            )
             raise ProviderError(_MSG_REQUEST_FAILED) from e
 
     @staticmethod
@@ -238,6 +254,16 @@ class GoogleProvider(LLMProviderBase):
             raise ProviderError(_MSG_NOT_CONNECTED)
 
         self._cancel_requested = False
+        self._logger.debug(
+            "google_chat_started",
+            extra={
+                "model": model,
+                "messages_count": len(messages),
+                "tools_count": len(tools) if tools else 0,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            },
+        )
 
         gemini_contents = self._convert_messages_to_provider_format(messages)
         gemini_tools = self._build_tool_declarations(tools) if tools else None
@@ -278,7 +304,21 @@ class GoogleProvider(LLMProviderBase):
                 duration_ms=duration_ms,
             )
 
+            self._logger.info(
+                "google_chat_completed",
+                extra={
+                    "model": model,
+                    "duration_ms": duration_ms,
+                    "tool_calls_count": len(tool_calls),
+                    "content_length": len(content),
+                },
+            )
+
         except Exception as e:
+            self._logger.exception(
+                "google_chat_failed",
+                extra={"model": model, "error": str(e)},
+            )
             error_msg = str(e).lower()
             if "quota" in error_msg or "rate" in error_msg or "429" in error_msg:
                 raise RateLimitError(_MSG_RATE_LIMITED) from e
@@ -314,9 +354,20 @@ class GoogleProvider(LLMProviderBase):
             raise ProviderError(_MSG_NOT_CONNECTED)
 
         self._cancel_requested = False
+        self._logger.debug(
+            "google_chat_stream_started",
+            extra={
+                "model": model,
+                "messages_count": len(messages),
+                "tools_count": len(tools) if tools else 0,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            },
+        )
 
         gemini_contents = self._convert_messages_to_provider_format(messages)
         gemini_tools = self._build_tool_declarations(tools) if tools else None
+        chunk_count = 0
 
         try:
             config = self._create_config(temperature, max_tokens, gemini_tools)
@@ -330,11 +381,26 @@ class GoogleProvider(LLMProviderBase):
 
             for chunk in response_stream:
                 if self._cancel_requested:
+                    self._logger.info(
+                        "google_chat_stream_cancelled",
+                        extra={"model": model, "chunks_received": chunk_count},
+                    )
                     break
                 if hasattr(chunk, "text") and chunk.text:
+                    chunk_count += 1
                     yield chunk.text
 
+            if not self._cancel_requested:
+                self._logger.info(
+                    "google_chat_stream_completed",
+                    extra={"model": model, "chunks_received": chunk_count},
+                )
+
         except Exception as e:
+            self._logger.exception(
+                "google_chat_stream_failed",
+                extra={"model": model, "error": str(e), "chunks_received": chunk_count},
+            )
             if not self._cancel_requested:
                 raise ProviderError(_MSG_STREAM_FAILED) from e
 
@@ -343,9 +409,14 @@ class GoogleProvider(LLMProviderBase):
 
         Sets the cancellation flag and cancels the current async task if present.
         """
+        had_active_task = self._current_task is not None and not self._current_task.done()
         self._cancel_requested = True
-        if self._current_task is not None and not self._current_task.done():
+        if had_active_task and self._current_task is not None:
             self._current_task.cancel()
+        self._logger.info(
+            "google_request_cancelled",
+            extra={"had_active_task": had_active_task},
+        )
 
     @staticmethod
     def _create_config(
@@ -413,10 +484,7 @@ class GoogleProvider(LLMProviderBase):
             if hasattr(candidate, "content") and candidate.content:
                 parts = candidate.content.parts
                 if parts:
-                    content = "".join(
-                        part.text for part in parts
-                        if hasattr(part, "text") and part.text
-                    )
+                    content = "".join(part.text for part in parts if hasattr(part, "text") and part.text)
 
         return content, tool_calls
 
@@ -523,9 +591,7 @@ class GoogleProvider(LLMProviderBase):
                     description=func.description,
                     parameters=types.Schema(
                         type=types.Type.OBJECT,
-                        properties={
-                            k: types.Schema(**v) for k, v in properties.items()
-                        },
+                        properties={k: types.Schema(**v) for k, v in properties.items()},
                         required=required,
                     ),
                 )
