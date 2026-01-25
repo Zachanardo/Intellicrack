@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Intellicrack"
-version = "2.0.0"
+version = "1.0.0"
 authors = [{ name = "Zachary Flint", email = "zach.flint2@gmail.com" }]
 description = "Intellicrack: AI-powered reverse engineering orchestration platform"
 readme = "README.md"
@@ -67,6 +67,8 @@ markers = [
     "slow: Slow running tests",
     "integration: Integration tests",
     "unit: Unit tests",
+    "xpu: Tests requiring Intel XPU hardware",
+    "b580: Tests specific to Intel Arc B580 GPU",
 ]
 
 [tool.black]
@@ -150,6 +152,9 @@ module = [
     "ghidra_bridge.*",
     "pefile.*",
     "lief.*",
+    "transformers.*",
+    "accelerate.*",
+    "bitsandbytes.*",
 ]
 ignore_missing_imports = true
 ignore_errors = true
@@ -166,6 +171,14 @@ module = [
     "intellicrack.ui.*",
 ]
 disable_error_code = ["attr-defined", "misc", "no-any-return", "redundant-cast", "unused-ignore"]
+
+[[tool.mypy.overrides]]
+module = [
+    "intellicrack.providers.xpu_utils",
+    "intellicrack.providers.model_loader",
+    "intellicrack.providers.local_transformers",
+]
+disable_error_code = ["valid-type", "unreachable", "no-untyped-call", "arg-type", "operator", "attr-defined"]
 
 [tool.pyright]
 include = ["src/intellicrack", "tests"]
@@ -310,7 +323,7 @@ dummy-variable-rgx = "^(_+|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
     "PLR6301",  # Methods could be static - designed for subclass implementation
 ]
 "src/intellicrack/providers/base.py" = ["TC001"]
-"src/intellicrack/providers/*.py" = ["TC003", "TRY003", "PLR6301", "TRY300", "PLR0914"]
+"src/intellicrack/providers/*.py" = ["TC003", "TRY003", "PLR6301", "TRY300", "PLR0914", "S404"]
 "tests/**/*.py" = [
     "PLR6301",  # Method could be a function - pytest test methods need self
     "PLR2004",  # Magic value used - test values are intentional

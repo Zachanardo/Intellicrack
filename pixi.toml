@@ -139,6 +139,11 @@ detect-secrets = "*"
 mcp = ">=1.2.0"
 pyannotate = ">=1.2.0,<2"
 structlog = ">=24.1.0"
+transformers = ">=4.40.0"
+accelerate = ">=0.30.0"
+bitsandbytes = ">=0.43.0"
+sentencepiece = "*"
+safetensors = "*"
 
 [pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/xpu"]

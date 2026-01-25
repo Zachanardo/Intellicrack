@@ -1,7 +1,7 @@
 """Global pytest fixtures for Intellicrack tests.
 
 This module provides shared fixtures for credential loading, API key availability
-checks, and common test utilities used across all test modules.
+checks, XPU hardware detection, and common test utilities used across all test modules.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ import pytest
 
 from intellicrack.core.types import ProviderName
 from intellicrack.credentials.env_loader import CredentialLoader
+from intellicrack.providers.xpu_utils import is_arc_b580, is_xpu_available
 
 
 if TYPE_CHECKING:
@@ -313,3 +314,23 @@ def grok_credentials(
     if not has_grok_key:
         return None
     return credential_loader.get_credentials(ProviderName.GROK)
+
+
+@pytest.fixture(scope="session")
+def has_xpu_available() -> bool:
+    """Check if Intel XPU is available.
+
+    Returns:
+        True if at least one XPU device is available.
+    """
+    return is_xpu_available()
+
+
+@pytest.fixture(scope="session")
+def has_arc_b580() -> bool:
+    """Check if an Intel Arc B580 GPU is available.
+
+    Returns:
+        True if an Arc B580 is detected.
+    """
+    return is_arc_b580()

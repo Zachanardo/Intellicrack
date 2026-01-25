@@ -25,14 +25,14 @@ welcoming environment for all contributors.
 2. Clone your fork locally:
 
     ```bash
-    git clone https://github.com/Zachanardo/Intellicrack.git
+    git clone https://github.com/ZachFlint/Intellicrack.git
     cd Intellicrack
     ```
 
 3. Add the upstream repository as a remote:
 
     ```bash
-    git remote add upstream https://github.com/Zachanardo/Intellicrack.git
+    git remote add upstream https://github.com/ZachFlint/Intellicrack.git
     ```
 
 ## Development Setup
@@ -210,7 +210,7 @@ def test_binary_analyzer_detects_pe_format():
 
 ## Additional Resources
 
-- [Issue Tracker](https://github.com/Zachanardo/Intellicrack/issues)
+- [Issue Tracker](https://github.com/ZachFlint/Intellicrack/issues)
 - [Documentation](docs/) - Local documentation in project repository
 
 ## Questions?

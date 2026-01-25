@@ -53,14 +53,6 @@ production-ready code:
 - Naming conventions must be clear, descriptive, and consistent with the
   existing codebase
 
-## GPU Handling Patterns
-
-- Import `intellicrack.utils.torch_gil_safety.initialize_gil_safety()` before
-  any PyTorch/C++ extensions to prevent GIL crashes
-- Use `intellicrack.utils.gpu_autoloader` for unified GPU detection and device
-  management
-- Always provide CPU fallback for GPU operations
-
 ## Error Handling Patterns
 
 - Use safe attribute access methods (`getattr()`, `hasattr()`)
@@ -91,37 +83,29 @@ production-ready code:
 - Primary launch method:
 
     ```bash
-    python launch_intellicrack.py
+    python -m intellicrack
     ```
 
-- Alternative methods:
+- Or import and call main directly:
 
-    ```bash
-    python -m intellicrack --gui
-    python -m intellicrack analyze target.exe
+    ```python
+    from intellicrack import main
+    main()
     ```
 
 ## Environment Setup
 
 - Pixi environment located at `D:\Intellicrack\.pixi\envs\default`
 - Activate with `pixi shell` or run commands with `pixi run <command>`
-- Configuration via `intellicrack.config.get_config()`
-- Dependencies managed via `pyproject.toml` with optional GPU-specific extras
+- Configuration via `intellicrack.core.config.Config`
+- Dependencies managed via `pyproject.toml` and `pixi.toml`
 
 ## Project-Specific Patterns
 
-- Configuration management: always validate config after loading
-- Binary analysis supports PE, ELF, Mach-O formats
-- Protection detection via `ProtectionAnalyzer`
-- GPU acceleration for pattern matching and hash operations
-- AI model integration supports multiple providers and local models with unified
-  device management
-
-## Intel Arc B580 Specific Considerations
-
-- Extensive Intel Arc B580 GPU support with GIL crash prevention environment
-  setup
-- Intel GPU detection pattern for PyTorch XPU acceleration
+- Configuration management via `intellicrack.core.config.Config`
+- Binary analysis supports PE, ELF, Mach-O formats via `bridges/binary.py`
+- License protection detection via `intellicrack.core.license_analyzer`
+- AI model integration supports multiple providers (Anthropic, OpenAI, Google, Ollama, OpenRouter, Hugging Face, Grok)
 
 ## Security & Ethics Context
 

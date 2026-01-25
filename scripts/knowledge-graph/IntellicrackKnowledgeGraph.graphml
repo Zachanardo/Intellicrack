@@ -5551,6 +5551,317 @@
       <data key="d3">_convert_tools_to_provider_format</data>
       <data key="d4">['self', 'tools']</data>
     </node>
+    <node id="src.intellicrack.providers.local_transformers">
+      <data key="d0">module</data>
+      <data key="d1">python</data>
+      <data key="d2">D:\Intellicrack\src\intellicrack\providers\local_transformers.py</data>
+      <data key="d3">src.intellicrack.providers.local_transformers</data>
+    </node>
+    <node id="gc" />
+    <node id="src.intellicrack.providers.model_loader">
+      <data key="d0">module</data>
+      <data key="d1">python</data>
+      <data key="d2">D:\Intellicrack\src\intellicrack\providers\model_loader.py</data>
+      <data key="d3">src.intellicrack.providers.model_loader</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils">
+      <data key="d0">module</data>
+      <data key="d1">python</data>
+      <data key="d2">D:\Intellicrack\src\intellicrack\providers\xpu_utils.py</data>
+      <data key="d3">src.intellicrack.providers.xpu_utils</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.LocalTransformersProvider">
+      <data key="d0">class</data>
+      <data key="d1">python</data>
+      <data key="d3">LocalTransformersProvider</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.__init__">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">__init__</data>
+      <data key="d4">['self', 'model_cache', 'prefer_xpu']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.name">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">name</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.device_type">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">device_type</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.xpu_available">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">xpu_available</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.is_b580_detected">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">is_b580_detected</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.current_model_id">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">current_model_id</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.connect">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">connect</data>
+      <data key="d4">['self', 'credentials']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.disconnect">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">disconnect</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.list_models">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">list_models</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.chat">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">chat</data>
+      <data key="d4">['self', 'messages', 'model', 'tools', 'temperature', 'max_tokens']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.chat_stream">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">chat_stream</data>
+      <data key="d4">['self', 'messages', 'model', 'tools', 'temperature', 'max_tokens']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers._ensure_model_loaded">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_ensure_model_loaded</data>
+      <data key="d4">['self', 'model_id']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers._generate_sync">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_generate_sync</data>
+      <data key="d4">['self', 'prompt', 'temperature', 'max_tokens']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers._stream_generate">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_stream_generate</data>
+      <data key="d4">['self', 'prompt', 'temperature', 'max_tokens']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers._convert_messages_to_provider_format">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_convert_messages_to_provider_format</data>
+      <data key="d4">['self', 'messages']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers._convert_tools_to_provider_format">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_convert_tools_to_provider_format</data>
+      <data key="d4">['self', 'tools']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers._format_prompt">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_format_prompt</data>
+      <data key="d4">['self', 'messages', 'tools']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers._parse_tool_calls">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_parse_tool_calls</data>
+      <data key="d4">['self', 'response']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers._extract_text_before_tool_call">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_extract_text_before_tool_call</data>
+      <data key="d4">['self', 'response']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers._model_supports_tools">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_model_supports_tools</data>
+      <data key="d4">['self', 'model_id']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers._estimate_context_window">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_estimate_context_window</data>
+      <data key="d4">['self', 'model_id']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.get_device_info">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">get_device_info</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.unload_model">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">unload_model</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.local_transformers.clear_cache">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">clear_cache</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="torch" />
+    <node id="src.intellicrack.providers.local_transformers._forward_pass">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_forward_pass</data>
+      <data key="d4">['_model', '_gen_ids', '_attn_mask', '_past_kv']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.LoadedModel">
+      <data key="d0">class</data>
+      <data key="d1">python</data>
+      <data key="d3">LoadedModel</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.ModelConfig">
+      <data key="d0">class</data>
+      <data key="d1">python</data>
+      <data key="d3">ModelConfig</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.ModelCache">
+      <data key="d0">class</data>
+      <data key="d1">python</data>
+      <data key="d3">ModelCache</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader._unload_model">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_unload_model</data>
+      <data key="d4">['loaded_model']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.estimate_model_memory">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">estimate_model_memory</data>
+      <data key="d4">['model_id', 'dtype', 'include_activations']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader._estimate_parameter_count">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_estimate_parameter_count</data>
+      <data key="d4">['model_id']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.select_dtype_for_memory">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">select_dtype_for_memory</data>
+      <data key="d4">['model_id', 'available_memory_bytes', 'preferred_dtype']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.load_model_for_xpu">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">load_model_for_xpu</data>
+      <data key="d4">['config', 'cache']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.load_model_for_cpu">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">load_model_for_cpu</data>
+      <data key="d4">['config', 'cache']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader._get_torch_dtype">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_get_torch_dtype</data>
+      <data key="d4">['dtype_str']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader._get_quantization_config">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_get_quantization_config</data>
+      <data key="d4">['dtype_str']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.get_global_model_cache">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">get_global_model_cache</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.set_global_cache_size">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">set_global_cache_size</data>
+      <data key="d4">['max_memory_bytes']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.clear_global_cache">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">clear_global_cache</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="transformers" />
+    <node id="src.intellicrack.providers.model_loader.__init__">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">__init__</data>
+      <data key="d4">['self', 'max_memory_bytes']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.max_memory_bytes">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">max_memory_bytes</data>
+      <data key="d4">['self', 'value']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.get">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">get</data>
+      <data key="d4">['self', 'model_id', 'dtype', 'device_type']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.put">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">put</data>
+      <data key="d4">['self', 'loaded_model']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.remove">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">remove</data>
+      <data key="d4">['self', 'model_id', 'dtype', 'device_type']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.clear">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">clear</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader.get_memory_usage">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">get_memory_usage</data>
+      <data key="d4">['self']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader._make_key">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_make_key</data>
+      <data key="d4">['self', 'model_id', 'dtype', 'device_type']</data>
+    </node>
+    <node id="src.intellicrack.providers.model_loader._evict_to_fit">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_evict_to_fit</data>
+      <data key="d4">['self', 'required_bytes']</data>
+    </node>
     <node id="src.intellicrack.providers.ollama">
       <data key="d0">module</data>
       <data key="d1">python</data>
@@ -6018,6 +6329,120 @@
       <data key="d1">python</data>
       <data key="d3">connect_one</data>
       <data key="d4">['name']</data>
+    </node>
+    <node id="platform" />
+    <node id="src.intellicrack.providers.xpu_utils.XPUDeviceInfo">
+      <data key="d0">class</data>
+      <data key="d1">python</data>
+      <data key="d3">XPUDeviceInfo</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils._import_torch">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_import_torch</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils.is_xpu_available">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">is_xpu_available</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils.get_xpu_device_count">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">get_xpu_device_count</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils._get_device_name_from_sycl">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_get_device_name_from_sycl</data>
+      <data key="d4">['device_index']</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils._get_windows_gpu_info">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_get_windows_gpu_info</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils._parse_device_id_from_pnp">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_parse_device_id_from_pnp</data>
+      <data key="d4">['pnp_id']</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils.get_xpu_device_info">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">get_xpu_device_info</data>
+      <data key="d4">['device_index']</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils._estimate_memory_from_name">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_estimate_memory_from_name</data>
+      <data key="d4">['device_name']</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils._is_b580_device">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_is_b580_device</data>
+      <data key="d4">['device_name', 'device_id']</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils.is_arc_b580">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">is_arc_b580</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils.initialize_xpu">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">initialize_xpu</data>
+      <data key="d4">['device_index']</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils._validate_xpu_device">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_validate_xpu_device</data>
+      <data key="d4">['torch', 'device']</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils.get_xpu_memory_info">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">get_xpu_memory_info</data>
+      <data key="d4">['device_index']</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils.clear_xpu_cache">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">clear_xpu_cache</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils.check_windows_requirements">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">check_windows_requirements</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils._check_intel_driver">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_check_intel_driver</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils._check_rebar_status">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">_check_rebar_status</data>
+      <data key="d4">[]</data>
+    </node>
+    <node id="src.intellicrack.providers.xpu_utils.get_optimal_dtype_for_xpu">
+      <data key="d0">function</data>
+      <data key="d1">python</data>
+      <data key="d3">get_optimal_dtype_for_xpu</data>
+      <data key="d4">[]</data>
     </node>
     <node id="src.intellicrack.providers.__init__">
       <data key="d0">module</data>
@@ -14390,6 +14815,321 @@
     <edge source="src.intellicrack.providers.huggingface.HuggingFaceProvider" target="src.intellicrack.providers.base.LLMProviderBase">
       <data key="d5">inherits</data>
     </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="__future__">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="asyncio">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="gc">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="json">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="re">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="time">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="datetime">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="typing">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.core.logging">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.core.types">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.base">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.model_loader">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.xpu_utils">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.LocalTransformersProvider">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="collections.abc">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.__init__">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.name">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.device_type">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.xpu_available">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.is_b580_detected">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.current_model_id">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.connect">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.disconnect">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.list_models">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.chat">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.chat_stream">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._ensure_model_loaded">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._generate_sync">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._stream_generate">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._convert_messages_to_provider_format">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._convert_tools_to_provider_format">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._format_prompt">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._parse_tool_calls">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._extract_text_before_tool_call">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._model_supports_tools">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._estimate_context_window">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.get_device_info">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.unload_model">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers.clear_cache">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="torch">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers" target="src.intellicrack.providers.local_transformers._forward_pass">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="__future__">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="gc">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="logging">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="threading">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="time">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="collections">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="dataclasses">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="typing">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.LoadedModel">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.ModelConfig">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.ModelCache">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader._unload_model">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.estimate_model_memory">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader._estimate_parameter_count">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.select_dtype_for_memory">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.load_model_for_xpu">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.load_model_for_cpu">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader._get_torch_dtype">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader._get_quantization_config">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.get_global_model_cache">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.set_global_cache_size">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.clear_global_cache">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="torch">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="transformers">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.__init__">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.max_memory_bytes">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.get">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.put">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.remove">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.clear">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader.get_memory_usage">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader._make_key">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.model_loader._evict_to_fit">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.model_loader" target="src.intellicrack.providers.xpu_utils">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="__future__">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="json">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="logging">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="platform">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="re">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="subprocess">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="sys">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="dataclasses">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="typing">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils.XPUDeviceInfo">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils._import_torch">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils.is_xpu_available">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils.get_xpu_device_count">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils._get_device_name_from_sycl">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils._get_windows_gpu_info">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils._parse_device_id_from_pnp">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils.get_xpu_device_info">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils._estimate_memory_from_name">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils._is_b580_device">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils.is_arc_b580">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils.initialize_xpu">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils._validate_xpu_device">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils.get_xpu_memory_info">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils.clear_xpu_cache">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils.check_windows_requirements">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils._check_intel_driver">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils._check_rebar_status">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="src.intellicrack.providers.xpu_utils.get_optimal_dtype_for_xpu">
+      <data key="d5">defines</data>
+    </edge>
+    <edge source="src.intellicrack.providers.xpu_utils" target="torch">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.local_transformers.LocalTransformersProvider" target="src.intellicrack.providers.base.LLMProviderBase">
+      <data key="d5">inherits</data>
+    </edge>
     <edge source="src.intellicrack.providers.ollama" target="__future__">
       <data key="d5">imports</data>
     </edge>
@@ -14678,6 +15418,12 @@
     <edge source="src.intellicrack.providers.__init__" target="src.intellicrack.providers.huggingface">
       <data key="d5">imports</data>
     </edge>
+    <edge source="src.intellicrack.providers.__init__" target="src.intellicrack.providers.local_transformers">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.__init__" target="src.intellicrack.providers.model_loader">
+      <data key="d5">imports</data>
+    </edge>
     <edge source="src.intellicrack.providers.__init__" target="src.intellicrack.providers.ollama">
       <data key="d5">imports</data>
     </edge>
@@ -14688,6 +15434,9 @@
       <data key="d5">imports</data>
     </edge>
     <edge source="src.intellicrack.providers.__init__" target="src.intellicrack.providers.registry">
+      <data key="d5">imports</data>
+    </edge>
+    <edge source="src.intellicrack.providers.__init__" target="src.intellicrack.providers.xpu_utils">
       <data key="d5">imports</data>
     </edge>
     <edge source="src.intellicrack.sandbox.base" target="__future__">

@@ -1,0 +1,902 @@
+"""Local Transformers provider with Intel XPU acceleration.
+
+This module provides a local LLM provider using HuggingFace Transformers
+with Intel XPU (Arc B580) acceleration via PyTorch 2.5+ native torch.xpu.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import gc
+import json
+import re
+import time
+from datetime import datetime
+from typing import TYPE_CHECKING, Literal
+
+from ..core.logging import get_logger
+from ..core.types import (
+    Message,
+    ModelInfo,
+    ProviderCredentials,
+    ProviderError,
+    ProviderName,
+    ToolCall,
+    ToolDefinition,
+)
+from .base import LLMProviderBase
+from .model_loader import (
+    RECOMMENDED_MODELS_B580,
+    LoadedModel,
+    ModelCache,
+    ModelConfig,
+    clear_global_cache,
+    estimate_model_memory,
+    get_global_model_cache,
+    load_model_for_cpu,
+    load_model_for_xpu,
+)
+from .xpu_utils import (
+    check_windows_requirements,
+    clear_xpu_cache,
+    get_xpu_device_info,
+    get_xpu_memory_info,
+    is_arc_b580,
+    is_xpu_available,
+)
+
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+
+_logger = get_logger("providers.local_transformers")
+
+_MSG_NOT_CONNECTED = "Provider not connected"
+_MSG_NO_MODEL_LOADED = "No model loaded"
+
+_DEFAULT_MODEL = "microsoft/Phi-3-mini-4k-instruct"
+_DEFAULT_MAX_NEW_TOKENS = 2048
+_DEFAULT_TEMPERATURE = 0.7
+
+
+class LocalTransformersProvider(LLMProviderBase):
+    """Local Transformers provider with Intel XPU/CPU inference.
+
+    Provides local LLM inference using HuggingFace Transformers models
+    with automatic Intel XPU acceleration when available, falling back
+    to CPU when XPU is unavailable.
+
+    Attributes:
+        device_type: Current device type ("xpu" or "cpu").
+        xpu_available: Whether XPU is available.
+        is_arc_b580: Whether an Arc B580 is detected.
+        current_model_id: Currently loaded model ID.
+    """
+
+    def __init__(
+        self,
+        model_cache: ModelCache | None = None,
+        prefer_xpu: bool = True,
+    ) -> None:
+        """Initialize the Local Transformers provider.
+
+        Args:
+            model_cache: Optional model cache. Uses global cache if None.
+            prefer_xpu: Whether to prefer XPU over CPU when available.
+        """
+        super().__init__()
+        self._model_cache = model_cache or get_global_model_cache()
+        self._prefer_xpu = prefer_xpu
+        self._loaded_model: LoadedModel | None = None
+        self._device_type: Literal["xpu", "cpu"] = "cpu"
+        self._xpu_available = False
+        self._is_arc_b580 = False
+        self._windows_warnings: list[str] = []
+        self._logger = _logger
+
+    @property
+    def name(self) -> ProviderName:
+        """Get the provider's name.
+
+        Returns:
+            ProviderName.LOCAL_TRANSFORMERS
+        """
+        return ProviderName.LOCAL_TRANSFORMERS
+
+    @property
+    def device_type(self) -> str:
+        """Get the current device type.
+
+        Returns:
+            "xpu" or "cpu" depending on what's being used.
+        """
+        return self._device_type
+
+    @property
+    def xpu_available(self) -> bool:
+        """Check if XPU is available.
+
+        Returns:
+            True if XPU is available and usable.
+        """
+        return self._xpu_available
+
+    @property
+    def is_b580_detected(self) -> bool:
+        """Check if an Arc B580 is detected.
+
+        Returns:
+            True if an Arc B580 GPU is detected.
+        """
+        return self._is_arc_b580
+
+    @property
+    def current_model_id(self) -> str | None:
+        """Get the currently loaded model ID.
+
+        Returns:
+            Model ID or None if no model is loaded.
+        """
+        if self._loaded_model:
+            return self._loaded_model.model_id
+        return None
+
+    async def connect(self, credentials: ProviderCredentials | None) -> None:
+        """Connect to the local transformers provider.
+
+        Initializes XPU detection and validates system requirements.
+        No API key is required for local inference.
+
+        Args:
+            credentials: Optional credentials (not used for local inference).
+
+        Raises:
+            ProviderError: If initialization fails.
+        """
+        self._credentials = credentials
+
+        self._xpu_available = await asyncio.to_thread(is_xpu_available)
+        self._is_arc_b580 = await asyncio.to_thread(is_arc_b580)
+
+        if self._xpu_available and self._prefer_xpu:
+            self._device_type = "xpu"
+
+            _, warnings = await asyncio.to_thread(check_windows_requirements)
+            self._windows_warnings = warnings
+
+            for warning in warnings:
+                self._logger.warning("xpu_requirement_warning", extra={"warning": warning})
+
+            if self._is_arc_b580:
+                device_info = await asyncio.to_thread(get_xpu_device_info, 0)
+                if device_info:
+                    self._logger.info(
+                        "xpu_connected_b580",
+                        extra={
+                            "device_name": device_info.device_name,
+                            "memory_gb": device_info.total_memory_bytes / (1024**3),
+                            "driver": device_info.driver_version,
+                        },
+                    )
+            else:
+                self._logger.info("xpu_connected", extra={"device_type": self._device_type})
+        else:
+            self._device_type = "cpu"
+            if not self._xpu_available:
+                self._logger.info("xpu_not_available_using_cpu")
+            else:
+                self._logger.info("cpu_preferred_over_xpu")
+
+        self._connected = True
+        self._logger.info(
+            "local_transformers_connected",
+            extra={
+                "device_type": self._device_type,
+                "xpu_available": self._xpu_available,
+                "is_arc_b580": self._is_arc_b580,
+            },
+        )
+
+    async def disconnect(self) -> None:
+        """Disconnect from the provider and cleanup resources."""
+        if self._loaded_model is not None:
+            self._loaded_model = None
+
+        if self._device_type == "xpu":
+            await asyncio.to_thread(clear_xpu_cache)
+
+        await super().disconnect()
+        self._logger.info("local_transformers_disconnected")
+
+    async def list_models(self) -> list[ModelInfo]:
+        """List available local models.
+
+        Returns a list of recommended models that can fit on the
+        available hardware (B580 12GB VRAM or CPU RAM).
+
+        Returns:
+            List of available ModelInfo objects.
+
+        Raises:
+            ProviderError: If not connected.
+        """
+        if not self._connected:
+            raise ProviderError(_MSG_NOT_CONNECTED)
+
+        models: list[ModelInfo] = []
+
+        for model_data in RECOMMENDED_MODELS_B580:
+            model_id = str(model_data["model_id"])
+            recommended_dtype = str(model_data.get("recommended_dtype", "float16"))
+
+            if self._device_type == "xpu":
+                _, total_vram = await asyncio.to_thread(get_xpu_memory_info, 0)
+                estimated = estimate_model_memory(model_id, recommended_dtype)
+                _ = estimated < (total_vram * 0.9) if total_vram > 0 else True
+
+            supports_tools = self._model_supports_tools(model_id)
+
+            models.append(
+                ModelInfo(
+                    id=model_id,
+                    name=f"[Local] {model_id.rsplit('/', maxsplit=1)[-1]}",
+                    provider=ProviderName.LOCAL_TRANSFORMERS,
+                    context_window=self._estimate_context_window(model_id),
+                    supports_tools=supports_tools,
+                    supports_vision=False,
+                    supports_streaming=True,
+                    input_cost_per_1m_tokens=None,
+                    output_cost_per_1m_tokens=None,
+                )
+            )
+
+        return models
+
+    async def chat(
+        self,
+        messages: list[Message],
+        model: str,
+        tools: list[ToolDefinition] | None = None,
+        temperature: float = _DEFAULT_TEMPERATURE,
+        max_tokens: int = _DEFAULT_MAX_NEW_TOKENS,
+    ) -> tuple[Message, list[ToolCall] | None]:
+        """Send a chat completion request.
+
+        Args:
+            messages: Conversation history.
+            model: Model ID to use (HuggingFace model identifier).
+            tools: Available tools for function calling.
+            temperature: Sampling temperature (0.0 to 1.0).
+            max_tokens: Maximum tokens in response.
+
+        Returns:
+            Tuple of (assistant message, tool calls if any).
+
+        Raises:
+            ProviderError: If not connected or request fails.
+        """
+        if not self._connected:
+            raise ProviderError(_MSG_NOT_CONNECTED)
+
+        self._cancel_requested = False
+
+        model_id = model if model else _DEFAULT_MODEL
+
+        await self._ensure_model_loaded(model_id)
+
+        if self._loaded_model is None:
+            raise ProviderError(_MSG_NO_MODEL_LOADED)
+
+        start_time = time.perf_counter()
+
+        try:
+            formatted_messages = self._convert_messages_to_provider_format(messages)
+            prompt = self._format_prompt(formatted_messages, tools)
+
+            response_text = await asyncio.to_thread(
+                self._generate_sync,
+                prompt,
+                temperature,
+                max_tokens,
+            )
+
+            tool_calls: list[ToolCall] | None = None
+            if tools:
+                tool_calls = self._parse_tool_calls(response_text)
+                if tool_calls:
+                    response_text = self._extract_text_before_tool_call(response_text)
+
+            duration_ms = (time.perf_counter() - start_time) * 1000
+
+            message = Message(
+                role="assistant",
+                content=response_text,
+                tool_calls=tool_calls,
+                timestamp=datetime.now(),
+            )
+
+            self._logger.info(
+                "local_chat_completed",
+                extra={
+                    "model": model_id,
+                    "device": self._device_type,
+                    "duration_ms": duration_ms,
+                    "has_tool_calls": tool_calls is not None,
+                },
+            )
+
+            return message, tool_calls
+
+        except Exception as exc:
+            self._logger.exception("local_chat_failed", extra={"model": model_id, "error": str(exc)})
+            raise ProviderError(f"Local inference failed: {exc}") from exc
+
+    async def chat_stream(
+        self,
+        messages: list[Message],
+        model: str,
+        tools: list[ToolDefinition] | None = None,
+        temperature: float = _DEFAULT_TEMPERATURE,
+        max_tokens: int = _DEFAULT_MAX_NEW_TOKENS,
+    ) -> AsyncIterator[str]:
+        """Stream a chat completion response.
+
+        Args:
+            messages: Conversation history.
+            model: Model ID to use.
+            tools: Available tools for function calling.
+            temperature: Sampling temperature (0.0 to 1.0).
+            max_tokens: Maximum tokens in response.
+
+        Yields:
+            Text chunks as they are generated.
+
+        Raises:
+            ProviderError: If not connected or request fails.
+        """
+        if not self._connected:
+            raise ProviderError(_MSG_NOT_CONNECTED)
+
+        self._cancel_requested = False
+
+        model_id = model if model else _DEFAULT_MODEL
+
+        await self._ensure_model_loaded(model_id)
+
+        if self._loaded_model is None:
+            raise ProviderError(_MSG_NO_MODEL_LOADED)
+
+        try:
+            formatted_messages = self._convert_messages_to_provider_format(messages)
+            prompt = self._format_prompt(formatted_messages, tools)
+
+            async for chunk in self._stream_generate(prompt, temperature, max_tokens):
+                if self._cancel_requested:
+                    break
+                yield chunk
+
+        except Exception as exc:
+            if not self._cancel_requested:
+                self._logger.exception("local_stream_failed", extra={"model": model_id, "error": str(exc)})
+                raise ProviderError(f"Local streaming failed: {exc}") from exc
+
+    async def _ensure_model_loaded(self, model_id: str) -> None:
+        """Ensure the specified model is loaded.
+
+        Args:
+            model_id: Model to load.
+
+        Raises:
+            ProviderError: If model loading fails.
+        """
+        if self._loaded_model is not None and self._loaded_model.model_id == model_id:
+            return
+
+        config = ModelConfig(
+            model_id=model_id,
+            dtype="auto",
+            device="xpu" if self._device_type == "xpu" else "cpu",
+        )
+
+        try:
+            if self._device_type == "xpu":
+                self._loaded_model = await asyncio.to_thread(
+                    load_model_for_xpu,
+                    config,
+                    self._model_cache,
+                )
+            else:
+                self._loaded_model = await asyncio.to_thread(
+                    load_model_for_cpu,
+                    config,
+                    self._model_cache,
+                )
+
+            self._logger.info(
+                "model_loaded",
+                extra={
+                    "model_id": model_id,
+                    "device": self._device_type,
+                    "dtype": self._loaded_model.dtype,
+                    "load_time_s": self._loaded_model.load_time_seconds,
+                },
+            )
+
+        except Exception as exc:
+            self._logger.exception("model_load_failed", extra={"model_id": model_id, "error": str(exc)})
+
+            if self._device_type == "xpu":
+                self._logger.warning("xpu_load_failed_falling_back_to_cpu")
+                self._device_type = "cpu"
+                config.device = "cpu"
+                try:
+                    self._loaded_model = await asyncio.to_thread(
+                        load_model_for_cpu,
+                        config,
+                        self._model_cache,
+                    )
+                except Exception as cpu_exc:
+                    raise ProviderError(f"Failed to load model on both XPU and CPU: {cpu_exc}") from cpu_exc
+            else:
+                raise ProviderError(f"Failed to load model: {exc}") from exc
+
+    def _generate_sync(
+        self,
+        prompt: str,
+        temperature: float,
+        max_tokens: int,
+    ) -> str:
+        """Synchronous text generation.
+
+        Args:
+            prompt: Input prompt.
+            temperature: Sampling temperature.
+            max_tokens: Maximum new tokens.
+
+        Returns:
+            Generated text.
+        """
+        if self._loaded_model is None:
+            raise RuntimeError(_MSG_NO_MODEL_LOADED)
+
+        import torch  # noqa: PLC0415
+
+        model = self._loaded_model.model
+        tokenizer = self._loaded_model.tokenizer
+        device = self._loaded_model.device
+
+        inputs = tokenizer(prompt, return_tensors="pt", truncation=True)
+        input_ids = inputs["input_ids"].to(device)
+        attention_mask = inputs.get("attention_mask")
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(device)
+
+        with torch.no_grad():
+            outputs = model.generate(
+                input_ids,
+                attention_mask=attention_mask,
+                max_new_tokens=max_tokens,
+                temperature=temperature if temperature > 0 else None,
+                do_sample=temperature > 0,
+                pad_token_id=tokenizer.pad_token_id,
+                eos_token_id=tokenizer.eos_token_id,
+            )
+
+        generated_ids = outputs[0][input_ids.shape[1] :]
+        response = tokenizer.decode(generated_ids, skip_special_tokens=True)
+
+        return response.strip()
+
+    async def _stream_generate(
+        self,
+        prompt: str,
+        temperature: float,
+        max_tokens: int,
+    ) -> AsyncIterator[str]:
+        """Stream text generation.
+
+        Args:
+            prompt: Input prompt.
+            temperature: Sampling temperature.
+            max_tokens: Maximum new tokens.
+
+        Yields:
+            Text chunks.
+        """
+        if self._loaded_model is None:
+            raise RuntimeError(_MSG_NO_MODEL_LOADED)
+
+        import torch  # noqa: PLC0415
+
+        model = self._loaded_model.model
+        tokenizer = self._loaded_model.tokenizer
+        device = self._loaded_model.device
+
+        inputs = tokenizer(prompt, return_tensors="pt", truncation=True)
+        input_ids = inputs["input_ids"].to(device)
+        attention_mask = inputs.get("attention_mask")
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(device)
+
+        generated_ids = input_ids.clone()
+        past_key_values = None
+
+        for _ in range(max_tokens):
+            if self._cancel_requested:
+                break
+
+            def _forward_pass(
+                _model: object,
+                _gen_ids: torch.Tensor,
+                _attn_mask: torch.Tensor | None,
+                _past_kv: object,
+            ) -> object:
+                use_ids = _gen_ids[:, -1:] if _past_kv else _gen_ids
+                return _model(
+                    input_ids=use_ids,
+                    attention_mask=_attn_mask,
+                    past_key_values=_past_kv,
+                    use_cache=True,
+                )
+
+            with torch.no_grad():
+                outputs = await asyncio.to_thread(
+                    _forward_pass,
+                    model,
+                    generated_ids,
+                    attention_mask,
+                    past_key_values,
+                )
+
+            logits = outputs.logits[:, -1, :]
+            past_key_values = outputs.past_key_values
+
+            if temperature > 0:
+                probs = torch.softmax(logits / temperature, dim=-1)
+                next_token = torch.multinomial(probs, num_samples=1)
+            else:
+                next_token = logits.argmax(dim=-1, keepdim=True)
+
+            if next_token.item() == tokenizer.eos_token_id:
+                break
+
+            generated_ids = torch.cat([generated_ids, next_token], dim=-1)
+
+            if attention_mask is not None:
+                attention_mask = torch.cat(
+                    [attention_mask, torch.ones((1, 1), device=device)],
+                    dim=-1,
+                )
+
+            token_text = tokenizer.decode(next_token[0], skip_special_tokens=True)
+            if token_text:
+                yield token_text
+
+    def _convert_messages_to_provider_format(
+        self,
+        messages: list[Message],
+    ) -> list[dict[str, object]]:
+        """Convert internal messages to a generic format.
+
+        Args:
+            messages: List of Message objects.
+
+        Returns:
+            List of message dictionaries.
+        """
+        result: list[dict[str, object]] = []
+
+        for msg in messages:
+            msg_dict: dict[str, object] = {
+                "role": msg.role,
+                "content": msg.content,
+            }
+
+            if msg.tool_calls:
+                msg_dict["tool_calls"] = [
+                    {
+                        "id": tc.id,
+                        "function": {
+                            "name": tc.function_name,
+                            "arguments": tc.arguments,
+                        },
+                    }
+                    for tc in msg.tool_calls
+                ]
+
+            if msg.tool_results:
+                msg_dict["tool_results"] = [
+                    {
+                        "call_id": tr.call_id,
+                        "result": tr.result,
+                        "success": tr.success,
+                    }
+                    for tr in msg.tool_results
+                ]
+
+            result.append(msg_dict)
+
+        return result
+
+    def _convert_tools_to_provider_format(
+        self,
+        tools: list[ToolDefinition],
+    ) -> list[dict[str, object]]:
+        """Convert tools to a generic format.
+
+        Args:
+            tools: List of ToolDefinition objects.
+
+        Returns:
+            List of tool dictionaries.
+        """
+        result: list[dict[str, object]] = []
+
+        for tool in tools:
+            for func in tool.functions:
+                properties: dict[str, dict[str, object]] = {}
+                required: list[str] = []
+
+                for param in func.parameters:
+                    prop: dict[str, object] = {
+                        "type": param.type,
+                        "description": param.description,
+                    }
+                    if param.enum:
+                        prop["enum"] = param.enum
+                    properties[param.name] = prop
+                    if param.required:
+                        required.append(param.name)
+
+                result.append({
+                    "type": "function",
+                    "function": {
+                        "name": func.name,
+                        "description": func.description,
+                        "parameters": {
+                            "type": "object",
+                            "properties": properties,
+                            "required": required,
+                        },
+                    },
+                })
+
+        return result
+
+    def _format_prompt(
+        self,
+        messages: list[dict[str, object]],
+        tools: list[ToolDefinition] | None = None,
+    ) -> str:
+        """Format messages into a prompt string.
+
+        Args:
+            messages: List of message dictionaries.
+            tools: Optional tools to include in prompt.
+
+        Returns:
+            Formatted prompt string.
+        """
+        prompt_parts: list[str] = []
+
+        for msg in messages:
+            role = str(msg.get("role", ""))
+            content = str(msg.get("content", ""))
+
+            if role == "system":
+                prompt_parts.append(f"<|system|>\n{content}\n")
+            elif role == "user":
+                prompt_parts.append(f"<|user|>\n{content}\n")
+            elif role == "assistant":
+                prompt_parts.append(f"<|assistant|>\n{content}\n")
+            elif role == "tool":
+                tool_results = msg.get("tool_results", [])
+                if isinstance(tool_results, list):
+                    for tr in tool_results:
+                        if isinstance(tr, dict):
+                            result = tr.get("result", "")
+                            prompt_parts.append(f"<|tool|>\n{result}\n")
+
+        if tools:
+            tool_schemas = self._convert_tools_to_provider_format(tools)
+            tools_json = json.dumps(tool_schemas, indent=2)
+            prompt_parts.insert(
+                0,
+                f"<|system|>\nYou have access to the following tools:\n{tools_json}\n\n"
+                "To use a tool, respond with JSON in this format:\n"
+                '{"tool_call": {"name": "tool_name", "arguments": {...}}}\n',
+            )
+
+        prompt_parts.append("<|assistant|>\n")
+
+        return "".join(prompt_parts)
+
+    def _parse_tool_calls(self, response: str) -> list[ToolCall] | None:
+        """Parse tool calls from response.
+
+        Args:
+            response: Model response text.
+
+        Returns:
+            List of ToolCall objects or None.
+        """
+        start_idx = response.find('{"tool_call":')
+        if start_idx == -1:
+            return None
+
+        brace_count = 0
+        end_idx = start_idx
+        in_string = False
+        escape_next = False
+
+        for i, char in enumerate(response[start_idx:], start=start_idx):
+            if escape_next:
+                escape_next = False
+                continue
+            if char == '\\':
+                escape_next = True
+                continue
+            if char == '"' and not escape_next:
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if char == '{':
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0:
+                    end_idx = i + 1
+                    break
+
+        if brace_count != 0:
+            return None
+
+        json_str = response[start_idx:end_idx]
+
+        try:
+            data = json.loads(json_str)
+            tool_call_data = data.get("tool_call", {})
+            name = tool_call_data.get("name", "")
+            arguments = tool_call_data.get("arguments", {})
+
+            if name:
+                return [
+                    ToolCall(
+                        id=f"call_{int(time.time() * 1000)}",
+                        tool_name=name.split(".")[0] if "." in name else name,
+                        function_name=name,
+                        arguments=arguments if isinstance(arguments, dict) else {},
+                    )
+                ]
+        except json.JSONDecodeError:
+            pass
+
+        return None
+
+    def _extract_text_before_tool_call(self, response: str) -> str:
+        """Extract text before tool call JSON.
+
+        Args:
+            response: Full response text.
+
+        Returns:
+            Text before the tool call JSON.
+        """
+        match = re.search(r'\{"tool_call":', response)
+        if match:
+            return response[: match.start()].strip()
+        return response
+
+    def _model_supports_tools(self, model_id: str) -> bool:
+        """Check if a model supports tool calling.
+
+        Args:
+            model_id: Model identifier.
+
+        Returns:
+            True if model supports tools.
+        """
+        model_lower = model_id.lower()
+        tool_capable = [
+            "phi-3",
+            "llama-3",
+            "qwen",
+            "mistral",
+            "mixtral",
+            "gemma",
+        ]
+        return any(cap in model_lower for cap in tool_capable)
+
+    def _estimate_context_window(self, model_id: str) -> int:
+        """Estimate context window for a model.
+
+        Args:
+            model_id: Model identifier.
+
+        Returns:
+            Estimated context window in tokens.
+        """
+        model_lower = model_id.lower()
+
+        if "128k" in model_lower:
+            return 128000
+        if "32k" in model_lower:
+            return 32768
+        if "16k" in model_lower:
+            return 16384
+        if "8k" in model_lower:
+            return 8192
+
+        if "phi-3-mini-4k" in model_lower:
+            return 4096
+        if "phi-3-mini-128k" in model_lower:
+            return 128000
+        if "phi-3" in model_lower:
+            return 4096
+
+        if "qwen2.5" in model_lower:
+            return 32768
+
+        if "llama-3" in model_lower:
+            return 8192
+
+        if "mistral" in model_lower:
+            return 32768
+
+        if "tinyllama" in model_lower:
+            return 2048
+
+        return 4096
+
+    def get_device_info(self) -> dict[str, object]:
+        """Get information about the current device.
+
+        Returns:
+            Dictionary with device information.
+        """
+        info: dict[str, object] = {
+            "device_type": self._device_type,
+            "xpu_available": self._xpu_available,
+            "is_arc_b580": self._is_arc_b580,
+            "warnings": self._windows_warnings,
+        }
+
+        if self._device_type == "xpu" and self._xpu_available:
+            device_info = get_xpu_device_info(0)
+            if device_info:
+                info["device_name"] = device_info.device_name
+                info["total_memory_gb"] = device_info.total_memory_bytes / (1024**3)
+                info["driver_version"] = device_info.driver_version
+                info["supports_fp16"] = device_info.supports_fp16
+                info["supports_bf16"] = device_info.supports_bf16
+
+            allocated, total = get_xpu_memory_info(0)
+            info["allocated_memory_gb"] = allocated / (1024**3)
+            info["total_memory_gb"] = total / (1024**3) if total > 0 else 12.0
+
+        if self._loaded_model:
+            info["loaded_model"] = self._loaded_model.model_id
+            info["model_dtype"] = self._loaded_model.dtype
+            info["model_memory_gb"] = self._loaded_model.memory_usage_bytes / (1024**3)
+
+        return info
+
+    async def unload_model(self) -> None:
+        """Unload the currently loaded model to free memory."""
+        if self._loaded_model is not None:
+            model_id = self._loaded_model.model_id
+            self._loaded_model = None
+
+            if self._device_type == "xpu":
+                await asyncio.to_thread(clear_xpu_cache)
+
+            gc.collect()
+
+            self._logger.info("model_unloaded", extra={"model_id": model_id})
+
+    def clear_cache(self) -> None:
+        """Clear the model cache."""
+        clear_global_cache()
+        self._logger.info("model_cache_cleared")

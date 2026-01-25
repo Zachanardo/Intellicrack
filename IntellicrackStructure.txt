@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sat, Jan 24, 2026 12:21:37 PM
+Generated: Sat, Jan 24, 2026 10:02:55 PM
 Directory: D:\Intellicrack\src
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -16,6 +16,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── frida_specialized.json
 │   │   │   ├── gptq_fast_inference.json
 │   │   │   ├── local_gguf_high_performance.json
+│   │   │   ├── local_xpu_inference.json
 │   │   │   ├── ollama_codellama.json
 │   │   │   ├── onnx_production.json
 │   │   │   ├── openai_gpt4.json
@@ -195,10 +196,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── google.py
 │   │   ├── grok.py
 │   │   ├── huggingface.py
+│   │   ├── local_transformers.py
+│   │   ├── model_loader.py
 │   │   ├── ollama.py
 │   │   ├── openai.py
 │   │   ├── openrouter.py
-│   │   └── registry.py
+│   │   ├── registry.py
+│   │   └── xpu_utils.py
 │   ├── sandbox/
 │   │   ├── __init__.py
 │   │   ├── base.py

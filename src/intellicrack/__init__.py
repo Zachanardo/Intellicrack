@@ -24,7 +24,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 
-__version__ = "2.0.0"
+__version__ = "1.0.0"
 __author__ = "Zachary Flint"
 __email__ = "zach.flint2@gmail.com"  # noqa: RUF067
 

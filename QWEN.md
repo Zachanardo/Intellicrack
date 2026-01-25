@@ -22,17 +22,17 @@ Intellicrack is a comprehensive binary analysis and security research tool. It f
 ```text
 intellicrack/
 ├── src/intellicrack/      # Main package source code
-│   ├── ai/               # AI and ML components
-│   ├── core/             # Core functionality
-│   ├── hexview/          # Hex viewer implementation
-│   ├── models/           # Model management
-│   ├── plugins/          # Plugin system
-│   ├── scripts/          # Utility scripts
-│   └── ui/               # User interface components
+│   ├── core/             # Configuration, orchestration, types, session, logging
+│   ├── bridges/          # Tool integrations (Ghidra, x64dbg, Frida, radare2)
+│   ├── providers/        # LLM providers (Anthropic, OpenAI, Google, Ollama, etc.)
+│   ├── sandbox/          # Windows Sandbox isolation
+│   ├── ui/               # PyQt6 graphical interface
+│   ├── credentials/      # API key management
+│   ├── plugins/          # Plugin infrastructure
+│   └── assets/           # Configuration files and resources
 ├── tests/                # Test suite
-├── docs/                 # Documentation
-├── data/                 # Runtime data (gitignored)
-└── .github/              # GitHub workflows and templates
+├── tools/                # External tool binaries
+└── config.toml           # Main configuration
 ```
 
 ### Coding Standards
@@ -65,11 +65,11 @@ intellicrack/
   - Place tests in the `tests/` directory, mirroring the source code structure.
   - Use descriptive test names.
   - Include positive and negative test cases.
-  - Must test Intellcirack functionality with genuine real tests
+  - Must test Intellicrack functionality with genuine real tests
 
 ### Environment Usage
 
-- **Pixi environment location**: `C:\Intellicrack\.pixi\\envs\default`
+- **Pixi environment location**: `D:\Intellicrack\.pixi\envs\default`
 - **Activation**: `pixi shell` or use `pixi run <command>`
 
 ### Submitting Changes

@@ -38,6 +38,7 @@ class ProviderName(enum.Enum):
     OPENROUTER = "openrouter"
     HUGGINGFACE = "huggingface"
     GROK = "grok"
+    LOCAL_TRANSFORMERS = "local_transformers"
 
 
 class ConfirmationLevel(enum.Enum):

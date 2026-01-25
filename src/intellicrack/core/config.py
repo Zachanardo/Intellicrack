@@ -166,6 +166,12 @@ def _default_providers() -> dict[ProviderName, ProviderConfig]:
             timeout_seconds=120,
             max_retries=3,
         ),
+        ProviderName.LOCAL_TRANSFORMERS: ProviderConfig(
+            enabled=True,
+            default_model="microsoft/Phi-3-mini-4k-instruct",
+            timeout_seconds=600,
+            max_retries=1,
+        ),
     }
 
 
